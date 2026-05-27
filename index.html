@@ -354,9 +354,9 @@ function handleFile(file){
   if(!file) return;
   const isCSV=file.name.toLowerCase().endsWith('.csv');
   const isPDF=file.name.toLowerCase().endsWith('.pdf');
+  const isXLSX=file.name.toLowerCase().endsWith('.xlsx');
   if(!isCSV&&!isPDF&&!isXLSX){ alert('Välj en CSV-, PDF- eller Excel-fil.'); return; }
   const reader=new FileReader();
-  const isXLSX = file.name.toLowerCase().endsWith('.xlsx');
   if(isCSV){
     reader.onload=e=>showPreview(parseCSV(e.target.result),file.name,'CSV');
     reader.readAsArrayBuffer(file);
@@ -388,7 +388,9 @@ function parseCSV(buffer){
 
   for(let i = 0; i < Math.min(6, lines.length); i++){
     const l = lines[i].toLowerCase();
-    if(l.includes('bokföring') || l.includes('transaktionsdag') || l.includes('radnummer')){
+    // Use ASCII-safe keywords that survive any encoding
+    if(l.includes('transaktionsdag') || l.includes('radnummer') || 
+       (l.includes('belopp') && (l.includes(';') || l.includes(',')))){
       startLine = i; break;
     }
   }
@@ -711,6 +713,6 @@ function changeCat(idx,cat){
 // ===== INIT =====
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.05.27-1344</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.05.27-1451</div>
 </body>
 </html>
