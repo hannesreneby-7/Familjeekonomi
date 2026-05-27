@@ -391,8 +391,10 @@ function parseCSV(buffer){
   const delim = lines[startLine].includes(';') ? ';' : ',';
   const headers = lines[startLine].split(delim).map(h => h.trim().replace(/"/g,'').toLowerCase());
 
-  const isSwedbank = headers.includes('beskrivning') && headers.includes('radnummer');
-  const isNordea   = headers.includes('rubrik') && headers.includes('bokföringsdag') && !headers.includes('radnummer');
+  // Robust format detection — works regardless of encoding issues with Swedish chars
+  const rawHeader = lines[startLine].toLowerCase();
+  const isSwedbank = rawHeader.includes('beskrivning') && rawHeader.includes('radnummer');
+  const isNordea   = rawHeader.includes('rubrik') && rawHeader.includes('belopp') && !rawHeader.includes('radnummer');
 
   let dateCol, amtCol, descCol, accName;
   if(isSwedbank){
@@ -401,9 +403,10 @@ function parseCSV(buffer){
     descCol = headers.indexOf('beskrivning');
     accName = 'Kort';
   } else if(isNordea){
-    dateCol = headers.indexOf('bokföringsdag');
-    amtCol  = headers.indexOf('belopp');
-    descCol = headers.indexOf('rubrik');
+    // Nordea: Bokföringsdag;Belopp;Avsändare;Mottagare;Namn;Rubrik;Saldo;Valuta
+    dateCol = 0;
+    amtCol  = 1;
+    descCol = 5;
     accName = 'Bank';
   } else {
     dateCol = headers.findIndex(h => h.includes('datum') || h.includes('bokföring'));
@@ -457,11 +460,13 @@ function parseCSV(buffer){
 }
 function parsePDFRaw(text){
   const txns = [];
-  for(const line of text.split(/[\n\r]+/)){
+  const lines = text.split(/[\n\r]+/);
+
+  for(const line of lines){
     const l = line.trim();
     if(l.length < 5) continue;
 
-    // Must start with a date YYYY-MM-DD
+    // Must start with YYYY-MM-DD
     const dateMatch = l.match(/^(\d{4}-\d{2}-\d{2})/);
     if(!dateMatch) continue;
     const date = dateMatch[1];
@@ -470,12 +475,11 @@ function parsePDFRaw(text){
     const lu = l.toUpperCase();
     if(lu.includes('FROM RENEBY') || lu.includes('RENEBY HANNES')) continue;
 
-    // Remove both dates from line (bokföring + räntedatum)
+    // Remove all dates from line
     let rest = l.replace(/\d{4}-\d{2}-\d{2}/g, '').trim();
 
-    // Find all numbers with comma decimal at end of string
-    // Handle space-separated thousands: "1 307,21" or "307,21"
-    const amtMatch = rest.match(/([\d\s]+,\d{2})\s*$/);
+    // Find amount at end of line — handles "1 307,21" and "307,21"
+    const amtMatch = rest.match(/([\d ]+,\d{2})\s*$/);
     if(!amtMatch) continue;
 
     const amtStr = amtMatch[1].replace(/\s/g,'').replace(',','.');
@@ -483,16 +487,9 @@ function parsePDFRaw(text){
     if(isNaN(amt) || amt <= 0 || amt > 200000) continue;
 
     // Description = everything before the amount
-    let desc = rest.slice(0, rest.lastIndexOf(amtMatch[1])).trim();
-    // Clean up stray chars
-    desc = desc.replace(/[^\w\s\-\*\.\/&åäöÅÄÖ]/g, ' ').replace(/\s+/g,' ').trim();
+    let desc = rest.slice(0, amtMatch.index).trim();
+    desc = desc.replace(/\s+/g,' ').replace(/[^\w\s\-\*\.\/&åäöÅÄÖ]/g,' ').trim();
     if(desc.length < 2) continue;
-
-    // Check if this is "In till konto" (credit/return) — skip those from Norwegian
-    // They appear as positive in-payments like "ICE ACADEMY 139,00" with "In till konto" header
-    // We detect them by checking if the amount appears in the "In till konto" column
-    // Simple heuristic: if desc contains known credit indicators, skip
-    if(lu.includes('FROM RENEBY')) continue;
 
     txns.push({date, acc:'Kreditkort', amt:-amt, desc, cat: autoCategory(desc)});
   }
