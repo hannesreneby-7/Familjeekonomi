@@ -111,6 +111,41 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
 .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
 .legend-dot{width:9px;height:9px;border-radius:2px}
+
+/* Top navigation */
+.top-nav{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:20px;width:fit-content}
+.top-nav-btn{padding:7px 20px;border-radius:7px;font-size:13px;cursor:pointer;color:var(--text3);border:none;background:none;font-family:'DM Sans',sans-serif;transition:all .15s;font-weight:400}
+.top-nav-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08);font-weight:500}
+
+/* Month selector */
+.month-bar{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.month-bar label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.month-chips{display:flex;gap:6px;flex-wrap:wrap}
+.month-chip{padding:5px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all .15s;font-family:'DM Sans',sans-serif}
+.month-chip:hover{border-color:var(--accent);color:var(--accent)}
+.month-chip.active{background:var(--accent);color:white;border-color:var(--accent)}
+
+/* Budget view */
+.budget-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-bottom:20px}
+.budget-card{background:var(--surface);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+.budget-card-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.budget-cat-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.budget-cat-name{font-size:13px;font-weight:500;flex:1}
+.budget-pct{font-size:12px;font-weight:600;white-space:nowrap}
+.budget-pct.over{color:var(--red)}
+.budget-pct.ok{color:var(--green)}
+.budget-pct.warn{color:var(--yellow)}
+.budget-bar-bg{background:var(--surface2);border-radius:6px;height:8px;margin-bottom:10px;overflow:hidden}
+.budget-bar-fill{height:100%;border-radius:6px;transition:width .4s ease}
+.budget-numbers{display:flex;justify-content:space-between;font-size:12px;color:var(--text2)}
+.budget-input-wrap{display:flex;align-items:center;gap:6px;margin-top:8px}
+.budget-input-wrap label{font-size:11px;color:var(--text3);white-space:nowrap}
+.budget-input{border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:'DM Sans',sans-serif;width:90px;outline:none;text-align:right}
+.budget-input:focus{border-color:var(--accent)}
+.budget-summary{background:var(--surface);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);margin-bottom:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center}
+.budget-sum-val{font-family:'DM Serif Display',serif;font-size:22px;letter-spacing:-.5px;margin-bottom:4px}
+.budget-sum-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
+.budget-no-data{text-align:center;padding:40px;color:var(--text3);font-size:13px}
 </style>
 </head>
 <body>
@@ -168,7 +203,23 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
   </div>
 
   <div id="dashboardContent" style="display:none">
-    <div class="kpi-row" id="kpiRow"></div>
+
+    <!-- Top navigation -->
+    <div class="top-nav">
+      <button class="top-nav-btn active" onclick="switchView('overview',this)">Översikt</button>
+      <button class="top-nav-btn" onclick="switchView('budget',this)">Budget</button>
+      <button class="top-nav-btn" onclick="switchView('transactions',this)">Transaktioner</button>
+    </div>
+
+    <!-- Month selector (shared across views) -->
+    <div class="month-bar">
+      <label>Månad:</label>
+      <div class="month-chips" id="monthChips"></div>
+    </div>
+
+    <!-- OVERVIEW VIEW -->
+    <div id="view-overview">
+      <div class="kpi-row" id="kpiRow"></div>
     <div class="chart-row">
       <div class="card">
         <div class="card-title">Inkomst vs utgift per månad</div>
@@ -193,6 +244,16 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
         <div style="height:230px;position:relative"><canvas id="accChart"></canvas></div>
       </div>
     </div>
+    </div><!-- end view-overview -->
+
+    <!-- BUDGET VIEW -->
+    <div id="view-budget" style="display:none">
+      <div class="budget-summary" id="budgetSummary"></div>
+      <div class="budget-grid" id="budgetGrid"></div>
+    </div>
+
+    <!-- TRANSACTIONS VIEW -->
+    <div id="view-transactions" style="display:none">
     <div class="card">
       <div class="section-h">Transaktioner</div>
       <div class="tabs">
@@ -204,9 +265,6 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
       <div class="txn-controls">
         <input type="text" class="si" placeholder="Sök mottagare..." id="searchInput" oninput="renderTxns()">
         <select class="fs" id="catFilter" onchange="renderTxns()"><option value="">Alla kategorier</option></select>
-        <select class="fs" id="monthFilter" onchange="renderTxns()">
-          <option value="">Alla månader</option>
-        </select>
         <select class="fs" id="dirFilter" onchange="renderTxns()">
           <option value="">In & ut</option><option value="in">Inkomster</option><option value="ut">Utgifter</option>
         </select>
@@ -218,7 +276,8 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
       <div class="pagination" id="pagination"></div>
       <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center" id="txnCount"></div>
     </div>
-  </div>
+    </div><!-- end view-transactions -->
+  </div><!-- end dashboardContent -->
 
   <div id="emptyState" style="display:none">
     <div class="empty-state">
@@ -243,6 +302,151 @@ const CAT_COLORS = {
 const ALL_CATS = Object.keys(CAT_COLORS);
 
 let TXNS = [];
+let BUDGET = {};         // {kategori: månadsbudget i kr}
+let activeMonth = 'all'; // 'all' eller 'YYYY-MM'
+let activeView = 'overview';
+
+
+// ===== BUDGET =====
+function loadBudget(){
+  // Budget laddas från JSONBin via loadFromCloud
+  // Denna funktion behålls bara för bakåtkompatibilitet
+}
+function saveBudget(){
+  // Budget sparas via saveToCloud
+}
+let budgetSaveTimer = null;
+function setBudget(cat, val){
+  const n = parseFloat(val);
+  if(!isNaN(n) && n > 0) BUDGET[cat] = n;
+  else delete BUDGET[cat];
+  renderBudgetView();
+  clearTimeout(budgetSaveTimer);
+  budgetSaveTimer = setTimeout(() => saveToCloud(), 2000);
+}
+
+// ===== VIEWS =====
+function switchView(view, el){
+  activeView = view;
+  document.querySelectorAll('.top-nav-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('view-overview').style.display     = view==='overview'     ? '' : 'none';
+  document.getElementById('view-budget').style.display       = view==='budget'       ? '' : 'none';
+  document.getElementById('view-transactions').style.display = view==='transactions' ? '' : 'none';
+  if(view==='budget') renderBudgetView();
+  if(view==='overview') rebuildCharts();
+  if(view==='transactions') renderTxns();
+}
+
+// ===== MONTH CHIPS =====
+function buildMonthChips(){
+  const months = [...new Set(TXNS.map(t=>t.date.slice(0,7)))].sort().reverse();
+  const monthNames = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'Maj',
+                      '06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Okt','11':'Nov','12':'Dec'};
+  const el = document.getElementById('monthChips');
+  el.innerHTML = `<button class="month-chip ${activeMonth==='all'?'active':''}" onclick="selectMonth('all')">Alla</button>` +
+    months.map(m => {
+      const [y,mo] = m.split('-');
+      const label = monthNames[mo]+' '+y.slice(2);
+      return `<button class="month-chip ${activeMonth===m?'active':''}" onclick="selectMonth('${m}')">${label}</button>`;
+    }).join('');
+}
+
+function selectMonth(m){
+  activeMonth = m;
+  buildMonthChips();
+  if(activeView==='overview') rebuildCharts();
+  if(activeView==='budget') renderBudgetView();
+  if(activeView==='transactions') renderTxns();
+}
+
+function filteredByMonth(){
+  if(activeMonth==='all') return TXNS;
+  return TXNS.filter(t => t.date.startsWith(activeMonth));
+}
+
+// ===== BUDGET VIEW =====
+function renderBudgetView(){
+  const txns = filteredByMonth();
+  const expenses = txns.filter(t => t.amt < 0 && t.cat !== 'Inkomst');
+  const catTotals = {};
+  expenses.forEach(t => { catTotals[t.cat] = (catTotals[t.cat]||0) + Math.abs(t.amt); });
+
+  // Budget summary
+  const totalSpent = Object.values(catTotals).reduce((a,b)=>a+b,0);
+  const totalBudget = Object.values(BUDGET).reduce((a,b)=>a+b,0);
+  const totalLeft = totalBudget - totalSpent;
+  const fmt = n => Math.round(Math.abs(n)).toLocaleString('sv-SE')+' kr';
+  const monthLabel = activeMonth==='all' ? 'alla månader' : activeMonth;
+
+  if(Object.keys(BUDGET).length === 0){
+    document.getElementById('budgetSummary').innerHTML = '';
+    document.getElementById('budgetGrid').innerHTML =
+      '<div class="budget-no-data" style="grid-column:1/-1">Sätt en budget per kategori nedan för att se hur ni ligger till.</div>';
+  } else {
+    document.getElementById('budgetSummary').innerHTML = `
+      <div>
+        <div class="budget-sum-val" style="color:var(--red)">${fmt(totalSpent)}</div>
+        <div class="budget-sum-label">Spenderat</div>
+      </div>
+      <div>
+        <div class="budget-sum-val" style="color:var(--text2)">${fmt(totalBudget)}</div>
+        <div class="budget-sum-label">Total budget</div>
+      </div>
+      <div>
+        <div class="budget-sum-val" style="color:${totalLeft>=0?'var(--green)':'var(--red)'}">
+          ${totalLeft>=0?'+':'−'}${fmt(totalLeft)}
+        </div>
+        <div class="budget-sum-label">${totalLeft>=0?'Kvar':'Över budget'}</div>
+      </div>`;
+  }
+
+  // Budget per category — show all cats with data, plus any with set budget
+  const allCats = [...new Set([...Object.keys(catTotals), ...Object.keys(BUDGET)])].sort();
+
+  document.getElementById('budgetGrid').innerHTML = allCats.map(cat => {
+    const spent = catTotals[cat] || 0;
+    const budget = BUDGET[cat] || 0;
+    const color = CAT_COLORS[cat] || '#888';
+    const pct = budget > 0 ? Math.round(spent/budget*100) : null;
+    const barW = budget > 0 ? Math.min(spent/budget*100, 100).toFixed(1) : 0;
+    const barColor = pct===null ? color : pct>100 ? '#b83c3c' : pct>80 ? '#c4821a' : '#2d7a56';
+    const pctLabel = pct===null ? '' : pct>100
+      ? `<span class="budget-pct over">${pct}% ⚠️</span>`
+      : `<span class="budget-pct ${pct>80?'warn':'ok'}">${pct}%</span>`;
+
+    return `<div class="budget-card">
+      <div class="budget-card-header">
+        <div class="budget-cat-dot" style="background:${color}"></div>
+        <div class="budget-cat-name">${cat}</div>
+        ${pctLabel}
+      </div>
+      ${budget>0 ? `
+        <div class="budget-bar-bg">
+          <div class="budget-bar-fill" style="width:${barW}%;background:${barColor}"></div>
+        </div>
+        <div class="budget-numbers">
+          <span style="color:${pct>100?'var(--red)':'var(--text2)'}">
+            ${Math.round(spent).toLocaleString('sv-SE')} kr spenderat
+          </span>
+          <span style="color:${pct>100?'var(--red)':'var(--green)'}">
+            ${pct>100?'−':''}${Math.abs(budget-spent).toLocaleString('sv-SE')} kr ${pct>100?'över':'kvar'}
+          </span>
+        </div>` : `
+        <div style="font-size:12px;color:var(--text3);margin-bottom:6px">
+          ${Math.round(spent).toLocaleString('sv-SE')} kr spenderat · ingen budget satt
+        </div>`}
+      <div class="budget-input-wrap">
+        <label>Budget/mån:</label>
+        <input type="number" class="budget-input" placeholder="0 kr"
+          value="${BUDGET[cat]||''}"
+          onchange="setBudget('${cat}',this.value)"
+          onblur="setBudget('${cat}',this.value)">
+        <span style="font-size:11px;color:var(--text3)">kr</span>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 // ===== JSONBIN =====
 function getKeys(){ return {secret:localStorage.getItem('jb_secret'),bin:localStorage.getItem('jb_bin')}; }
@@ -286,6 +490,7 @@ async function loadFromCloud(){
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data=await r.json();
     TXNS=data.transaktioner||[];
+    BUDGET=data.budget||{};
     setSyncStatus('ok','✓ Synkad');
     if(TXNS.length===0){ showEmpty(); }
     else { showDashboard(); }
@@ -303,7 +508,7 @@ async function saveToCloud(showStatus=true){
     const r=await fetch('https://api.jsonbin.io/v3/b/'+k.bin,{
       method:'PUT',
       headers:{'Content-Type':'application/json','X-Master-Key':k.secret},
-      body:JSON.stringify({transaktioner:TXNS})
+      body:JSON.stringify({transaktioner:TXNS,budget:BUDGET})
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
     if(showStatus) setSyncStatus('ok','✓ Sparad '+new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'}));
@@ -322,6 +527,7 @@ function showEmpty(){
 function showDashboard(){
   document.getElementById('emptyState').style.display='none';
   document.getElementById('dashboardContent').style.display='block';
+  buildMonthChips();
   rebuildCharts();
   renderTxns();
   updateHeader();
@@ -590,22 +796,13 @@ function updateHeader(){
   }
   // Update month filter dynamically
   const months=[...new Set(TXNS.map(t=>t.date.slice(0,7)))].sort();
-  const mf=document.getElementById('monthFilter');
-  const curr=mf.value;
-  mf.innerHTML='<option value="">Alla månader</option>';
-  const monthNames={'01':'Januari','02':'Februari','03':'Mars','04':'April','05':'Maj','06':'Juni','07':'Juli','08':'Augusti','09':'September','10':'Oktober','11':'November','12':'December'};
-  months.forEach(m=>{
-    const [y,mo]=m.split('-');
-    const o=document.createElement('option');
-    o.value=m; o.textContent=(monthNames[mo]||mo)+' '+y;
-    if(m===curr) o.selected=true;
-    mf.appendChild(o);
-  });
+  
 }
 
 function rebuildCharts(){
-  const expenses=TXNS.filter(t=>t.amt<0&&t.cat!=='Inkomst');
-  const income=TXNS.filter(t=>t.amt>0&&t.cat==='Inkomst');
+  const txnsSrc=filteredByMonth();
+  const expenses=txnsSrc.filter(t=>t.amt<0&&t.cat!=='Inkomst');
+  const income=txnsSrc.filter(t=>t.amt>0&&t.cat==='Inkomst');
   const totalInc=income.reduce((s,t)=>s+t.amt,0);
   const totalExp=expenses.reduce((s,t)=>s+Math.abs(t.amt),0);
   const net=totalInc-totalExp;
@@ -669,13 +866,12 @@ function setTab(acc,el){activeTab=acc;document.querySelectorAll('.tab').forEach(
 function getFiltered(){
   const search=document.getElementById('searchInput').value.toLowerCase();
   const cat=document.getElementById('catFilter').value;
-  const month=document.getElementById('monthFilter').value;
   const dir=document.getElementById('dirFilter').value;
   return TXNS.filter(t=>{
+    if(activeMonth!=='all'&&!t.date.startsWith(activeMonth)) return false;
     if(activeTab!=='all'&&t.acc!==activeTab) return false;
     if(search&&!t.desc.toLowerCase().includes(search)) return false;
     if(cat&&t.cat!==cat) return false;
-    if(month&&!t.date.startsWith(month)) return false;
     if(dir==='in'&&t.amt<=0) return false;
     if(dir==='ut'&&t.amt>=0) return false;
     return true;
@@ -711,8 +907,9 @@ function changeCat(idx,cat){
 }
 
 // ===== INIT =====
+loadBudget();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.05.27-1451</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.05.27-1521</div>
 </body>
 </html>
