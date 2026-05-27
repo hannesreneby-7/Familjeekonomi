@@ -354,7 +354,7 @@ function handleFile(file){
   if(!file) return;
   const isCSV=file.name.toLowerCase().endsWith('.csv');
   const isPDF=file.name.toLowerCase().endsWith('.pdf');
-  if(!isCSV&&!isPDF){ alert('Välj en CSV- eller PDF-fil.'); return; }
+  if(!isCSV&&!isPDF&&!isXLSX){ alert('Välj en CSV-, PDF- eller Excel-fil.'); return; }
   const reader=new FileReader();
   const isXLSX = file.name.toLowerCase().endsWith('.xlsx');
   if(isCSV){
@@ -711,6 +711,6 @@ function changeCat(idx,cat){
 // ===== INIT =====
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.05.27-1340</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.05.27-1344</div>
 </body>
 </html>
