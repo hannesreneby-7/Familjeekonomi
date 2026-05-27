@@ -357,7 +357,7 @@ function handleFile(file){
   const reader=new FileReader();
   if(isCSV){
     reader.onload=e=>showPreview(parseCSV(e.target.result),file.name,'CSV');
-    reader.readAsText(file,'utf-8');
+    reader.readAsArrayBuffer(file);
   } else {
     reader.onload=e=>{
       const arr=new Uint8Array(e.target.result);
@@ -372,28 +372,99 @@ function handleFile(file){
     reader.readAsArrayBuffer(file);
   }
 }
-function parseCSV(text){
-  const lines=text.trim().split('\n');
-  let startLine=0;
-  for(let i=0;i<Math.min(5,lines.length);i++){
-    if(lines[i].toLowerCase().includes('datum')||lines[i].toLowerCase().includes('bokföring')||lines[i].toLowerCase().includes('transaktionsdag')){ startLine=i; break; }
+function parseCSV(buffer){
+  // Try multiple encodings — latin-1 first (covers Swedbank), then utf-8
+  let text = '';
+  try {
+    // Try latin-1 / windows-1252 first
+    const decoder = new TextDecoder('windows-1252');
+    text = decoder.decode(buffer);
+  } catch(e) {
+    text = new TextDecoder('utf-8').decode(buffer);
   }
-  const delim=lines[startLine].includes(';')?';':',';
-  const headers=lines[startLine].split(delim).map(h=>h.trim().replace(/"/g,'').toLowerCase());
-  const dateCol=headers.findIndex(h=>h.includes('datum')||h.includes('bokföring')||h.includes('transaktionsdag'));
-  const amtCol=headers.findIndex(h=>h.includes('belopp'));
-  const descCol=headers.findIndex(h=>h.includes('rubrik')||h.includes('transaktion')||h.includes('beskrivning')||h.includes('namn')||h.includes('avsändare'));
-  if(dateCol<0||amtCol<0){ alert('Kunde inte tolka CSV-filen.'); return []; }
-  const txns=[];
-  for(let i=startLine+1;i<lines.length;i++){
-    const row=lines[i].split(delim).map(c=>c.trim().replace(/"/g,''));
-    if(row.length<3) continue;
-    let dateStr=row[dateCol].replace(/\//g,'-');
+
+  const lines = text.trim().split(/\r?\n/);
+  let startLine = 0;
+
+  // Find header line
+  for(let i = 0; i < Math.min(6, lines.length); i++){
+    const l = lines[i].toLowerCase();
+    if(l.includes('bokföring') || l.includes('transaktionsdag') || l.includes('datum')){
+      startLine = i;
+      break;
+    }
+  }
+
+  const delim = lines[startLine].includes(';') ? ';' : ',';
+  const headers = lines[startLine].split(delim).map(h => h.trim().replace(/"/g,'').toLowerCase());
+
+  // Detect format
+  const isSwedbank = headers.includes('beskrivning') && headers.includes('radnummer');
+  const isNordea   = headers.includes('rubrik') && headers.includes('bokföringsdag');
+
+  let dateCol, amtCol, descCol, accName;
+
+  if(isSwedbank){
+    dateCol  = headers.indexOf('bokföringsdag');
+    amtCol   = headers.indexOf('belopp');
+    descCol  = headers.indexOf('beskrivning');
+    accName  = 'Kort';
+  } else if(isNordea){
+    dateCol  = headers.indexOf('bokföringsdag');
+    amtCol   = headers.indexOf('belopp');
+    descCol  = headers.indexOf('rubrik');
+    accName  = 'Bank';
+  } else {
+    // Generic fallback
+    dateCol  = headers.findIndex(h => h.includes('datum') || h.includes('bokföring') || h.includes('transaktionsdag'));
+    amtCol   = headers.findIndex(h => h.includes('belopp'));
+    descCol  = headers.findIndex(h => h.includes('beskrivning') || h.includes('rubrik') || h.includes('namn') || h.includes('transaktion'));
+    accName  = 'Importerat';
+  }
+
+  if(dateCol < 0 || amtCol < 0){
+    alert('Kunde inte tolka CSV-filen. Kontrollera att den är från Swedbank eller Nordea.');
+    return [];
+  }
+
+  const txns = [];
+  for(let i = startLine + 1; i < lines.length; i++){
+    const line = lines[i].trim();
+    if(!line) continue;
+
+    // Handle quoted fields with commas inside
+    const row = [];
+    let inQuote = false, cell = '';
+    for(let j = 0; j < line.length; j++){
+      const ch = line[j];
+      if(ch === '"'){ inQuote = !inQuote; }
+      else if(ch === delim && !inQuote){ row.push(cell); cell = ''; }
+      else { cell += ch; }
+    }
+    row.push(cell);
+
+    if(row.length < 3) continue;
+
+    // Parse date — handle both 2026-01-01 and 2026/01/01
+    let dateStr = (row[dateCol] || '').trim().replace(/\//g, '-');
     if(!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
-    const amt=parseFloat((row[amtCol]||'').replace(',','.').replace(/\s/g,''));
+
+    // Parse amount — handle both . and , as decimal separator
+    const amtStr = (row[amtCol] || '').trim().replace(/\s/g,'').replace(',','.');
+    const amt = parseFloat(amtStr);
     if(isNaN(amt)) continue;
-    const desc=row[descCol]||'Okänd';
-    txns.push({date:dateStr,acc:'Importerat',amt,desc,cat:autoCategory(desc)});
+
+    const desc = (row[descCol] || 'Okänd').trim();
+    if(!desc || desc.length < 2) continue;
+
+    // Skip internal transfers
+    const du = desc.toUpperCase();
+    if(du.includes('EVA MAGNUSSON') || du.includes('EXTRA TILL MAT') ||
+       du.includes('MAT MAJ') || du.includes('MAT APRIL') || du.includes('MAT MARS') ||
+       du.includes('TILL MATKONTO') || du.includes('BANK NORWEGI') ||
+       du.includes('4187500')) continue;
+
+    txns.push({date: dateStr, acc: accName, amt, desc, cat: autoCategory(desc)});
   }
   return txns;
 }
