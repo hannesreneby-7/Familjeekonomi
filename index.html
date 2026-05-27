@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Familjens Ekonomi</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f4f1eb;--surface:#fff;--surface2:#ede9e0;--border:#d6cfc2;--text:#1a1710;--text2:#6b6454;--text3:#9e9484;--green:#2d7a56;--red:#b83c3c;--accent:#2d5a8e;--yellow:#c4821a;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,.07)}
@@ -125,9 +126,9 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
        ondrop="handleDrop(event)">
     <div class="dropzone-icon">📂</div>
     <p>Klicka eller dra hit en fil</p>
-    <small>CSV eller PDF · Max 10 MB</small>
+    <small>CSV, PDF eller Excel (.xlsx) · Max 10 MB</small>
   </div>
-  <input type="file" id="fileInput" accept=".csv,.pdf" onchange="handleFile(this.files[0])">
+  <input type="file" id="fileInput" accept=".csv,.pdf,.xlsx" onchange="handleFile(this.files[0])">
   <div class="parse-result" id="parseResult">
     <div class="parse-info" id="parseInfo"></div>
     <div style="max-height:200px;overflow-y:auto">
@@ -355,8 +356,12 @@ function handleFile(file){
   const isPDF=file.name.toLowerCase().endsWith('.pdf');
   if(!isCSV&&!isPDF){ alert('Välj en CSV- eller PDF-fil.'); return; }
   const reader=new FileReader();
+  const isXLSX = file.name.toLowerCase().endsWith('.xlsx');
   if(isCSV){
     reader.onload=e=>showPreview(parseCSV(e.target.result),file.name,'CSV');
+    reader.readAsArrayBuffer(file);
+  } else if(isXLSX){
+    reader.onload=e=>showPreview(parseXLSX(e.target.result),file.name,'Excel');
     reader.readAsArrayBuffer(file);
   } else {
     reader.onload=e=>{
@@ -458,6 +463,59 @@ function parseCSV(buffer){
   }
   return txns;
 }
+
+function parseXLSX(buffer){
+  const wb = XLSX.read(buffer, {type:'array', cellDates:true});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+  if(!rows.length){ alert('Tom Excel-fil.'); return []; }
+
+  // Find header row
+  let headerRow = 0;
+  for(let i=0;i<Math.min(5,rows.length);i++){
+    const r = rows[i].map(c=>String(c).toLowerCase());
+    if(r.some(c=>c.includes('transactiondate')||c.includes('text')||c.includes('amount'))){
+      headerRow=i; break;
+    }
+  }
+
+  const headers = rows[headerRow].map(c=>String(c).toLowerCase().trim());
+  const dateCol = headers.findIndex(h=>h.includes('transactiondate')||h.includes('date'));
+  const descCol = headers.findIndex(h=>h==='text'||h.includes('description')||h.includes('beskrivning'));
+  const amtCol  = headers.findIndex(h=>h==='amount'||h==='belopp');
+
+  if(dateCol<0||amtCol<0){ alert('Kunde inte tolka Excel-filen.'); return []; }
+
+  const txns=[];
+  for(let i=headerRow+1;i<rows.length;i++){
+    const row=rows[i];
+    if(!row[dateCol]) continue;
+
+    // Parse date
+    let dateStr='';
+    const rawDate=row[dateCol];
+    if(rawDate instanceof Date){
+      dateStr=rawDate.toISOString().slice(0,10);
+    } else {
+      dateStr=String(rawDate).slice(0,10).replace(/\//g,'-');
+    }
+    if(!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
+
+    const amt=parseFloat(String(row[amtCol]).replace(',','.'));
+    if(isNaN(amt)) continue;
+
+    const desc=String(row[descCol]||'Okänd').trim();
+    if(!desc||desc.length<2) continue;
+
+    // Skip internal payments
+    const du=desc.toUpperCase();
+    if(du.includes('FROM RENEBY')||du.includes('RENEBY HANNES')) continue;
+
+    txns.push({date:dateStr, acc:'Kreditkort', amt, desc, cat:autoCategory(desc)});
+  }
+  return txns;
+}
+
 function parsePDFRaw(text){
   const txns = [];
   const lines = text.split(/[\n\r]+/);
@@ -653,5 +711,6 @@ function changeCat(idx,cat){
 // ===== INIT =====
 loadFromCloud();
 </script>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.05.27-1340</div>
 </body>
 </html>
