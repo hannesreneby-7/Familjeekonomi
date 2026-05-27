@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Familjens Ekonomi 2026</title>
+<title>Familjens Ekonomi</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -26,11 +26,20 @@ header p{font-size:12px;opacity:.5;margin-top:3px}
 .main{padding:24px 32px;max-width:1280px;margin:0 auto}
 
 /* Setup banner */
-.setup-banner{background:#fff3cd;border:1px solid #ffc107;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;font-size:13px;color:#664d00}
+.setup-banner{background:#fff3cd;border:1px solid #ffc107;border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;font-size:13px;color:#664d00}
 .setup-banner h3{font-size:15px;font-weight:600;margin-bottom:8px;color:#4a3700}
-.setup-banner input{border:1px solid #ffc107;border-radius:6px;padding:6px 10px;font-size:13px;font-family:'DM Sans',sans-serif;width:100%;margin:4px 0 8px;outline:none}
+.setup-banner p{margin-bottom:12px;line-height:1.5}
+.setup-banner label{font-size:12px;font-weight:600;display:block;margin-bottom:3px}
+.setup-banner input{border:1px solid #ffc107;border-radius:6px;padding:7px 10px;font-size:13px;font-family:'DM Sans',sans-serif;width:100%;margin-bottom:10px;outline:none}
 .setup-banner input:focus{border-color:#c4821a}
-.setup-banner .save-btn{background:#c4821a;color:white;border:none;border-radius:6px;padding:7px 16px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer}
+.setup-banner .save-btn{background:#c4821a;color:white;border:none;border-radius:6px;padding:8px 18px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500}
+.setup-banner .save-btn:hover{background:#a06814}
+
+/* Empty state */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-state h2{font-family:'DM Serif Display',serif;font-size:24px;font-weight:400;color:var(--text2);margin-bottom:10px}
+.empty-state p{font-size:14px;margin-bottom:20px}
+.empty-state .empty-btn{background:var(--accent);color:white;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer}
 
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
@@ -76,7 +85,6 @@ header p{font-size:12px;opacity:.5;margin-top:3px}
 .cat-bar-wrap{width:80px;background:var(--surface2);border-radius:4px;height:5px;flex-shrink:0}
 .cat-bar-fill{height:100%;border-radius:4px}
 .cat-amount{font-size:12px;font-weight:500;min-width:65px;text-align:right}
-.banner{background:#fff8e6;border:1px solid #f0d88a;border-radius:var(--radius);padding:10px 16px;font-size:12px;color:#7a5e00;margin-bottom:16px;display:flex;align-items:flex-start;gap:8px}
 .section-h{font-family:'DM Serif Display',serif;font-size:19px;font-weight:400;margin-bottom:12px}
 .txn-controls{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
 input.si,select.fs{border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-family:'DM Sans',sans-serif;font-size:12px;background:var(--surface);color:var(--text);outline:none}
@@ -106,7 +114,6 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
 </head>
 <body>
 
-<!-- Upload modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
 <div class="modal">
   <button class="modal-close" onclick="closeModal()">✕</button>
@@ -149,85 +156,79 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
 </header>
 
 <div class="main">
-
-  <!-- Setup banner (visas tills nycklar är sparade) -->
   <div class="setup-banner" id="setupBanner" style="display:none">
-    <h3>🔑 Koppla till JSONBin för delad data</h3>
-    <p style="margin-bottom:10px">Klistra in dina JSONBin-uppgifter för att synka data mellan dig och din fru.</p>
-    <label style="font-size:12px;font-weight:600">Secret Key (börjar med $2b$...)</label>
+    <h3>🔑 Koppla till JSONBin</h3>
+    <p>Klistra in dina JSONBin-uppgifter. Dessa sparas bara i din webbläsare — aldrig i koden.</p>
+    <label>Secret Key (börjar med $2b$...)</label>
     <input type="password" id="inputSecretKey" placeholder="$2b$10$...">
-    <label style="font-size:12px;font-weight:600">Bin ID</label>
+    <label>Bin ID</label>
     <input type="text" id="inputBinId" placeholder="6839f1e2c2ef...">
     <button class="save-btn" onclick="saveKeys()">Spara & anslut</button>
   </div>
 
-  <div class="kpi-row" id="kpiRow">
-    <div class="kpi income"><div class="kpi-label">Laddar...</div><div class="kpi-value">—</div></div>
-    <div class="kpi expense"><div class="kpi-label">Laddar...</div><div class="kpi-value">—</div></div>
-    <div class="kpi net"><div class="kpi-label">Laddar...</div><div class="kpi-value">—</div></div>
-    <div class="kpi avg"><div class="kpi-label">Laddar...</div><div class="kpi-value">—</div></div>
-  </div>
-
-  <div class="banner">
-    <span>⚖️</span>
-    <div><strong>Interna överföringar kvittade:</strong> Swish-betalningar mellan konton och kreditkortsbetalningar (Bank Norwegian) är borttagna — kreditkortets köp redovisas direkt.</div>
-  </div>
-
-  <div class="chart-row">
-    <div class="card">
-      <div class="card-title">Inkomst vs utgift per månad</div>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#5DCAA5"></div>Inkomster</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#E8918D"></div>Utgifter</div>
+  <div id="dashboardContent" style="display:none">
+    <div class="kpi-row" id="kpiRow"></div>
+    <div class="chart-row">
+      <div class="card">
+        <div class="card-title">Inkomst vs utgift per månad</div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#5DCAA5"></div>Inkomster</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#E8918D"></div>Utgifter</div>
+        </div>
+        <div style="height:200px;position:relative"><canvas id="monthChart"></canvas></div>
       </div>
-      <div style="height:200px;position:relative"><canvas id="monthChart"></canvas></div>
+      <div class="card">
+        <div class="card-title">Utgifter per kategori</div>
+        <div style="height:230px;position:relative"><canvas id="pieChart"></canvas></div>
+      </div>
+    </div>
+    <div class="cat-grid">
+      <div class="card">
+        <div class="card-title">Kategoriöversikt — totalt</div>
+        <div id="catBars"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Utgifter per konto</div>
+        <div style="height:230px;position:relative"><canvas id="accChart"></canvas></div>
+      </div>
     </div>
     <div class="card">
-      <div class="card-title">Utgifter per kategori</div>
-      <div style="height:230px;position:relative"><canvas id="pieChart"></canvas></div>
+      <div class="section-h">Transaktioner</div>
+      <div class="tabs">
+        <button class="tab active" onclick="setTab('all',this)">Alla</button>
+        <button class="tab" onclick="setTab('Kort',this)">Kortkonto</button>
+        <button class="tab" onclick="setTab('Bank',this)">Bankkonto</button>
+        <button class="tab" onclick="setTab('Kreditkort',this)">Kreditkort</button>
+      </div>
+      <div class="txn-controls">
+        <input type="text" class="si" placeholder="Sök mottagare..." id="searchInput" oninput="renderTxns()">
+        <select class="fs" id="catFilter" onchange="renderTxns()"><option value="">Alla kategorier</option></select>
+        <select class="fs" id="monthFilter" onchange="renderTxns()">
+          <option value="">Alla månader</option>
+        </select>
+        <select class="fs" id="dirFilter" onchange="renderTxns()">
+          <option value="">In & ut</option><option value="in">Inkomster</option><option value="ut">Utgifter</option>
+        </select>
+      </div>
+      <table class="txn-table">
+        <thead><tr><th>Datum</th><th>Mottagare</th><th>Konto</th><th>Kategori</th><th style="text-align:right">Belopp</th></tr></thead>
+        <tbody id="txnBody"></tbody>
+      </table>
+      <div class="pagination" id="pagination"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center" id="txnCount"></div>
     </div>
   </div>
-  <div class="cat-grid">
-    <div class="card">
-      <div class="card-title">Kategoriöversikt — totalt</div>
-      <div id="catBars"></div>
+
+  <div id="emptyState" style="display:none">
+    <div class="empty-state">
+      <h2>Inga transaktioner än</h2>
+      <p>Ladda upp ditt första kontoutdrag för att komma igång.</p>
+      <button class="empty-btn" onclick="openModal()">＋ Ladda upp kontoutdrag</button>
     </div>
-    <div class="card">
-      <div class="card-title">Utgifter per konto</div>
-      <div style="height:230px;position:relative"><canvas id="accChart"></canvas></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="section-h">Transaktioner</div>
-    <div class="tabs">
-      <button class="tab active" onclick="setTab('all',this)">Alla</button>
-      <button class="tab" onclick="setTab('Kort',this)">Kortkonto</button>
-      <button class="tab" onclick="setTab('Bank',this)">Bankkonto</button>
-      <button class="tab" onclick="setTab('Kreditkort',this)">Kreditkort</button>
-    </div>
-    <div class="txn-controls">
-      <input type="text" class="si" placeholder="Sök mottagare..." id="searchInput" oninput="renderTxns()">
-      <select class="fs" id="catFilter" onchange="renderTxns()"><option value="">Alla kategorier</option></select>
-      <select class="fs" id="monthFilter" onchange="renderTxns()">
-        <option value="">Alla månader</option>
-        <option value="2026-01">Januari</option><option value="2026-02">Februari</option>
-        <option value="2026-03">Mars</option><option value="2026-04">April</option><option value="2026-05">Maj</option>
-      </select>
-      <select class="fs" id="dirFilter" onchange="renderTxns()">
-        <option value="">In & ut</option><option value="in">Inkomster</option><option value="ut">Utgifter</option>
-      </select>
-    </div>
-    <table class="txn-table">
-      <thead><tr><th>Datum</th><th>Mottagare</th><th>Konto</th><th>Kategori</th><th style="text-align:right">Belopp</th></tr></thead>
-      <tbody id="txnBody"></tbody>
-    </table>
-    <div class="pagination" id="pagination"></div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center" id="txnCount"></div>
   </div>
 </div>
 
 <script>
-const SEED = [["2026-05-25","Bank",52523.0,"Lön","Inkomst"],["2026-05-25","Kreditkort",-8.0,"NORMAL NACKA","Kläder & shopping"],["2026-05-25","Kreditkort",-151.23,"COOP GUSTAVSBERG","Mat & dagligvaror"],["2026-05-25","Kreditkort",-43.0,"SL","Kollektivtrafik"],["2026-05-25","Kreditkort",-270.0,"GRONA LUND AUTO","Nöje & fritid"],["2026-05-25","Kreditkort",-200.0,"GRONA LUND SPEL","Nöje & fritid"],["2026-05-25","Kreditkort",-30.0,"GRONA LUND SPEL","Nöje & fritid"],["2026-05-25","Kreditkort",-100.0,"GRONA LUND SPEL","Nöje & fritid"],["2026-05-25","Kreditkort",-19.9,"GRONA LUND MAT","Mat & dagligvaror"],["2026-05-25","Kreditkort",-158.0,"GRONA LUND MAT","Mat & dagligvaror"],["2026-05-24","Kreditkort",-65.0,"WAYNES ICE HOCKEY ACADEMY","Barn & familj"],["2026-05-24","Kreditkort",-320.32,"STORA COOP ORMINGE","Mat & dagligvaror"],["2026-05-24","Kreditkort",-96.9,"MAXI ICA STORMARKNAD HANI","Mat & dagligvaror"],["2026-05-22","Kort",197.95,"LINDEX NACKA FO","Kläder & shopping"],["2026-05-21","Kort",-312.26,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-05-21","Kort",-228.96,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-05-20","Kort",-86.0,"SL","Kollektivtrafik"],["2026-05-20","Kort",-246.31,"HEMKOP STOCKHOLM","Mat & dagligvaror"],["2026-05-20","Bank",1325.0,"BARNBDR 1979121601370182","Inkomst"],["2026-05-19","Bank",-1531.0,"Swish betalning EKSTRAND, JOHAN","Övrigt"],["2026-05-19","Kreditkort",139.0,"ICE ACADEMY","Barn & familj"],["2026-05-18","Kort",-130.0,"Zettle_*Barasken","Restaurang & café"],["2026-05-18","Kort",-43.0,"SL","Kollektivtrafik"],["2026-05-18","Kort",-154.91,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-05-18","Kort",-109.0,"Netflix.com","Streaming & prenumerationer"],["2026-05-18","Kreditkort",-115.0,"A160 GBG Olearys","Restaurang & café"],["2026-05-18","Kreditkort",-26.0,"Pressbyran 4128113","Nöje & fritid"],["2026-05-17","Kort",-19.0,"Zettle_*Boo Fotb","Barn & familj"],["2026-05-17","Kort",-149.0,"BookBeat 22af069","Streaming & prenumerationer"],["2026-05-17","Kort",-239.5,"RUSTA - 76 NACKA","Kläder & shopping"],["2026-05-17","Kort",-651.96,"MAXI ICA STORMAR","Mat & dagligvaror"],["2026-05-17","Kort",-124.0,"LAGERHAUS NACKA","Kläder & shopping"],["2026-05-17","Kort",-74.5,"help.hbomax.com","Streaming & prenumerationer"],["2026-05-17","Kort",-108.28,"KANDYZ NACKA","Kläder & shopping"],["2026-05-17","Kort",-43.0,"SL","Kollektivtrafik"],["2026-05-17","Kort",-876.25,"LINDEX NACKA FO","Kläder & shopping"],["2026-05-17","Kort",-362.0,"NORMAL NACKA","Kläder & shopping"],["2026-05-17","Kort",-299.0,"STADIUM NACKA 1","Kläder & shopping"],["2026-05-17","Bank",-37.0,"Swish betalning VÄSTTRAFIK AB","Kollektivtrafik"],["2026-05-17","Bank",-1040.0,"Swish betalning EKSTRAND, JOHAN","Övrigt"],["2026-05-17","Kreditkort",-139.0,"ICE ACADEMY","Barn & familj"],["2026-05-16","Kort",-93.63,"BROD OCH SALT SO","Övrigt"],["2026-05-16","Kort",-228.0,"FJARILSHUSET HAG","Nöje & fritid"],["2026-05-16","Kort",-637.0,"FJARILSHUSET HAG","Nöje & fritid"],["2026-05-16","Kort",-29.0,"7-Eleven Stora H","Nöje & fritid"],["2026-05-16","Kort",-28.0,"ICA SUPERMARKET","Mat & dagligvaror"],["2026-05-16","Kreditkort",-778.0,"SWEDAVIA ARN PARKERING","Resor"],["2026-05-16","Kreditkort",-594.81,"MAXI ICA STORMARKNAD NACK","Mat & dagligvaror"],["2026-05-16","Kreditkort",-340.6,"Systembolaget","Nöje & fritid"],["2026-05-16","Kreditkort",-121.02,"Sportsbar E-Com","Nöje & fritid"],["2026-05-16","Kreditkort",-458.43,"Sportsbar E-Com","Nöje & fritid"],["2026-05-15","Kort",-353.0,"Zettle_*Vardshus","Restaurang & café"],["2026-05-15","Kort",-35.0,"Zettle_*Vardshus","Restaurang & café"],["2026-05-15","Kreditkort",-280.56,"Walkthrough Level 1 ZRH","Resor"],["2026-05-15","Kreditkort",-391.19,"Walkthrough Level 1 ZRH","Resor"],["2026-05-15","Kreditkort",-88.02,"SBB Bahnhof Altstetten","Resor"],["2026-05-15","Kreditkort",-272.62,"SUBWAY 65835 Altstetten","Restaurang & café"],["2026-05-14","Kort",-399.0,"RANELLA AB","Hälsa & apotek"],["2026-05-14","Kort",-294.58,"HEMKOP SALTSJO-B","Mat & dagligvaror"],["2026-05-14","Bank",-380.0,"Swish betalning EKSTRAND, JOHAN","Övrigt"],["2026-05-14","Kreditkort",-978.95,"AIRPORT TAXI ZUERICH","Resor"],["2026-05-14","Kreditkort",-358.55,"WAL*JACK S CEVAP HOUSE","Restaurang & café"],["2026-05-14","Kreditkort",-575.13,"Ristorante Piu Schiffbau","Restaurang & café"],["2026-05-14","Kreditkort",-97.9,"NOVOTEL ZURICH C WEST","Resor"],["2026-05-14","Kreditkort",-171.31,"NOVOTEL ZURICH CITY W","Resor"],["2026-05-13","Kort",-43.46,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-05-13","Kort",-310.0,"Tsolmon Ganbat","Övrigt"],["2026-05-13","Kort",-3000.0,"PING*Svenskalag","Barn & familj"],["2026-05-13","Kort",-104.0,"SL APP","Kollektivtrafik"],["2026-05-13","Bank",-39.0,"Kortköp 260513 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-05-13","Bank",-500.0,"Swish betalning STEFAN MAGLICIC","Övrigt"],["2026-05-13","Bank",500.0,"1048112 139671-2","Övrigt"],["2026-05-12","Kort",-52.0,"NORMAL STOCKHOL","Kläder & shopping"],["2026-05-11","Kort",-86.0,"GUSTAVSBERGSBAD","Nöje & fritid"],["2026-05-11","Kort",-195.0,"GUSTAVSBERGSBAD","Nöje & fritid"],["2026-05-11","Kort",-305.0,"GUSTAVSBERGSBAD","Nöje & fritid"],["2026-05-11","Kort",-422.05,"MAXI ICA STORMAR","Mat & dagligvaror"],["2026-05-10","Kort",-55.0,"Badmintonstadio","Övrigt"],["2026-05-10","Kort",-189.0,"Spotify P4245ED8","Streaming & prenumerationer"],["2026-05-10","Kort",-261.6,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-05-10","Kort",-1366.62,"PREEM SALTSJ@-BO","Bilkostnader"],["2026-05-10","Kort",-365.0,"PRIMA NAPOLETAN","Övrigt"],["2026-05-10","Kort",-59.7,"CITY GROSS LANNA","Övrigt"],["2026-05-10","Kort",-25.0,"Cafe Eriksdal","Restaurang & café"],["2026-05-09","Kort",-119.0,"NMB*Headspot Nac","Övrigt"],["2026-05-09","Kort",-358.9,"Systembolaget","Nöje & fritid"],["2026-05-09","Kort",-189.0,"INDOCHINE","Övrigt"],["2026-05-09","Kort",-39.0,"Pressbyran T5 F","Nöje & fritid"],["2026-05-09","Bank",-15.0,"Swish betalning MAGNUSSON, JOHANNA","Övrigt"],["2026-05-08","Kort",-86.0,"SL","Kollektivtrafik"],["2026-05-08","Kort",-108.0,"Pressbyran 44083","Nöje & fritid"],["2026-05-08","Kort",-15.0,"HEMKOP STOCKHOLM","Mat & dagligvaror"],["2026-05-08","Kort",-165.0,"HEAT RESTAURANG","Restaurang & café"],["2026-05-08","Bank",-39.0,"Kortköp 260508 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-05-07","Kort",-86.0,"SL","Kollektivtrafik"],["2026-05-07","Kort",-159.0,"RISTORANTE RUSTI","Övrigt"],["2026-05-06","Kort",-397.72,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-05-06","Kort",-86.0,"SL","Kollektivtrafik"],["2026-05-06","Kort",-135.0,"MEKI FOOD AB","Övrigt"],["2026-05-06","Kort",-474.11,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-05-05","Kort",-288.65,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-05-04","Kort",-392.0,"Max Burgers 2010","Restaurang & café"],["2026-05-04","Kort",-303.1,"KANDYZ MJA.LBY","Kläder & shopping"],["2026-05-03","Bank",-13.0,"Kortköp 260502 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-05-02","Kort",-137.4,"ICA KVANTUM NASS","Mat & dagligvaror"],["2026-05-02","Kort",-109.0,"hallon","Streaming & prenumerationer"],["2026-05-02","Kort",-763.01,"LIDL116NASSJO","Mat & dagligvaror"],["2026-05-01","Kort",-444.0,"RANELLA AB","Hälsa & apotek"],["2026-05-01","Kort",-485.41,"PREEM SALTSJÖ-BO","Bilkostnader"],["2026-05-01","Kort",-1511.9,"PREEM SALTSJ@-BO","Bilkostnader"],["2026-05-01","Kort",-415.4,"Systembolaget","Nöje & fritid"],["2026-05-01","Kort",-456.0,"Max Burgers 2010","Restaurang & café"],["2026-05-01","Bank",-35.0,"Nordea Vardagspaket","Boende & el"],["2026-04-30","Kort",-697.0,"TRE KRONOR","Barn & familj"],["2026-04-30","Kort",-508.0,"TRE KRONOR","Barn & familj"],["2026-04-30","Kort",-171.0,"TRE KRONOR","Barn & familj"],["2026-04-30","Kort",-86.0,"SL","Kollektivtrafik"],["2026-04-30","Kort",-218.0,"Systembolaget","Nöje & fritid"],["2026-04-30","Kort",-68.89,"ICA SUPERMARKET","Mat & dagligvaror"],["2026-04-30","Bank",-112.0,"Betalning BG 250-5683 Transportstyr","Bilkostnader"],["2026-04-30","Bank",-323.0,"Betalning BG 282-4647 Transportstyr","Bilkostnader"],["2026-04-29","Kort",-86.0,"SL","Kollektivtrafik"],["2026-04-29","Kort",-156.0,"SL APP","Kollektivtrafik"],["2026-04-29","Kort",-86.0,"SL","Kollektivtrafik"],["2026-04-29","Kort",-166.5,"Itamae Sushi & G","Restaurang & café"],["2026-04-29","Kort",-8.23,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-04-29","Bank",-255.0,"Kortköp 260426 Google One","Övrigt"],["2026-04-28","Kort",-173.82,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-28","Kort",-89.9,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-28","Kort",-165.92,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-04-28","Kort",-45.0,"PRIS NYCKELKUND","Mat & dagligvaror"],["2026-04-28","Bank",-1406.0,"Betalning BG 5088-6696 Tibber AB","Boende & el"],["2026-04-28","Bank",-1510.0,"Betalning BG 5225-9983 Boo Energi A","Boende & el"],["2026-04-28","Bank",-299.0,"Autogiro TELE2","Streaming & prenumerationer"],["2026-04-27","Kort",-100.0,"DIREKTEN VARMDO","Barn & familj"],["2026-04-27","Kort",-140.18,"WH NACKA FORUM","Restaurang & café"],["2026-04-27","Kort",-48.0,"MCDVARMDO","Restaurang & café"],["2026-04-27","Kort",-280.0,"orminge","Övrigt"],["2026-04-27","Kort",-561.0,"LINDEX NACKA FO","Kläder & shopping"],["2026-04-27","Kort",-38.5,"SE01211 TZ-SHOP","Övrigt"],["2026-04-27","Kort",-245.87,"LINDEX MOLNVIK","Kläder & shopping"],["2026-04-27","Kort",-29.0,"INTERSPORT VARM","Kläder & shopping"],["2026-04-27","Bank",-1000.0,"Open Banking BG 504-6289 SKB","Övrigt"],["2026-04-27","Bank",-89.0,"Open Banking BG 316-7541 Parkman i","Bilkostnader"],["2026-04-27","Bank",-160.0,"Open Banking BG 5642-8568 UNIONENS","Streaming & prenumerationer"],["2026-04-27","Bank",-235.0,"Betalning BG 322-8756 Unionen","Streaming & prenumerationer"],["2026-04-27","Bank",-866.0,"Betalning BG 809-2934 Parkster / Bi","Bilkostnader"],["2026-04-27","Bank",-2650.0,"Autogiro AVANZA BANK","Sparande & investeringar"],["2026-04-27","Bank",-236.0,"Autogiro CONVINI","Mat & dagligvaror"],["2026-04-26","Kort",-183.36,"MAXI ICA STORMAR","Mat & dagligvaror"],["2026-04-26","Kort",-99.0,"Kronans Apotek A","Hälsa & apotek"],["2026-04-26","Kort",-372.69,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-26","Kort",-44.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-26","Kort",-700.01,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-26","Kort",-492.8,"Systembolaget","Nöje & fritid"],["2026-04-26","Kreditkort",-50.0,"ZETTLE_*BOO HOCKEY CLU","Barn & familj"],["2026-04-26","Kreditkort",-10.0,"ZETTLE_*BOO HOCKEY CLU","Barn & familj"],["2026-04-25","Kreditkort",-487.27,"STORA COOP ORMINGE","Mat & dagligvaror"],["2026-04-25","Kreditkort",-238.0,"Systembolaget","Nöje & fritid"],["2026-04-24","Kort",-52.0,"SL APP","Kollektivtrafik"],["2026-04-24","Kort",-43.0,"SL","Kollektivtrafik"],["2026-04-24","Bank",175.0,"Swish inbetalning BRAW, CHRISTOFFER","Övrigt"],["2026-04-24","Bank",54086.0,"Lön","Inkomst"],["2026-04-24","Kreditkort",-283.0,"KUNG CARLS BAKFICKA","Restaurang & café"],["2026-04-24","Kreditkort",-652.0,"Riche","Restaurang & café"],["2026-04-24","Kreditkort",-364.0,"BOLT.EU/O/2604232042","Resor"],["2026-04-24","Kreditkort",-49.69,"7-Eleven 4216125","Nöje & fritid"],["2026-04-24","Kreditkort",-26.0,"7-Eleven 4216125","Nöje & fritid"],["2026-04-23","Kort",-144.6,"JULA SVERIGE AB","Kläder & shopping"],["2026-04-23","Kort",-588.11,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-23","Kort",-89.9,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-23","Bank",-800.0,"Swish betalning BRAW, CHRISTOFFER","Övrigt"],["2026-04-23","Kreditkort",-500.0,"OKQ8","Bilkostnader"],["2026-04-23","Kreditkort",-130.5,"PREPP SODER","Restaurang & café"],["2026-04-22","Kort",-110.0,"STOP N SHOP","Kläder & shopping"],["2026-04-22","Kort",-86.0,"SL","Kollektivtrafik"],["2026-04-22","Kort",500.0,"Mat","Övrigt"],["2026-04-22","Bank",-170.0,"Swish betalning SKARIN,JACOB","Övrigt"],["2026-04-22","Bank",-1876.0,"Swish betalning EKSTRAND, JOHAN","Övrigt"],["2026-04-22","Kreditkort",-375.52,"STORA COOP ORMINGE","Mat & dagligvaror"],["2026-04-22","Kreditkort",-191.38,"DERMAROME AB","Hälsa & apotek"],["2026-04-22","Kreditkort",-158.0,"SLAKTBAREN","Kollektivtrafik"],["2026-04-22","Kreditkort",-158.8,"Systembolaget","Nöje & fritid"],["2026-04-21","Kort",-134.0,"Holy Greens AB","Restaurang & café"],["2026-04-21","Kort",-113.01,"ICA RIDDAREN  ST","Mat & dagligvaror"],["2026-04-21","Kreditkort",-177.0,"GLOBEN FOOD MARKET","Mat & dagligvaror"],["2026-04-21","Kreditkort",-66.31,"KANDYZ NACKA","Kläder & shopping"],["2026-04-20","Kort",-20.0,"Zettle_*Nacka Ho","Övrigt"],["2026-04-20","Kort",-25.0,"Nacka Gymnastikf","Barn & familj"],["2026-04-20","Kort",-50.0,"Nacka Gymnastikf","Barn & familj"],["2026-04-20","Kort",-218.0,"OMG SUSHI","Restaurang & café"],["2026-04-20","Kort",-139.47,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-20","Kort",-147.0,"MCDNACKA","Restaurang & café"],["2026-04-20","Bank",-250.0,"Open Banking BG 504-6289 SKB","Övrigt"],["2026-04-20","Bank",1325.0,"BARNBDR 1979121601370182","Inkomst"],["2026-04-19","Kort",-729.1,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-19","Kort",-27.4,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-19","Kort",-44.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-19","Kort",-91.0,"Zettle_*Boo Fotb","Barn & familj"],["2026-04-19","Kort",-74.5,"help.hbomax.com","Streaming & prenumerationer"],["2026-04-19","Kort",-32.0,"Zettle_*Boo Fotb","Barn & familj"],["2026-04-19","Bank",-120.0,"Swish betalning NACKA GYMNASTIKFÖRE","Barn & familj"],["2026-04-18","Kort",-109.0,"Netflix.com","Streaming & prenumerationer"],["2026-04-18","Kort",-165.0,"HEAT RESTAURANG","Restaurang & café"],["2026-04-18","Bank",-360.0,"Swish betalning Olof Gustaf Harald","Övrigt"],["2026-04-18","Kreditkort",-162.0,"BIBLIOTEKET","Nöje & fritid"],["2026-04-18","Kreditkort",-93.0,"BIBLIOTEKET","Nöje & fritid"],["2026-04-18","Kreditkort",-364.0,"BIBLIOTEKET","Nöje & fritid"],["2026-04-18","Kreditkort",-50.0,"BIBLIOTEKET","Nöje & fritid"],["2026-04-18","Kreditkort",-86.0,"SL","Kollektivtrafik"],["2026-04-18","Kreditkort",-115.0,"3ARENA","Nöje & fritid"],["2026-04-18","Kreditkort",-285.0,"3ARENA","Nöje & fritid"],["2026-04-17","Kort",-86.0,"SL","Kollektivtrafik"],["2026-04-17","Kort",-149.0,"BookBeat 4cb7144","Streaming & prenumerationer"],["2026-04-17","Bank",100.0,"Swish inbetalning ASPBLAD,DANIEL","Övrigt"],["2026-04-17","Kreditkort",-135.0,"PHILS BURGER MAGNUS LADUL","Restaurang & café"],["2026-04-17","Kreditkort",-188.2,"HEMKOP STOCKHOLM SKA","Mat & dagligvaror"],["2026-04-16","Bank",-500.0,"Swish betalning BULO DOMARCHI,ANGEL","Övrigt"],["2026-04-15","Kort",-43.0,"SL","Kollektivtrafik"],["2026-04-15","Bank",-370.0,"Swish betalning COOP ÖSTRA FÖRSÄLJN","Mat & dagligvaror"],["2026-04-14","Kort",-43.0,"SL","Kollektivtrafik"],["2026-04-14","Kort",-150.0,"LE KEBAB - ROSE","Restaurang & café"],["2026-04-14","Kort",-329.01,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-14","Kort",-44.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-14","Kort",-325.93,"ICA RIDDAREN  ST","Mat & dagligvaror"],["2026-04-14","Bank",-150.0,"Swish betalning Olof Gustaf Harald","Övrigt"],["2026-04-13","Kort",-530.0,"RANELLA AB","Hälsa & apotek"],["2026-04-13","Kort",-193.51,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-13","Bank",-39.0,"Kortköp 260413 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-04-13","Kreditkort",-119.0,"UBER *TRIP","Resor"],["2026-04-12","Kort",-255.41,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-12","Kort",-65.26,"COOP MATBODEN","Mat & dagligvaror"],["2026-04-12","Kort",-248.0,"OMG SUSHI","Restaurang & café"],["2026-04-11","Kort",-166.2,"Systembolaget","Nöje & fritid"],["2026-04-11","Kort",-883.6,"VOLT T34 NACKA","Kläder & shopping"],["2026-04-11","Kort",-90.0,"RANELLA AB","Hälsa & apotek"],["2026-04-11","Kort",-86.0,"SL SEN DRAGNING","Kollektivtrafik"],["2026-04-11","Kort",-86.0,"SL","Kollektivtrafik"],["2026-04-11","Kort",-188.15,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-04-11","Kort",-635.0,"MICHA ADAM AB","Kläder & shopping"],["2026-04-11","Kort",-129.0,"SL SEN DRAGNING","Kollektivtrafik"],["2026-04-11","Kort",-10.0,"Zettle_*Boo Hock","Barn & familj"],["2026-04-11","Kort",-67.0,"NAKED JUICEBAR N","Restaurang & café"],["2026-04-10","Kort",-99.0,"LINDEX ORMINGE","Kläder & shopping"],["2026-04-10","Kort",-189.0,"Spotify P4146795","Streaming & prenumerationer"],["2026-04-10","Kort",-244.0,"TOR AB","Nöje & fritid"],["2026-04-10","Kort",-72.0,"STOP N SHOP","Kläder & shopping"],["2026-04-09","Kort",-93.05,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-04-09","Kort",-154.0,"LULU SUNDBYBERG","Restaurang & café"],["2026-04-09","Kort",-169.99,"HEMKOP STOCKHOLM","Mat & dagligvaror"],["2026-04-08","Kort",-178.0,"Pressbyran 43088","Nöje & fritid"],["2026-04-08","Bank",74.87,"UB1448935 952342-4","Inkomst"],["2026-04-08","Bank",-39.0,"Kortköp 260408 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-04-08","Bank",26354.0,"Skatt","Övrigt"],["2026-04-07","Kort",-517.19,"MAXI ICA STORMAR","Mat & dagligvaror"],["2026-04-07","Kort",-93.13,"LINDEX SICKLA","Kläder & shopping"],["2026-04-07","Kort",-40.0,"JumpYard Nacka F","Nöje & fritid"],["2026-04-07","Kort",-880.0,"Svea Vaccin","Hälsa & apotek"],["2026-04-07","Kort",-134.0,"NAKED JUICEBAR N","Restaurang & café"],["2026-04-07","Kort",-235.0,"AHLENS Sickla","Kläder & shopping"],["2026-04-07","Kort",-110.0,"NACKA TOBAK & SP","Nöje & fritid"],["2026-04-07","Kort",-173.0,"NORMAL NACKA","Kläder & shopping"],["2026-04-07","Kort",-220.0,"MCDENKOPING","Restaurang & café"],["2026-04-07","Bank",-75.0,"Swish betalning Katarina Drysén","Övrigt"],["2026-04-07","Bank",-375.0,"Swish betalning DRYSÉN,PETER","Övrigt"],["2026-04-06","Kort",-139.0,"Rituals","Kläder & shopping"],["2026-04-06","Kort",-140.0,"ROMME ALPIN, WA","Nöje & fritid"],["2026-04-06","Kort",-109.0,"OMG SUSHI","Restaurang & café"],["2026-04-06","Kort",-113.88,"GODISGALLERIAN","Kläder & shopping"],["2026-04-06","Kort",-480.0,"JumpYard Nacka F","Nöje & fritid"],["2026-04-05","Kort",-32.0,"RANELLA AB","Hälsa & apotek"],["2026-04-05","Kort",-156.0,"RANELLA AB","Hälsa & apotek"],["2026-04-05","Kort",-800.0,"Elite Hotel Brag","Restaurang & café"],["2026-04-05","Kort",-233.0,"Elite Hotel Brag","Restaurang & café"],["2026-04-05","Kort",-208.0,"Elite Hotel Brag","Restaurang & café"],["2026-04-05","Kort",-113.0,"HAMBURGERI","Restaurang & café"],["2026-04-05","Kort",-1233.0,"TZATZIKI KOLLGRI","Restaurang & café"],["2026-04-05","Kort",-250.0,"ROMME ALPIN, WA","Nöje & fritid"],["2026-04-05","Kort",-329.0,"XXL SPORT & VIL","Kläder & shopping"],["2026-04-05","Kort",-60.45,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-05","Kort",-19.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-05","Bank",-100.0,"Swish betalning TYRVING,DANIEL TOMM","Boende & el"],["2026-04-04","Kort",-218.9,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-04","Kort",-2460.0,"rommealpin.se","Nöje & fritid"],["2026-04-04","Bank",-200.0,"Swish betalning TYRVING,DANIEL TOMM","Boende & el"],["2026-04-04","Bank",200.0,"Swish inbetalning TYRVING,DANIEL TO","Boende & el"],["2026-04-04","Bank",800.0,"Swish inbetalning TYRVING,DANIEL TO","Boende & el"],["2026-04-03","Kort",-44.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-03","Kort",-462.77,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-03","Kort",-261.66,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-04-02","Kort",-50.14,"HEMKOP STOCKHOLM","Mat & dagligvaror"],["2026-04-02","Kort",-43.0,"SL SEN DRAGNING","Kollektivtrafik"],["2026-04-02","Kort",-19.0,"hallon","Streaming & prenumerationer"],["2026-04-02","Kort",-44.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-02","Kort",-128.62,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-04-02","Kort",-39.0,"WAYNES ICE HOCKE","Restaurang & café"],["2026-04-02","Kort",-86.0,"SL","Kollektivtrafik"],["2026-04-02","Bank",-300.0,"Swish betalning Frank Reneby Sjöste","Övrigt"],["2026-04-01","Kort",-136.83,"WH NACKA FORUM","Restaurang & café"],["2026-04-01","Kort",-117.0,"PARKMAN I SVERI","Bilkostnader"],["2026-04-01","Bank",-35.0,"Nordea Vardagspaket","Boende & el"],["2026-03-31","Kort",-697.0,"TRE KRONOR","Barn & familj"],["2026-03-31","Kort",-508.0,"TRE KRONOR","Barn & familj"],["2026-03-31","Kort",-171.0,"TRE KRONOR","Barn & familj"],["2026-03-31","Kort",-86.0,"SL","Kollektivtrafik"],["2026-03-31","Kort",-1150.0,"M.Almen Hair AB","Övrigt"],["2026-03-31","Kort",-61.9,"HEMKOP STOCKHOLM","Mat & dagligvaror"],["2026-03-31","Kort",-180.0,"Pressbyran Sundb","Nöje & fritid"],["2026-03-31","Bank",-176.0,"Betalning BG 250-5683 Transportstyr","Bilkostnader"],["2026-03-31","Bank",-160.0,"Betalning BG 5642-8568 Unionens A-k","Streaming & prenumerationer"],["2026-03-31","Bank",-235.0,"Betalning BG 322-8756 Unionen","Streaming & prenumerationer"],["2026-03-31","Bank",-265.0,"Betalning BG 282-4647 Transportstyr","Bilkostnader"],["2026-03-31","Bank",-1157.0,"Autogiro Parkster","Bilkostnader"],["2026-03-30","Kort",-717.41,"WILLYS NACKA SIC","Mat & dagligvaror"],["2026-03-30","Kort",-51.95,"COOP MATBODEN","Mat & dagligvaror"],["2026-03-30","Kort",-357.0,"OMG SUSHI","Restaurang & café"],["2026-03-30","Kort",-39.0,"PRIS NYCKELKUND","Mat & dagligvaror"],["2026-03-30","Bank",-2197.0,"Betalning BG 5225-9983 Boo Energi A","Boende & el"],["2026-03-30","Bank",-3817.0,"Betalning BG 5088-6696 Tibber AB","Boende & el"],["2026-03-30","Kreditkort",-50.0,"HANVIKENS SK","Barn & familj"],["2026-03-29","Kort",-90.0,"RANELLA AB","Hälsa & apotek"],["2026-03-29","Kort",-23.7,"KANDYZ NACKA","Kläder & shopping"],["2026-03-29","Kort",-43.0,"SL SEN DRAGNING","Kollektivtrafik"],["2026-03-29","Bank",-255.0,"Kortköp 260326 Google One","Övrigt"],["2026-03-29","Kreditkort",-290.31,"STORA COOP ORMINGE","Mat & dagligvaror"],["2026-03-28","Kort",20000.0,"Mat april","Övrigt"],["2026-03-28","Bank",-30.0,"Swish betalning HOFSTRÖM, MAGNUS","Övrigt"],["2026-03-28","Bank",-50.0,"Swish betalning HOFSTRÖM, MAGNUS","Övrigt"],["2026-03-28","Bank",-15.0,"Swish betalning HOFSTRÖM, MAGNUS","Övrigt"],["2026-03-28","Kreditkort",-79.9,"BILTEMA SWEDEN HANINGE","Bilkostnader"],["2026-03-28","Kreditkort",-29.0,"BILTEMA SWEDEN HANINGE","Bilkostnader"],["2026-03-28","Kreditkort",-59.8,"ICA RIDDAREN STOCKHOLM","Mat & dagligvaror"],["2026-03-28","Kreditkort",-6456.0,"STIVENBILVERKSTADAB","Bilkostnader"],["2026-03-28","Kreditkort",-1100.0,"Pinchos","Restaurang & café"],["2026-03-27","Bank",-299.0,"Autogiro TELE2","Streaming & prenumerationer"],["2026-03-26","Kort",-86.0,"SL","Kollektivtrafik"],["2026-03-26","Kreditkort",-193.51,"STORA COOP ORMINGE","Mat & dagligvaror"],["2026-03-25","Kort",-86.0,"SL","Kollektivtrafik"],["2026-03-25","Bank",-100.0,"Swish betalning CAFE OCH ICE ACADEM","Restaurang & café"],["2026-03-25","Bank",-2650.0,"Autogiro AVANZA BANK","Sparande & investeringar"],["2026-03-25","Bank",-163.0,"Autogiro CONVINI","Mat & dagligvaror"],["2026-03-25","Bank",48941.0,"Lön","Inkomst"],["2026-03-25","Kreditkort",-100.01,"HEMKOP STOCKHOLM SKA","Mat & dagligvaror"],["2026-03-25","Kreditkort",-384.09,"AmazonMktplc*6Q9U69YM5","Kläder & shopping"],["2026-03-24","Kort",-43.0,"SL","Kollektivtrafik"],["2026-03-24","Kort",-155.0,"LINDEROTHS CYKEL","Bilkostnader"],["2026-03-24","Kort",-130.0,"Hellasgarden","Övrigt"],["2026-03-24","Kort",-49.0,"XS LEKSAKER MOS","Övrigt"],["2026-03-24","Bank",-13.0,"Kortköp 260321 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-03-24","Kreditkort",-43.0,"SL","Kollektivtrafik"],["2026-03-23","Kort",-408.0,"HM SE0158","Kläder & shopping"],["2026-03-23","Kort",-27.8,"WILLYS NACKA SIC","Mat & dagligvaror"],["2026-03-23","Kort",-56.0,"MAXI ICA STORMAR","Mat & dagligvaror"],["2026-03-23","Kort",-46.95,"MAXI ICA STORMAR","Mat & dagligvaror"],["2026-03-23","Kort",-1023.15,"MAXI ICA STORMAR","Mat & dagligvaror"],["2026-03-23","Bank",-13.0,"Kortköp 260322 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-03-22","Kort",-203.32,"HEMKOP SALTSJO-B","Mat & dagligvaror"],["2026-03-22","Kort",-90.0,"RANELLA AB","Hälsa & apotek"],["2026-03-21","Kort",-336.0,"NORMAL SUNDBYBE","Kläder & shopping"],["2026-03-21","Kort",-55.0,"STOP N SHOP","Kläder & shopping"],["2026-03-21","Bank",-20.0,"Swish betalning Anna-Maria Michaela","Övrigt"],["2026-03-21","Kreditkort",-1810.0,"SJ.SE","Kollektivtrafik"],["2026-03-20","Kort",-173.91,"PREEM SALTSJ@-BO","Bilkostnader"],["2026-03-20","Kort",-238.28,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-20","Bank",1325.0,"BARNBDR 1979121601370182","Inkomst"],["2026-03-20","Kreditkort",-44.97,"KANDYZ SEGELTORP","Kläder & shopping"],["2026-03-19","Kort",-149.75,"Kronans Apotek A","Hälsa & apotek"],["2026-03-19","Kort",-54.0,"Pressbyran Ormin","Nöje & fritid"],["2026-03-19","Kort",-44.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-19","Kort",-398.97,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-19","Kort",-127.4,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-19","Bank",-1600.0,"Swish betalning PING PAYMENTS AB","Övrigt"],["2026-03-18","Kort",-45.0,"RANELLA AB","Hälsa & apotek"],["2026-03-18","Kort",-109.0,"Netflix.com","Streaming & prenumerationer"],["2026-03-18","Kort",-37.0,"STOCKHOLM LIVE A","Nöje & fritid"],["2026-03-18","Kort",-71.0,"STOCKHOLM LIVE A","Nöje & fritid"],["2026-03-18","Kort",-35.0,"STOCKHOLM LIVE A","Nöje & fritid"],["2026-03-18","Kort",-67.0,"STOCKHOLM LIVE A","Nöje & fritid"],["2026-03-18","Kort",-149.0,"BookBeat a9524ea","Streaming & prenumerationer"],["2026-03-17","Kort",-304.88,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-03-17","Kort",-74.5,"help.hbomax.com","Streaming & prenumerationer"],["2026-03-17","Kort",-44.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-17","Kort",-139.1,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-16","Kort",-577.97,"Qstar Kristineha","Bilkostnader"],["2026-03-16","Kort",-408.0,"MCDKRISTINEHAMN","Restaurang & café"],["2026-03-15","Kort",-58.0,"BRANES RESTAURAN","Övrigt"],["2026-03-15","Kort",-302.0,"SOLTORGET SHOP","Kläder & shopping"],["2026-03-15","Kort",-120.0,"DIF biljett","Övrigt"],["2026-03-15","Kort",5000.0,"Extra mat","Övrigt"],["2026-03-15","Kort",-120.0,"Did bilkett","Övrigt"],["2026-03-15","Bank",-120.0,"Swish betalning DJURGÅRDEN HOCKEY A","Övrigt"],["2026-03-14","Kort",-330.0,"SOLTORGET SHOP","Kläder & shopping"],["2026-03-14","Kort",-1105.0,"W*branas.se","Nöje & fritid"],["2026-03-14","Kort",-870.0,"W*branas.se","Nöje & fritid"],["2026-03-14","Kort",-1105.0,"W*branas.se","Nöje & fritid"],["2026-03-14","Bank",-39.0,"Kortköp 260313 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-03-13","Kort",-586.0,"LEKHYTTANS KOK O","Övrigt"],["2026-03-13","Kort",-930.0,"W*branas.se","Nöje & fritid"],["2026-03-12","Kort",-1234.65,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-03-12","Kort",-803.47,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-12","Kort",-1450.1,"Systembolaget","Nöje & fritid"],["2026-03-11","Kort",-5000.0,"NACKA SALTSJ@BA","Boende & el"],["2026-03-11","Kort",-70.0,"NORMAL STOCKHOL","Kläder & shopping"],["2026-03-11","Kort",-183.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-10","Kort",-189.0,"Spotify P4031D89","Streaming & prenumerationer"],["2026-03-10","Kort",-54.0,"Pressbyran 42081","Nöje & fritid"],["2026-03-10","Kort",-129.0,"SL","Kollektivtrafik"],["2026-03-09","Kort",-370.25,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-09","Bank",-39.0,"Kortköp 260308 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-03-08","Kort",-54.56,"GRYMT GODIS","Övrigt"],["2026-03-08","Kort",-272.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-08","Kort",-546.4,"MAXI ICA STORMAR","Mat & dagligvaror"],["2026-03-07","Kort",-10.0,"Zettle_*Boo Hock","Barn & familj"],["2026-03-07","Kort",-180.37,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-06","Kort",-132.51,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-06","Kort",-148.0,"MCDNACKA","Restaurang & café"],["2026-03-06","Kort",-241.56,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-03-06","Kort",-129.0,"SL","Kollektivtrafik"],["2026-03-06","Kort",-68.0,"MEDLEY NACKA SI","Hälsa & apotek"],["2026-03-06","Kort",-325.0,"MEDLEY NACKA SI","Hälsa & apotek"],["2026-03-06","Bank",-500.0,"Swish betalning STEFAN MAGLICIC","Övrigt"],["2026-03-05","Kort",-20.0,"Zettle_*Boo Hock","Barn & familj"],["2026-03-05","Kort",-42.0,"Espresso House 2","Övrigt"],["2026-03-05","Kort",-1015.79,"PREEM SALTSJ@-BO","Bilkostnader"],["2026-03-05","Kort",-410.65,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-04","Kort",-86.0,"SL","Kollektivtrafik"],["2026-03-02","Kort",-697.0,"TRE KRONOR","Barn & familj"],["2026-03-02","Kort",-508.0,"TRE KRONOR","Barn & familj"],["2026-03-02","Kort",-171.0,"TRE KRONOR","Barn & familj"],["2026-03-02","Kort",-129.0,"Zettle_*Skeppsbr","Restaurang & café"],["2026-03-02","Kort",-60.0,"Zettle_*Boo Hock","Barn & familj"],["2026-03-02","Kort",-19.0,"hallon","Streaming & prenumerationer"],["2026-03-02","Kreditkort",-600.26,"MAXI ICA STORMARKNAD NACK","Mat & dagligvaror"],["2026-03-01","Kort",-69.57,"STORA COOP VARMD","Mat & dagligvaror"],["2026-03-01","Kort",-689.48,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-03-01","Kort",-105.0,"EasyPark","Bilkostnader"],["2026-03-01","Bank",-290.0,"Swish betalning Frank Reneby Sjöste","Övrigt"],["2026-03-01","Bank",-35.0,"Nordea Vardagspaket","Boende & el"],["2026-03-01","Kreditkort",-130.0,"STOCKHOLM LIVE AVICII HOV","Nöje & fritid"],["2026-02-28","Bank",-255.0,"Kortköp 260226 Google One","Övrigt"],["2026-02-28","Kreditkort",-102.8,"LIDL184NACKAORMINGE","Mat & dagligvaror"],["2026-02-28","Kreditkort",-74.0,"KOKPUNKTEN","Restaurang & café"],["2026-02-28","Kreditkort",-101.2,"AIMO PARK SWEDEN WEB","Resor"],["2026-02-28","Kreditkort",-93.0,"UBER *TRIP","Resor"],["2026-02-27","Kort",22000.0,"Mat mars o förs","Övrigt"],["2026-02-27","Bank",-1282.0,"Betalning PG 4784604-3 Verisure Sve","Övrigt"],["2026-02-27","Bank",-2297.0,"Betalning BG 5225-9983 Boo Energi A","Boende & el"],["2026-02-27","Bank",-3909.0,"Betalning BG 5088-6696 Tibber AB","Boende & el"],["2026-02-27","Bank",-467.0,"Betalning BG 282-4647 Transportstyr","Bilkostnader"],["2026-02-27","Bank",-168.0,"Betalning BG 250-5683 Transportstyr","Bilkostnader"],["2026-02-27","Bank",-235.0,"Betalning BG 322-8756 Unionen","Streaming & prenumerationer"],["2026-02-27","Bank",-160.0,"Betalning BG 5642-8568 Unionens A-k","Streaming & prenumerationer"],["2026-02-27","Bank",-886.0,"Betalning BG 809-2934 Parkster / Bi","Bilkostnader"],["2026-02-27","Bank",-299.0,"Autogiro TELE2","Streaming & prenumerationer"],["2026-02-27","Kreditkort",-149.44,"LIDL184NACKAORMINGE","Mat & dagligvaror"],["2026-02-26","Kort",-39.0,"PRIS NYCKELKUND","Mat & dagligvaror"],["2026-02-26","Bank",-116.54,"Swish betalning ELECTRONIC PARKING","Bilkostnader"],["2026-02-26","Bank",-2000.0,"Swish betalning STEFAN MAGLICIC","Övrigt"],["2026-02-25","Bank",-2650.0,"Autogiro AVANZA BANK","Sparande & investeringar"],["2026-02-25","Bank",957.0,"FKASSA 1979121601370182","Övrigt"],["2026-02-25","Bank",52833.0,"Lön","Inkomst"],["2026-02-25","Kreditkort",-119.6,"RUSTA - 76 NACKA","Kläder & shopping"],["2026-02-25","Kreditkort",-231.83,"LIDL184NACKAORMINGE","Mat & dagligvaror"],["2026-02-23","Kreditkort",-300.29,"BILTEMA SWEDEN VERMDO","Bilkostnader"],["2026-02-23","Kreditkort",-1144.5,"STORA COOP VARMDO","Mat & dagligvaror"],["2026-02-23","Kreditkort",-93.8,"Kronans Apotek AB","Hälsa & apotek"],["2026-02-22","Kort",-76.0,"NORMAL NACKA","Kläder & shopping"],["2026-02-22","Kort",-46.95,"HEMKOP TYRESO TR","Mat & dagligvaror"],["2026-02-22","Kort",-119.85,"HEMKOP TYRESO TR","Mat & dagligvaror"],["2026-02-22","Kort",-10.0,"Zettle_*Boo Hock","Barn & familj"],["2026-02-22","Kort",-280.0,"orminge","Övrigt"],["2026-02-22","Kort",-1064.96,"PREEM SALTSJ@-BO","Bilkostnader"],["2026-02-22","Bank",-13.0,"Kortköp 260221 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-02-21","Kort",-350.73,"AmazonMktplc*NA0","Övrigt"],["2026-02-21","Kort",-373.28,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-02-20","Kort",-59.0,"MEDLEY NACKA SI","Hälsa & apotek"],["2026-02-20","Kort",-86.0,"SL","Kollektivtrafik"],["2026-02-20","Kort",-669.49,"CIRCLE K NACKA S","Bilkostnader"],["2026-02-20","Bank",1325.0,"BARNBDR 1979121601370182","Inkomst"],["2026-02-19","Kort",-1840.0,"städ okt 2025","Övrigt"],["2026-02-19","Kort",-100.0,"WAYNES ICE HOCKE","Restaurang & café"],["2026-02-19","Kort",-224.5,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-02-18","Kort",-106.0,"CENTRALKONDITORI","Övrigt"],["2026-02-18","Kort",-86.0,"SL","Kollektivtrafik"],["2026-02-18","Kort",-109.0,"Netflix.com","Streaming & prenumerationer"],["2026-02-17","Kort",-352.9,"OKQ8","Bilkostnader"],["2026-02-17","Kort",-391.0,"RANELLA AB","Hälsa & apotek"],["2026-02-17","Kort",-49.0,"HAPPIES LEKSAKE","Barn & familj"],["2026-02-17","Kort",-74.5,"help.hbomax.com","Streaming & prenumerationer"],["2026-02-17","Kreditkort",-1970.0,"SAS","Nöje & fritid"],["2026-02-17","Kreditkort",-1970.0,"SAS","Nöje & fritid"],["2026-02-17","Kreditkort",-4978.0,"NORWEGIAN AI","Resor"],["2026-02-16","Kort",-779.25,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-02-16","Kort",-39.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-02-16","Kort",-86.0,"Zettle_*Skeppsbr","Restaurang & café"],["2026-02-16","Kort",-149.0,"BookBeat f570637","Streaming & prenumerationer"],["2026-02-16","Kort",-73.8,"LIDL184NACKAORMI","Mat & dagligvaror"],["2026-02-15","Kort",-648.65,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-02-15","Kort",-10.0,"Zettle_*Boo Hock","Barn & familj"],["2026-02-15","Kort",-1256.0,"SAS  11725430135","Resor"],["2026-02-15","Kort",-1256.0,"SAS  11725430135","Resor"],["2026-02-15","Kort",-1256.0,"SAS  11725430135","Resor"],["2026-02-15","Kort",3768.0,"SAS Edinburgh","Resor"],["2026-02-14","Kort",-25.0,"Zettle_*Boo Hock","Barn & familj"],["2026-02-14","Kort",-43.0,"SL","Kollektivtrafik"],["2026-02-14","Kort",-30.0,"Zettle_*Boo Hock","Barn & familj"],["2026-02-14","Kort",-290.61,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-02-14","Kort",-185.7,"Systembolaget","Nöje & fritid"],["2026-02-14","Kort",-498.0,"Taxi Stockholm","Resor"],["2026-02-13","Kort",-39.0,"APPLE.COM/BILL","Streaming & prenumerationer"],["2026-02-13","Kort",-45.98,"HEMKOP STOCKHOLM","Mat & dagligvaror"],["2026-02-13","Kort",-34.0,"MEDLEY NACKA SI","Hälsa & apotek"],["2026-02-13","Kort",-86.0,"SL","Kollektivtrafik"],["2026-02-12","Kort",-323.4,"LINDEX NACKA FO","Kläder & shopping"],["2026-02-12","Kort",-86.0,"SL","Kollektivtrafik"],["2026-02-12","Kort",-98.0,"LAGERHAUS NACKA","Kläder & shopping"],["2026-02-12","Kort",-900.0,"NACKA SALTSJ@BA","Boende & el"],["2026-02-12","Kort",-228.34,"WH NACKA FORUM","Restaurang & café"],["2026-02-11","Kort",-86.0,"SL","Kollektivtrafik"],["2026-02-11","Kort",-790.0,"FLOTTSBRO LIFT 1","Övrigt"],["2026-02-11","Bank",-90.0,"Swish betalning SHARIAR SHAHIDI","Övrigt"],["2026-02-10","Kort",-47.9,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-02-10","Kort",-86.0,"SL","Kollektivtrafik"],["2026-02-10","Kort",-598.0,"SP WEEKLY REVOLT","Kläder & shopping"],["2026-02-10","Kort",-189.0,"SPOTIFY","Streaming & prenumerationer"],["2026-02-10","Bank",97.3,"UB1448935 952342-4","Inkomst"],["2026-02-09","Kort",-1350.0,"JYSK NACKA S646","Övrigt"],["2026-02-09","Kort",-59.25,"EasyPark","Bilkostnader"],["2026-02-09","Kort",-430.0,"HUDDINGE SAMH#L","Övrigt"],["2026-02-09","Kort",-754.69,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-02-09","Kort",-635.0,"MICHA ADAM AB","Kläder & shopping"],["2026-02-09","Bank",-300.0,"Swish betalning STEFAN MAGLICIC","Övrigt"],["2026-02-08","Kort",350.0,"STADIUM OUTLET","Kläder & shopping"],["2026-02-08","Kort",-280.09,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-02-08","Kort",-135.0,"Zettle_*I ett Kn","Restaurang & café"],["2026-02-08","Bank",-39.0,"Kortköp 260208 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-02-08","Bank",320.0,"Swish inbetalning Carl-Henrik Dahl","Övrigt"],["2026-02-07","Kort",-240.0,"FILMSTADEN SICK","Övrigt"],["2026-02-07","Kort",-43.0,"SL","Kollektivtrafik"],["2026-02-07","Kort",-198.0,"MCDNACKA","Restaurang & café"],["2026-02-07","Kort",-618.11,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-02-06","Kort",-22.0,"MEDLEY NACKA SI","Hälsa & apotek"],["2026-02-06","Kort",-86.0,"SL","Kollektivtrafik"],["2026-02-06","Kort",-62.0,"NORMAL STOCKHOL","Kläder & shopping"],["2026-02-05","Kort",-86.0,"SL","Kollektivtrafik"],["2026-02-05","Kort",-350.0,"RANELLA AB","Hälsa & apotek"],["2026-02-04","Kort",-86.0,"SL","Kollektivtrafik"],["2026-02-04","Kort",-560.69,"PREEM SALTSJÖ-BO","Bilkostnader"],["2026-02-04","Kort",-309.41,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-02-03","Bank",-1060.0,"Swish betalning EKSTRAND, JOAKIM","Övrigt"],["2026-02-02","Kort",-697.0,"TRE KRONOR","Barn & familj"],["2026-02-02","Kort",-508.0,"TRE KRONOR","Barn & familj"],["2026-02-02","Kort",-171.0,"TRE KRONOR","Barn & familj"],["2026-02-02","Kort",-19.0,"hallon","Streaming & prenumerationer"],["2026-02-02","Kort",-39.0,"PRIS NYCKELKUND","Mat & dagligvaror"],["2026-02-01","Bank",-35.0,"Nordea Vardagspaket","Boende & el"],["2026-02-01","Kreditkort",-608.96,"MAXI ICA STORMARKNAD NACK","Mat & dagligvaror"],["2026-02-01","Kreditkort",-268.9,"RUSTA - 76 NACKA","Kläder & shopping"],["2026-01-31","Kreditkort",-361.62,"STORA COOP ORMINGE","Mat & dagligvaror"],["2026-01-31","Kreditkort",-200.95,"HEMKOP SALTSJO-BOO L","Mat & dagligvaror"],["2026-01-30","Bank",-29.0,"Kortköp 260129 APPLE.COM/BILL","Streaming & prenumerationer"],["2026-01-28","Bank",-234.8,"Kortköp 260127 WILLYS NACKA SICKLA","Mat & dagligvaror"],["2026-01-28","Bank",-255.0,"Kortköp 260126 Google One","Övrigt"],["2026-01-28","Bank",-612.0,"Betalning BG 809-2934 Parkster / Bi","Bilkostnader"],["2026-01-28","Bank",-1371.0,"Betalning BG 5088-6696 Tibber AB","Boende & el"],["2026-01-28","Bank",-1899.0,"Betalning BG 5225-9983 Boo Energi A","Boende & el"],["2026-01-28","Bank",-160.0,"Betalning BG 5642-8568 Unionens A-k","Streaming & prenumerationer"],["2026-01-28","Bank",-1449.0,"Betalning BG 5051-6822 Transportsty","Bilkostnader"],["2026-01-28","Bank",-692.0,"Betalning BG 282-4647 Transportstyr","Bilkostnader"],["2026-01-28","Bank",-136.0,"Betalning BG 250-5683 Transportstyr","Bilkostnader"],["2026-01-28","Bank",-235.0,"Betalning BG 322-8756 Unionen","Streaming & prenumerationer"],["2026-01-28","Bank",-299.0,"Autogiro TELE2","Streaming & prenumerationer"],["2026-01-27","Bank",-1000.0,"Swish betalning STEFAN MAGLICIC","Övrigt"],["2026-01-27","Bank",-41.8,"Kortköp 260126 ICA RIDDAREN  STOCKH","Mat & dagligvaror"],["2026-01-26","Bank",-2650.0,"Autogiro AVANZA BANK","Sparande & investeringar"],["2026-01-26","Bank",-192.0,"Autogiro CONVINI","Mat & dagligvaror"],["2026-01-26","Kreditkort",-319.66,"Avolta AGP The Shop DFT80","Resor"],["2026-01-26","Kreditkort",-154.41,"SSP S.A. - AEROPUERTO DE","Resor"],["2026-01-25","Bank",-2500.0,"Swish betalning DRYSÉN, ROLF","Övrigt"],["2026-01-25","Bank",-1047.0,"Swish betalning DRYSÉN,PETER","Övrigt"],["2026-01-25","Kreditkort",-433.43,"LCC SANTANA GOLF AND LEIS","Nöje & fritid"],["2026-01-24","Bank",-1234.0,"Swish betalning DRYSÉN, ROLF","Övrigt"],["2026-01-24","Bank",106.0,"Swish inbetalning DRYSÉN, ROLF","Övrigt"],["2026-01-24","Bank",110.0,"Swish inbetalning DRYSÉN,PETER","Övrigt"],["2026-01-24","Bank",-48.0,"Swish betalning DRYSÉN, ROLF","Övrigt"],["2026-01-24","Bank",-48.0,"Swish betalning DRYSÉN,PETER","Övrigt"],["2026-01-24","Bank",-265.0,"Swish betalning DRYSÉN,PETER","Övrigt"],["2026-01-24","Kreditkort",-108.75,"MIJAS GOLF","Nöje & fritid"],["2026-01-23","Bank",-160.0,"Swish betalning Olof Gustaf Harald","Övrigt"],["2026-01-23","Bank",-30.0,"Swish betalning DRYSÉN, ROLF","Övrigt"],["2026-01-23","Bank",51208.0,"Lön","Inkomst"],["2026-01-23","Kreditkort",-657.21,"RIO REAL GOLF HOTEL SL","Kollektivtrafik"],["2026-01-22","Bank",-222.0,"Swish betalning DRYSÉN,PETER","Övrigt"],["2026-01-22","Bank",155.0,"Swish inbetalning DRYSÉN,PETER","Övrigt"],["2026-01-22","Bank",-599.0,"Kortköp 260121 TV4 Aktiebolag","Övrigt"],["2026-01-22","Kreditkort",-65.75,"PG ACADEMY MIJAS S.L","Nöje & fritid"],["2026-01-22","Kreditkort",-1227.31,"MASALA ELVIRIA","Restaurang & café"],["2026-01-22","Kreditkort",-109.58,"MIJAS GOLF","Nöje & fritid"],["2026-01-22","Kreditkort",-98.62,"MIJAS GOLF INTERN. SA","Nöje & fritid"],["2026-01-21","Kort",-86.0,"SL","Kollektivtrafik"],["2026-01-21","Bank",-275.0,"Swish betalning DRYSÉN, ROLF","Övrigt"],["2026-01-21","Bank",327.0,"Swish inbetalning DRYSÉN, ROLF","Övrigt"],["2026-01-21","Bank",326.0,"Swish inbetalning DRYSÉN,PETER","Övrigt"],["2026-01-21","Bank",327.0,"Swish inbetalning Olof Gustaf Haral","Övrigt"],["2026-01-21","Kreditkort",-981.37,"PREEM SALTSJO-BOO","Bilkostnader"],["2026-01-20","Kort",-253.0,"BURGER KING FAR","Restaurang & café"],["2026-01-20","Bank",1325.0,"BARNBDR 1979121601370182","Inkomst"],["2026-01-20","Kreditkort",-1299.0,"SWEDAVIA.SE","Resor"],["2026-01-19","Kort",-30.12,"EasyPark","Bilkostnader"],["2026-01-19","Kort",-20.0,"Zettle_*Boo Hock","Barn & familj"],["2026-01-19","Kreditkort",-200.0,"ZETTLE_*BOO HOCKEY CLU","Barn & familj"],["2026-01-19","Kreditkort",-30.0,"ZETTLE_*BOO HOCKEY CLU","Barn & familj"],["2026-01-19","Kreditkort",-1347.0,"STADIUM FARSTA","Kläder & shopping"],["2026-01-18","Kort",-1128.58,"WILLYS NACKA SIC","Mat & dagligvaror"],["2026-01-18","Kort",-13.0,"APPLE.COM/BILL","Streaming & prenumerationer"],["2026-01-18","Kort",-13.0,"APPLE.COM/BILL","Streaming & prenumerationer"],["2026-01-18","Kort",-370.66,"ICA KVANTUM SICK","Mat & dagligvaror"],["2026-01-18","Kort",-155.0,"Systembolaget","Nöje & fritid"],["2026-01-18","Kort",-10.0,"Zettle_*Boo Hock","Barn & familj"],["2026-01-18","Kort",-109.0,"Netflix.com","Streaming & prenumerationer"],["2026-01-18","Kort",-162.95,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-18","Kort",125.0,"Zettle_*I ett Kn","Restaurang & café"],["2026-01-18","Kort",-10.0,"Zettle_*I ett Kn","Restaurang & café"],["2026-01-18","Kort",-147.0,"Ohlssons Tyger S","Övrigt"],["2026-01-17","Kort",-149.0,"Oh Poke Nacka","Övrigt"],["2026-01-17","Kort",-247.0,"Lekia Nacka","Övrigt"],["2026-01-17","Kort",-74.5,"help.hbomax.com","Streaming & prenumerationer"],["2026-01-17","Kort",-199.5,"CLAS OHLSON","Övrigt"],["2026-01-17","Kort",-102.7,"WH NACKA FORUM","Restaurang & café"],["2026-01-17","Kort",-358.8,"Systembolaget","Nöje & fritid"],["2026-01-17","Kort",-149.0,"BookBeat 096faf0","Streaming & prenumerationer"],["2026-01-16","Kort",-523.18,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-16","Kort",-27.8,"ICA RIDDAREN  ST","Mat & dagligvaror"],["2026-01-16","Kort",-86.0,"SL","Kollektivtrafik"],["2026-01-16","Kort",-380.0,"Zettle_*I ett Kn","Restaurang & café"],["2026-01-15","Kort",-204.62,"Kronans Apotek A","Hälsa & apotek"],["2026-01-15","Kort",-374.28,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-15","Kort",-75.0,"MaBra Haelsa Dan","Övrigt"],["2026-01-14","Kort",-350.0,"RANELLA AB","Hälsa & apotek"],["2026-01-14","Kort",-69.0,"HAPPIES LEKSAKE","Barn & familj"],["2026-01-14","Kort",-198.49,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-14","Kort",-39.0,"APPLE.COM/BILL","Streaming & prenumerationer"],["2026-01-14","Kreditkort",-240.65,"FLYTOGET 1021104 VI","Kollektivtrafik"],["2026-01-14","Kreditkort",-240.65,"FLYTOGET 1021104 VI","Kollektivtrafik"],["2026-01-14","Kreditkort",-278.89,"DUTY FREE 7108 AVGANG NOR","Resor"],["2026-01-14","Kreditkort",-41.04,"RUTERAPPEN","Kollektivtrafik"],["2026-01-13","Kort",-35.0,"7-Eleven Arlanda","Nöje & fritid"],["2026-01-13","Kreditkort",-439.0,"SWEDAVIA.SE","Resor"],["2026-01-12","Kort",-350.0,"Feld Entertainme","Övrigt"],["2026-01-12","Kort",-120.0,"Zettle_*Puck   P","Övrigt"],["2026-01-12","Kort",-35.0,"STOCKHOLM LIVE A","Nöje & fritid"],["2026-01-12","Kort",-70.0,"STOCKHOLM LIVE A","Nöje & fritid"],["2026-01-12","Kreditkort",-830.32,"STORA COOP ORMINGE","Mat & dagligvaror"],["2026-01-11","Kort",-86.0,"SL","Kollektivtrafik"],["2026-01-11","Kort",-356.26,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-11","Kort",-10.0,"Zettle_*Boo Hock","Barn & familj"],["2026-01-11","Kort",-37.0,"7-Eleven 4517111","Nöje & fritid"],["2026-01-11","Kort",-1840.0,"Zettle_*Skidbyta","Övrigt"],["2026-01-11","Kort",-46.7,"WH NACKA FORUM","Restaurang & café"],["2026-01-10","Kort",-368.2,"Systembolaget","Nöje & fritid"],["2026-01-10","Kort",-189.0,"SPOTIFY","Streaming & prenumerationer"],["2026-01-10","Kort",-25.0,"Zettle_*Boo Hock","Barn & familj"],["2026-01-10","Kort",-225.0,"Zettle_*Boo Hock","Barn & familj"],["2026-01-10","Kort",-559.38,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-09","Kort",-149.0,"Tsolmon Ganbat","Övrigt"],["2026-01-09","Kort",-155.9,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-09","Kort",-300.55,"HEMKOP SALTSJO-B","Mat & dagligvaror"],["2026-01-09","Kort",-32.0,"MEDLEY NACKA SI","Hälsa & apotek"],["2026-01-09","Kort",-86.0,"SL","Kollektivtrafik"],["2026-01-09","Kort",-39.0,"APPLE.COM/BILL","Streaming & prenumerationer"],["2026-01-09","Bank",225.0,"Swish inbetalning Gustav Vallbo","Övrigt"],["2026-01-09","Bank",-180.0,"Swish betalning Thomas  Joubert","Resor"],["2026-01-08","Kort",-72.0,"NEW BOWL CENTER","Nöje & fritid"],["2026-01-08","Kort",-28.7,"EasyPark","Bilkostnader"],["2026-01-07","Kort",-400.0,"JumpYard Nacka F","Nöje & fritid"],["2026-01-07","Kort",-79.9,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-07","Kort",-187.85,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-07","Kort",-309.0,"HAPPIES LEKSAKE","Barn & familj"],["2026-01-06","Kort",-252.0,"HM SE0158","Kläder & shopping"],["2026-01-06","Kort",-270.97,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-06","Kort",-60.0,"NORMAL NACKA","Kläder & shopping"],["2026-01-06","Kort",-262.53,"MAXI ICA STORMAR","Mat & dagligvaror"],["2026-01-06","Kort",-60.0,"NEW BOWL CENTER","Nöje & fritid"],["2026-01-06","Kort",-16.0,"NEW BOWL CENTER","Nöje & fritid"],["2026-01-06","Kort",-30.0,"NEW BOWL CENTER","Nöje & fritid"],["2026-01-06","Kort",-115.0,"NEW BOWL CENTER","Nöje & fritid"],["2026-01-06","Kort",-430.0,"NEW BOWL CENTER","Nöje & fritid"],["2026-01-06","Kort",-329.1,"Systembolaget","Nöje & fritid"],["2026-01-05","Kort",-350.0,"RANELLA AB","Hälsa & apotek"],["2026-01-05","Kort",-49.9,"BYGGMAX NACKA 1","Boende & el"],["2026-01-04","Kort",-25.0,"Zettle_*Boo Hock","Barn & familj"],["2026-01-04","Kort",-250.51,"HEMKOP SALTSJO-B","Mat & dagligvaror"],["2026-01-04","Kort",-997.62,"PREEM SALTSJ@-BO","Bilkostnader"],["2026-01-03","Kort",-155.0,"KANDYZ NACKA","Kläder & shopping"],["2026-01-03","Kort",-756.28,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-03","Kort",-266.78,"BYGGMAX NACKA 1","Boende & el"],["2026-01-01","Kort",-890.15,"STORA COOP ORMIN","Mat & dagligvaror"],["2026-01-01","Kort",-625.8,"Systembolaget","Nöje & fritid"],["2026-01-01","Bank",-35.0,"Nordea Vardagspaket","Boende & el"]];
 const CAT_RULES = {"Mat & dagligvaror":["ICA","COOP","LIDL","HEMKOP","MAXI","WILLYS","NETTO","MATHEM","CONVINI","PRIS NYCKELKUND","CITY GROSS","GRONA LUND MAT"],"Restaurang & café":["RESTAURANG","SUSHI","BURGER","MCD","MAX BURGER","PIZZA","KEBAB","THAI","CAFE","COFFEE","HOLY GREENS","HEAT","HAMBURGERI","TZATZIKI","WAYNES","ITAMAE","OMG SUSHI","PINCHOS","RICHE","KUNG CARLS","SLAKTBAREN","MASALA","RISTORANTE","SUBWAY","WAL*JACK","OLEARYS","PREPP","KOKPUNKT","NAKED JUICEBAR","PRIMA NAPOLETAN","MEKI FOOD","INDOCHINE","ESPRESSO HOUSE","CENTRALKONDITORI","BRANES RESTAURAN","LEKHYTTANS","LULU"],"Kollektivtrafik":["SL","VÄSTTRAFIK","SJ.SE","FLYTOGET","RUTERAPPEN","RUTER"],"Resor":["SAS","NORWEGIAN AI","SWEDAVIA","AIRPORT TAXI","NOVOTEL","WALKTHROUGH","SBB BAHNHOF","BOLT.EU","UBER","TAXI STOCKHOLM","AIMO PARK","DUTY FREE","AVOLTA","SSP S.A.","RIO REAL GOLF HOTEL"],"Bilkostnader":["PREEM","OKQ8","CIRCLE K","SHELL","ST1","QSTAR","PARKSTER","PARKMAN","EASYPARK","BILTEMA","STIVENBILVERKSTAD","TRANSPORTSTYR","BG 250-5683","BG 282-4647","BG 809-2934","BG 316-7541","BG 5051-6822","LINDEROTHS CYKEL"],"Kläder & shopping":["LINDEX","H&M","ZARA","STADIUM","XXL","INTERSPORT","AHLENS","NORMAL","RUSTA","LAGERHAUS","JULA","VOLT","RITUALS","KANDYZ","GODISGALLERIAN","STOP N SHOP","MICHA ADAM","SOLTORGET","BYGGMAX","DERMAROME","AMAZON","DUTY FREE"],"Nöje & fritid":["JUMPYARD","SYSTEMBOLAGET","NACKA TOBAK","BIOGRAF","ROMME","FJARILSHUSET","PRESSBYRAN","7-ELEVEN","STOCKHOLM LIVE","GRONA LUND","BIBLIOTEKET","3ARENA","SPORTSBAR","FLOTTSBRO","NEW BOWL","FILMSTADEN","GUSTAVSBERGSBAD","BADMINTONSTADIO","W*BRANAS","MEDLEY"],"Barn & familj":["BOO FOTB","BOO HOCK","NACKA GYMN","WAYNES ICE","PINGIS","SVENSKALAG","TRE KRONOR","DIREKTEN","HAPPIES LEKSAKE","HANVIKENS","ICE ACADEMY","ZETTLE_*BOO HOCKEY"],"Streaming & prenumerationer":["NETFLIX","SPOTIFY","BOOKBEAT","HBOMAX","APPLE.COM","HALLON","TELE2","COMVIQ","UNIONEN","GOOGLE ONE","TV4"],"Hälsa & apotek":["APOTEK","KRONANS","VACCIN","LÄKARE","TANDLÄK","RANELLA","MEDLEY","SVEA VACCIN","MABRA"],"Boende & el":["TIBBER","VATTENFALL","BOSTADS","BOO ENERGI","NORDEA VARDAG","NACKA SALTSJ","BYGGMAX","VERISURE"],"Sparande & investeringar":["AVANZA","NORDNET"],"Inkomst":["LÖN","BARNBDR","BARNBIDRAG","FÖRSÄKRINGSK","SKATTEVERKET","FKASSA"]};
 const CAT_COLORS = {
   'Mat & dagligvaror':'#2d7a56','Kollektivtrafik':'#4a9e6b',
@@ -239,97 +240,93 @@ const CAT_COLORS = {
   'Inkomst':'#1a7a3e','Övrigt':'#888780',
 };
 const ALL_CATS = Object.keys(CAT_COLORS);
-const MONTHS = ['2026-01','2026-02','2026-03','2026-04','2026-05'];
-const MONTH_LABELS = ['Jan','Feb','Mar','Apr','Maj'];
+
+let TXNS = [];
 
 // ===== JSONBIN =====
-function getKeys(){ return { secret: localStorage.getItem('jb_secret'), bin: localStorage.getItem('jb_bin') }; }
+function getKeys(){ return {secret:localStorage.getItem('jb_secret'),bin:localStorage.getItem('jb_bin')}; }
 
 function saveKeys(){
-  const s = document.getElementById('inputSecretKey').value.trim();
-  const b = document.getElementById('inputBinId').value.trim();
+  const s=document.getElementById('inputSecretKey').value.trim();
+  const b=document.getElementById('inputBinId').value.trim();
   if(!s||!b){ alert('Fyll i båda fälten.'); return; }
-  localStorage.setItem('jb_secret', s);
-  localStorage.setItem('jb_bin', b);
+  localStorage.setItem('jb_secret',s);
+  localStorage.setItem('jb_bin',b);
   document.getElementById('setupBanner').style.display='none';
   loadFromCloud();
 }
 
 function showSetup(){
-  const k = getKeys();
-  if(k.secret) document.getElementById('inputSecretKey').value = k.secret;
-  if(k.bin)    document.getElementById('inputBinId').value    = k.bin;
+  const k=getKeys();
+  if(k.secret) document.getElementById('inputSecretKey').value=k.secret;
+  if(k.bin)    document.getElementById('inputBinId').value=k.bin;
   document.getElementById('setupBanner').style.display='block';
   window.scrollTo(0,0);
 }
 
-function setSyncStatus(state, text){
-  const el = document.getElementById('syncStatus');
-  el.className = 'sync-status sync-' + state;
-  el.textContent = text;
+function setSyncStatus(state,text){
+  const el=document.getElementById('syncStatus');
+  el.className='sync-status sync-'+state;
+  el.textContent=text;
 }
 
 async function loadFromCloud(){
-  const k = getKeys();
-  if(!k.secret || !k.bin){ 
+  const k=getKeys();
+  if(!k.secret||!k.bin){
     document.getElementById('setupBanner').style.display='block';
-    loadLocal();
-    return; 
+    showEmpty();
+    return;
   }
   setSyncStatus('saving','⟳ Hämtar data...');
-  try {
-    const r = await fetch('https://api.jsonbin.io/v3/b/'+k.bin+'/latest',{
+  try{
+    const r=await fetch('https://api.jsonbin.io/v3/b/'+k.bin+'/latest',{
       headers:{'X-Master-Key':k.secret,'X-Bin-Meta':'false'}
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
-    const data = await r.json();
-    if(data.transaktioner && data.transaktioner.length > 0){
-      TXNS = data.transaktioner;
-    } else {
-      // First time — push seed data to cloud
-      TXNS = SEED.map(r=>({date:r[0],acc:r[1],amt:r[2],desc:r[3],cat:r[4]}));
-      await saveToCloud(false);
-    }
+    const data=await r.json();
+    TXNS=data.transaktioner||[];
     setSyncStatus('ok','✓ Synkad');
-    rebuildCharts();
-    renderTxns();
-    updateHeader();
+    if(TXNS.length===0){ showEmpty(); }
+    else { showDashboard(); }
   } catch(e){
     setSyncStatus('error','✗ Fel: '+e.message);
-    loadLocal();
+    showEmpty();
   }
 }
 
 async function saveToCloud(showStatus=true){
-  const k = getKeys();
-  if(!k.secret || !k.bin) { saveLocal(); return; }
+  const k=getKeys();
+  if(!k.secret||!k.bin) return;
   if(showStatus) setSyncStatus('saving','⟳ Sparar...');
-  try {
-    const r = await fetch('https://api.jsonbin.io/v3/b/'+k.bin,{
+  try{
+    const r=await fetch('https://api.jsonbin.io/v3/b/'+k.bin,{
       method:'PUT',
       headers:{'Content-Type':'application/json','X-Master-Key':k.secret},
-      body: JSON.stringify({transaktioner: TXNS})
+      body:JSON.stringify({transaktioner:TXNS})
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
     if(showStatus) setSyncStatus('ok','✓ Sparad '+new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'}));
-    saveLocal();
   } catch(e){
     setSyncStatus('error','✗ Sparning misslyckades');
-    saveLocal();
   }
 }
 
-function saveLocal(){ localStorage.setItem('ekonomi_txns', JSON.stringify(TXNS)); }
-function loadLocal(){
-  const saved = localStorage.getItem('ekonomi_txns');
-  TXNS = saved ? JSON.parse(saved) : SEED.map(r=>({date:r[0],acc:r[1],amt:r[2],desc:r[3],cat:r[4]}));
-  setSyncStatus('error','! Lokalt läge');
-  rebuildCharts(); renderTxns(); updateHeader();
+function showEmpty(){
+  document.getElementById('dashboardContent').style.display='none';
+  document.getElementById('emptyState').style.display='block';
+  document.getElementById('headerSub').textContent='Inga transaktioner';
+  document.getElementById('txnBadge').textContent='0 transaktioner';
 }
 
-// ===== DATA =====
-let TXNS = [];
+function showDashboard(){
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('dashboardContent').style.display='block';
+  rebuildCharts();
+  renderTxns();
+  updateHeader();
+}
 
+// ===== CATEGORIZE =====
 function autoCategory(desc){
   const d=desc.toUpperCase();
   for(const [cat,kws] of Object.entries(CAT_RULES))
@@ -438,43 +435,63 @@ async function importTransactions(){
   TXNS=[...pendingTxns,...TXNS].sort((a,b)=>b.date.localeCompare(a.date));
   closeModal();
   await saveToCloud();
-  rebuildCharts(); renderTxns(); updateHeader();
+  showDashboard();
   alert('✓ '+pendingTxns.length+' transaktioner importerade och sparade!');
 }
 
 // ===== CHARTS =====
 let monthChart,pieChart,accChart;
+
 function updateHeader(){
   document.getElementById('txnBadge').textContent=TXNS.length+' transaktioner';
   const dates=TXNS.map(t=>t.date).filter(Boolean).sort();
   if(dates.length){
     const from=new Date(dates[0]).toLocaleDateString('sv-SE',{month:'long',year:'numeric'});
     const to=new Date(dates[dates.length-1]).toLocaleDateString('sv-SE',{month:'long',year:'numeric'});
-    document.getElementById('headerSub').textContent=from+' – '+to+' · Tre konton';
+    document.getElementById('headerSub').textContent=from+' – '+to;
   }
+  // Update month filter dynamically
+  const months=[...new Set(TXNS.map(t=>t.date.slice(0,7)))].sort();
+  const mf=document.getElementById('monthFilter');
+  const curr=mf.value;
+  mf.innerHTML='<option value="">Alla månader</option>';
+  const monthNames={'01':'Januari','02':'Februari','03':'Mars','04':'April','05':'Maj','06':'Juni','07':'Juli','08':'Augusti','09':'September','10':'Oktober','11':'November','12':'December'};
+  months.forEach(m=>{
+    const [y,mo]=m.split('-');
+    const o=document.createElement('option');
+    o.value=m; o.textContent=(monthNames[mo]||mo)+' '+y;
+    if(m===curr) o.selected=true;
+    mf.appendChild(o);
+  });
 }
+
 function rebuildCharts(){
   const expenses=TXNS.filter(t=>t.amt<0&&t.cat!=='Inkomst');
   const income=TXNS.filter(t=>t.amt>0&&t.cat==='Inkomst');
   const totalInc=income.reduce((s,t)=>s+t.amt,0);
   const totalExp=expenses.reduce((s,t)=>s+Math.abs(t.amt),0);
   const net=totalInc-totalExp;
-  const mExp=MONTHS.map(m=>expenses.filter(t=>t.date.startsWith(m)).reduce((s,t)=>s+Math.abs(t.amt),0));
-  const avgExp=mExp.filter(v=>v>0).reduce((a,b)=>a+b,0)/mExp.filter(v=>v>0).length||0;
+  const months=[...new Set(TXNS.map(t=>t.date.slice(0,7)))].sort();
+  const mExp=months.map(m=>expenses.filter(t=>t.date.startsWith(m)).reduce((s,t)=>s+Math.abs(t.amt),0));
+  const mInc=months.map(m=>income.filter(t=>t.date.startsWith(m)).reduce((s,t)=>s+t.amt,0));
+  const avgExp=mExp.filter(v=>v>0).reduce((a,b)=>a+b,0)/(mExp.filter(v=>v>0).length||1);
   const fmt=n=>Math.round(n).toLocaleString('sv-SE')+' kr';
+  const mLabels=months.map(m=>{const [y,mo]=m.split('-');const n={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'Maj','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Okt','11':'Nov','12':'Dec'};return n[mo]+' '+y.slice(2);});
+
   document.getElementById('kpiRow').innerHTML=
     '<div class="kpi income"><div class="kpi-label">Totala inkomster</div><div class="kpi-value">+'+fmt(totalInc)+'</div><div class="kpi-sub">Löner, barnbidrag</div></div>'+
     '<div class="kpi expense"><div class="kpi-label">Totala utgifter</div><div class="kpi-value">−'+fmt(totalExp)+'</div><div class="kpi-sub">Alla konton</div></div>'+
     '<div class="kpi net"><div class="kpi-label">Nettoresultat</div><div class="kpi-value" style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmt(net)+'</div><div class="kpi-sub">Överskott</div></div>'+
     '<div class="kpi avg"><div class="kpi-label">Snitt utgifter/mån</div><div class="kpi-value">'+fmt(avgExp)+'</div><div class="kpi-sub">Genomsnitt</div></div>';
-  const mInc=MONTHS.map(m=>income.filter(t=>t.date.startsWith(m)).reduce((s,t)=>s+t.amt,0));
+
   if(monthChart) monthChart.destroy();
-  monthChart=new Chart(document.getElementById('monthChart'),{type:'bar',data:{labels:MONTH_LABELS,datasets:[
+  monthChart=new Chart(document.getElementById('monthChart'),{type:'bar',data:{labels:mLabels,datasets:[
     {label:'Inkomster',data:mInc,backgroundColor:'#5DCAA5',borderRadius:4,borderSkipped:false},
     {label:'Utgifter',data:mExp,backgroundColor:'#E8918D',borderRadius:4,borderSkipped:false},
-    {label:'Snitt',data:Array(MONTH_LABELS.length).fill(Math.round(avgExp)),type:'line',borderColor:'#bbb',borderDash:[4,3],borderWidth:1.5,pointRadius:0,fill:false}
+    {label:'Snitt',data:Array(mLabels.length).fill(Math.round(avgExp)),type:'line',borderColor:'#bbb',borderDash:[4,3],borderWidth:1.5,pointRadius:0,fill:false}
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
     scales:{x:{ticks:{color:'#9e9484',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#9e9484',callback:v=>(v/1000)+'k',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}}}});
+
   const catTotals={};
   expenses.forEach(t=>{catTotals[t.cat]=(catTotals[t.cat]||0)+Math.abs(t.amt)});
   const sorted=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
@@ -485,10 +502,12 @@ function rebuildCharts(){
     options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{
       legend:{position:'right',labels:{color:'#6b6454',font:{size:10},boxWidth:9,padding:6,usePointStyle:true,pointStyle:'rectRounded'}},
       tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+Math.round(ctx.raw).toLocaleString('sv-SE')+' kr'}}}}});
+
   const maxV=sorted[0]?.[1]||1;
   document.getElementById('catBars').innerHTML=sorted.map(([cat,val])=>
     '<div class="cat-item"><div class="cat-dot" style="background:'+(CAT_COLORS[cat]||'#888')+'"></div><div class="cat-name">'+cat+'</div><div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:'+(val/maxV*100).toFixed(1)+'%;background:'+(CAT_COLORS[cat]||'#888')+'"></div></div><div class="cat-amount">'+Math.round(val).toLocaleString('sv-SE')+' kr</div></div>'
   ).join('');
+
   const top5=sorted.slice(0,5).map(([c])=>c);
   const accs=['Kort','Bank','Kreditkort','Importerat'];
   const accColors={'Kort':'#378ADD','Bank':'#A07840','Kreditkort':'#C05050','Importerat':'#7B52B8'};
@@ -498,6 +517,7 @@ function rebuildCharts(){
       datasets:accs.map(acc=>({label:acc,data:top5.map(cat=>expenses.filter(t=>t.acc===acc&&t.cat===cat).reduce((s,t)=>s+Math.abs(t.amt),0)),backgroundColor:accColors[acc],borderRadius:3})).filter(ds=>ds.data.some(v=>v>0))},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6b6454',font:{size:10},boxWidth:9}}},
       scales:{x:{ticks:{color:'#9e9484',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#9e9484',callback:v=>(v/1000)+'k',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}}}});
+
   const cf=document.getElementById('catFilter');
   const curr=cf.value;
   cf.innerHTML='<option value="">Alla kategorier</option>';
