@@ -146,6 +146,20 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
 .budget-sum-val{font-family:'DM Serif Display',serif;font-size:22px;letter-spacing:-.5px;margin-bottom:4px}
 .budget-sum-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
 .budget-no-data{text-align:center;padding:40px;color:var(--text3);font-size:13px}
+
+/* Smart preview */
+.preview-section{margin-top:14px}
+.preview-section-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;margin-bottom:6px;font-size:12px;font-weight:500;cursor:pointer}
+.preview-section-header.confirmed{background:#e8f4ed;color:#2d7a56}
+.preview-section-header.uncertain{background:#fff8e6;color:#7a5e00}
+.preview-confirm-btn{border:none;border-radius:6px;padding:4px 12px;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500}
+.preview-confirm-btn.green{background:#2d7a56;color:white}
+.preview-confirm-btn.yellow{background:#c4821a;color:white}
+.preview-row-confirmed td{background:#f4fbf7}
+.preview-row-uncertain td{background:#fffbf0}
+.confidence-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.confidence-dot.high{background:#2d7a56}
+.confidence-dot.low{background:#c4821a}
 </style>
 </head>
 <body>
@@ -302,8 +316,9 @@ const CAT_COLORS = {
 const ALL_CATS = Object.keys(CAT_COLORS);
 
 let TXNS = [];
-let BUDGET = {};         // {kategori: månadsbudget i kr}
-let activeMonth = 'all'; // 'all' eller 'YYYY-MM'
+let BUDGET = {};
+let LEARNED = {};        // {mottagarnyckel: kategori} — inlärd från manuella val
+let activeMonth = 'all';
 let activeView = 'overview';
 
 
@@ -446,6 +461,44 @@ function renderBudgetView(){
       </div>
     </div>`;
   }).join('');
+}
+
+
+// ===== INLÄRNING =====
+function descKey(desc){
+  // Normalisera till nyckel: uppercase, max 20 tecken, ta bort siffror i slutet
+  return desc.toUpperCase().replace(/\d+$/,'').replace(/[^A-ZÅÄÖ0-9 \*\.]/g,'').trim().slice(0,20);
+}
+
+function loadLearned(){
+  const saved = localStorage.getItem('ekonomi_learned');
+  LEARNED = saved ? JSON.parse(saved) : {};
+}
+
+function saveLearned(){
+  localStorage.setItem('ekonomi_learned', JSON.stringify(LEARNED));
+}
+
+function learnCategory(desc, cat){
+  const key = descKey(desc);
+  if(key.length < 2) return;
+  LEARNED[key] = cat;
+  saveLearned();
+}
+
+function smartCategory(desc){
+  // 1. Kolla inlärd kategori
+  const key = descKey(desc);
+  if(LEARNED[key]) return {cat: LEARNED[key], confident: true, source: 'learned'};
+
+  // 2. Kolla om vi sett denna mottagare i befintliga transaktioner
+  const existing = TXNS.find(t => descKey(t.desc) === key);
+  if(existing) return {cat: existing.cat, confident: true, source: 'existing'};
+
+  // 3. Fallback till nyckelordsregler
+  const ruleCat = autoCategory(desc);
+  const confident = ruleCat !== 'Övrigt';
+  return {cat: ruleCat, confident, source: 'rules'};
 }
 
 // ===== JSONBIN =====
@@ -763,19 +816,94 @@ function parsePDFRaw(text){
 }
 function showPreview(txns,filename,type){
   if(!txns.length){ alert('Hittade inga transaktioner.'); return; }
-  const existingKeys=new Set(TXNS.map(t=>t.date+'|'+t.desc+'|'+t.amt));
-  const newTxns=txns.filter(t=>!existingKeys.has(t.date+'|'+t.desc+'|'+t.amt));
-  pendingTxns=newTxns;
-  document.getElementById('parseInfo').innerHTML=
-    '<strong>'+filename+'</strong> · '+type+' · '+txns.length+' hittades · <strong>'+newTxns.length+' nya</strong>'+(txns.length-newTxns.length>0?' · '+(txns.length-newTxns.length)+' dubletter borttagna':'');
-  document.getElementById('previewBody').innerHTML=newTxns.slice(0,50).map((t,i)=>{
-    const col=CAT_COLORS[t.cat]||'#888';
-    return '<tr><td style="white-space:nowrap;color:var(--text3)">'+t.date+'</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+t.desc+'</td><td style="text-align:right">'+Math.abs(t.amt).toFixed(0)+' kr</td><td><select class="cat-sel" onchange="pendingTxns['+i+'].cat=this.value" style="color:'+col+'">'+ALL_CATS.map(c=>'<option value="'+c+'"'+(c===t.cat?' selected':'')+'>'+c+'</option>').join('')+'</select></td></tr>';
-  }).join('')+(newTxns.length>50?'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:8px">...och '+(newTxns.length-50)+' fler</td></tr>':'');
-  document.getElementById('parseResult').style.display='block';
-  document.getElementById('importBtn').disabled=newTxns.length===0;
+  const existingKeys = new Set(TXNS.map(t => t.date+'|'+t.desc+'|'+t.amt));
+  const newTxns = txns.filter(t => !existingKeys.has(t.date+'|'+t.desc+'|'+t.amt));
+  if(!newTxns.length){ alert('Inga nya transaktioner — allt verkar redan importerat!'); return; }
+
+  // Smart kategorisering
+  newTxns.forEach(t => {
+    const r = smartCategory(t.desc);
+    t.cat = r.cat;
+    t._confident = r.confident;
+  });
+  pendingTxns = newTxns;
+
+  const confirmed = newTxns.filter(t =>  t._confident);
+  const uncertain = newTxns.filter(t => !t._confident);
+  const dupes = txns.length - newTxns.length;
+
+  function makeRows(list){
+    return list.map(t => {
+      const i   = newTxns.indexOf(t);
+      const col = CAT_COLORS[t.cat] || '#888';
+      const dot = t._confident ? 'high' : 'low';
+      const bg  = t._confident ? '#f4fbf7' : '#fffbf0';
+      const opts = ALL_CATS.map(c => {
+        const sel = c === t.cat ? ' selected' : '';
+        return '<option value="' + c + '"' + sel + '>' + c + '</option>';
+      }).join('');
+      const onChange = 'pendingTxns[' + i + '].cat=this.value;learnCategory(pendingTxns[' + i + '].desc,this.value)';
+      return '<tr style="background:' + bg + '">' +
+        '<td style="white-space:nowrap;color:#9e9484;font-size:11px;padding:6px 10px">' + t.date + '</td>' +
+        '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 10px">' +
+          '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:' +
+          (t._confident ? '#2d7a56' : '#c4821a') + '"></span>' + t.desc +
+        '</td>' +
+        '<td style="text-align:right;white-space:nowrap;padding:6px 10px">' + Math.abs(t.amt).toFixed(0) + ' kr</td>' +
+        '<td style="padding:6px 10px"><select class="cat-sel" onchange="' + onChange + '" style="color:' + col + '">' + opts + '</select></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function makeSection(list, isConfident){
+    if(!list.length) return '';
+    const bgColor  = isConfident ? '#e8f4ed' : '#fff8e6';
+    const txtColor = isConfident ? '#2d7a56' : '#7a5e00';
+    const btnColor = isConfident ? '#2d7a56' : '#c4821a';
+    const icon     = isConfident ? '✓ ' : '? ';
+    const label    = isConfident
+      ? icon + list.length + ' känns igen — kategorier satta automatiskt'
+      : icon + list.length + ' nya mottagare — granska och justera';
+    const btnLabel = isConfident ? 'Godkänn alla' : 'Godkänn förslag';
+
+    return '<div style="margin-bottom:10px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:' + bgColor + ';color:' + txtColor + ';font-size:12px;font-weight:500;margin-bottom:4px">' +
+        '<span>' + label + '</span>' +
+        '<button style="background:' + btnColor + ';color:white;border:none;border-radius:6px;padding:4px 12px;font-size:11px;font-family:DM Sans,sans-serif;cursor:pointer"' +
+          ' onclick="event.stopPropagation()">' + btnLabel + '</button>' +
+      '</div>' +
+      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">' +
+        '<thead><tr style="background:#ede9e0">' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9e9484">Datum</th>' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9e9484">Mottagare</th>' +
+          '<th style="padding:5px 10px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9e9484">Belopp</th>' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9e9484">Kategori</th>' +
+        '</tr></thead>' +
+        '<tbody>' + makeRows(list) + '</tbody>' +
+      '</table></div>' +
+    '</div>';
+  }
+
+  const infoHtml =
+    '<strong>' + filename + '</strong> · ' + type + ' · ' +
+    '<strong style="color:#2d7a56">' + confirmed.length + ' säkra</strong> · ' +
+    '<strong style="color:#c4821a">' + uncertain.length + ' osäkra</strong>' +
+    (dupes > 0 ? ' · ' + dupes + ' dubletter borttagna' : '');
+
+  const previewEl = document.getElementById('parseResult');
+  previewEl.innerHTML =
+    '<div style="background:#e8f0fb;border-radius:8px;padding:10px 14px;font-size:12px;color:#2d5a8e;margin-bottom:10px">' + infoHtml + '</div>' +
+    '<div style="max-height:380px;overflow-y:auto">' +
+      makeSection(confirmed, true) +
+      makeSection(uncertain, false) +
+    '</div>';
+  previewEl.style.display = 'block';
+  document.getElementById('importBtn').disabled = false;
 }
+
 async function importTransactions(){
+  // Lär av alla bekräftade kategorier
+  pendingTxns.forEach(t => learnCategory(t.desc, t.cat));
   TXNS=[...pendingTxns,...TXNS].sort((a,b)=>b.date.localeCompare(a.date));
   closeModal();
   await saveToCloud();
@@ -900,6 +1028,7 @@ function renderTxns(){
 }
 let saveTimer=null;
 function changeCat(idx,cat){
+  learnCategory(TXNS[idx].desc, cat);
   TXNS[idx].cat=cat;
   renderTxns();
   clearTimeout(saveTimer);
@@ -908,8 +1037,9 @@ function changeCat(idx,cat){
 
 // ===== INIT =====
 loadBudget();
+loadLearned();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.05.27-1521</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.05.27-1541</div>
 </body>
 </html>
