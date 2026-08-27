@@ -277,7 +277,7 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
         <button class="tab" onclick="setTab('Kreditkort',this)">Kreditkort</button>
       </div>
       <div class="txn-controls">
-        <input type="text" class="si" placeholder="Sök mottagare..." id="searchInput" oninput="renderTxns()">
+        <input type="text" class="si" placeholder="Sök mottagare..." id="searchInput" oninput="clearTimeout(searchTimer);searchTimer=setTimeout(renderTxns,200)">
         <select class="fs" id="catFilter" onchange="renderTxns()"><option value="">Alla kategorier</option></select>
         <select class="fs" id="dirFilter" onchange="renderTxns()">
           <option value="">In & ut</option><option value="in">Inkomster</option><option value="ut">Utgifter</option>
@@ -348,9 +348,12 @@ function switchView(view, el){
   document.getElementById('view-overview').style.display     = view==='overview'     ? '' : 'none';
   document.getElementById('view-budget').style.display       = view==='budget'       ? '' : 'none';
   document.getElementById('view-transactions').style.display = view==='transactions' ? '' : 'none';
-  if(view==='budget') renderBudgetView();
-  if(view==='overview') rebuildCharts();
-  if(view==='transactions') renderTxns();
+  // Lazy — rita bara det som faktiskt visas
+  requestAnimationFrame(() => {
+    if(view==='budget')       renderBudgetView();
+    if(view==='overview')     rebuildCharts();
+    if(view==='transactions') renderTxns();
+  });
 }
 
 // ===== MONTH CHIPS =====
@@ -535,21 +538,43 @@ async function loadFromCloud(){
     showEmpty();
     return;
   }
-  setSyncStatus('saving','⟳ Hämtar data...');
+
+  // ── STEG 1: Visa cachad data omedelbart ──
+  const cached = localStorage.getItem('ekonomi_cache');
+  if(cached){
+    try{
+      const c = JSON.parse(cached);
+      TXNS   = c.transaktioner || [];
+      BUDGET = c.budget || {};
+      if(TXNS.length > 0){
+        showDashboard();
+        setSyncStatus('saving','⟳ Uppdaterar...');
+      }
+    } catch(e){ /* ignorera trasig cache */ }
+  }
+
+  // ── STEG 2: Hämta från JSONBin i bakgrunden ──
   try{
-    const r=await fetch('https://api.jsonbin.io/v3/b/'+k.bin+'/latest',{
+    const r = await fetch('https://api.jsonbin.io/v3/b/'+k.bin+'/latest',{
       headers:{'X-Master-Key':k.secret,'X-Bin-Meta':'false'}
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
-    const data=await r.json();
-    TXNS=data.transaktioner||[];
-    BUDGET=data.budget||{};
+    const data = await r.json();
+
+    // Uppdatera bara om datan faktiskt ändrats
+    const newJson = JSON.stringify(data);
+    const oldJson = localStorage.getItem('ekonomi_cache');
+    if(newJson !== oldJson){
+      TXNS   = data.transaktioner || [];
+      BUDGET = data.budget || {};
+      localStorage.setItem('ekonomi_cache', newJson);
+      if(TXNS.length === 0){ showEmpty(); }
+      else { showDashboard(); }
+    }
     setSyncStatus('ok','✓ Synkad');
-    if(TXNS.length===0){ showEmpty(); }
-    else { showDashboard(); }
   } catch(e){
-    setSyncStatus('error','✗ Fel: '+e.message);
-    showEmpty();
+    setSyncStatus('error','✗ Offline — visar cachad data');
+    if(TXNS.length === 0) showEmpty();
   }
 }
 
@@ -564,6 +589,8 @@ async function saveToCloud(showStatus=true){
       body:JSON.stringify({transaktioner:TXNS,budget:BUDGET})
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
+    // Uppdatera cache när vi sparar
+    localStorage.setItem('ekonomi_cache', JSON.stringify({transaktioner:TXNS,budget:BUDGET}));
     if(showStatus) setSyncStatus('ok','✓ Sparad '+new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'}));
   } catch(e){
     setSyncStatus('error','✗ Sparning misslyckades');
@@ -928,6 +955,7 @@ function updateHeader(){
 }
 
 function rebuildCharts(){
+  if(activeView !== 'overview') return; // Kör inte om fliken inte syns
   const txnsSrc=filteredByMonth();
   const expenses=txnsSrc.filter(t=>t.amt<0&&t.cat!=='Inkomst');
   const income=txnsSrc.filter(t=>t.amt>0&&t.cat==='Inkomst');
@@ -988,7 +1016,7 @@ function rebuildCharts(){
 }
 
 // ===== TRANSACTIONS =====
-let currentPage=1,activeTab='all';
+let currentPage=1,activeTab='all',searchTimer=null;
 const PAGE_SIZE=25;
 function setTab(acc,el){activeTab=acc;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');currentPage=1;renderTxns();}
 function getFiltered(){
@@ -1006,6 +1034,7 @@ function getFiltered(){
   });
 }
 function renderTxns(){
+  if(activeView !== 'transactions') return; // Kör inte om fliken inte syns
   const filtered=getFiltered();
   const pages=Math.ceil(filtered.length/PAGE_SIZE)||1;
   if(currentPage>pages) currentPage=1;
@@ -1040,6 +1069,6 @@ loadBudget();
 loadLearned();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.05.27-1541</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.27-1947</div>
 </body>
 </html>
