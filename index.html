@@ -581,29 +581,40 @@ function addImportLogEntry(filename, type, accName, txns){
 
 // ===== KONTOÖVERSIKT =====
 function renderAccountsView(){
-  // Bygg kontoöversikt baserat på importlogg och TXNS
-  const accTypes = {
-    'nordea':      t => t.acc==='Bank' && t.desc.toUpperCase().includes('LÖN') || (t.acc==='Bank' && !t.desc.toUpperCase().includes('BARNBDR')),
-    'norwegian':   t => t.acc==='Kreditkort',
-    'swedbank_mat':t => t.acc==='Kort',
-    'eva_lon':     t => false, // inte importerat än
-    'eva_spark':   t => false, // inte importerat än
+  // Detektera täckning direkt från TXNS per konto-typ
+  function getAccStats(filterFn){
+    const txns = TXNS.filter(filterFn);
+    if(!txns.length) return null;
+    const dates = txns.map(t=>t.date).sort();
+    return {
+      count: txns.length,
+      fromDate: dates[0],
+      toDate: dates[dates.length-1]
+    };
+  }
+
+  // Mappning: konto-id → filter mot TXNS
+  const accStats = {
+    'nordea':       getAccStats(t => t.acc==='Bank'),
+    'norwegian':    getAccStats(t => t.acc==='Kreditkort'),
+    'swedbank_mat': getAccStats(t => t.acc==='Kort'),
+    'eva_lon':      getAccStats(t => t.acc==='Eva_Bank'),
+    'eva_spark':    getAccStats(t => t.acc==='Eva_Spark'),
   };
 
-  // Hitta senaste import per konto från importloggen
+  // Hitta senaste loggade import per konto (för filnamn)
   const lastImport = {};
   IMPORT_LOG.forEach(entry => {
     const accId = guessAccountId(entry.account, entry.filename);
     if(!lastImport[accId]) lastImport[accId] = entry;
   });
 
-  // Rendera konto-kort
   document.getElementById('accountsGrid').innerHTML = ACCOUNT_CONFIG.map(acc => {
-    const last = lastImport[acc.id];
-    const hasTxns = TXNS.some(t => t.acc === acc.type || (acc.id === 'nordea' && t.acc === 'Bank'));
-    const status = last ? 'ok' : (hasTxns ? 'partial' : 'missing');
-    const statusLabel = last ? 'Uppladdad' : (hasTxns ? 'Delvis' : 'Saknas');
-    const icon = last ? '✓' : (hasTxns ? '~' : '!');
+    const stats  = accStats[acc.id];
+    const last   = lastImport[acc.id];
+    const status = stats ? 'ok' : 'missing';
+    const statusLabel = stats ? 'Uppladdad' : 'Saknas';
+    const icon   = stats ? '✓' : '!';
 
     return '<div class="account-card '+status+'">' +
       '<div class="account-card-header">' +
@@ -613,9 +624,11 @@ function renderAccountsView(){
         '</div>' +
         '<span class="account-status '+status+'">'+icon+' '+statusLabel+'</span>' +
       '</div>' +
-      (last ?
-        '<div class="account-last">Senast: '+last.filename+'</div>' +
-        '<div class="account-range">'+last.fromDate+' → '+last.toDate+' · '+last.count+' transaktioner</div>'
+      (stats ?
+        '<div class="account-last">' +
+          (last ? 'Senast: '+last.filename : stats.count+' transaktioner') +
+        '</div>' +
+        '<div class="account-range">'+stats.fromDate+' → '+stats.toDate+' · '+stats.count+' transaktioner</div>'
         :
         '<div class="account-last" style="color:var(--red)">Inget utdrag uppladdat än</div>'
       ) +
@@ -1234,6 +1247,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.27-2009</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.28-0618</div>
 </body>
 </html>
