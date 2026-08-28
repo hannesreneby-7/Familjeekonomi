@@ -160,6 +160,33 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
 .confidence-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
 .confidence-dot.high{background:#2d7a56}
 .confidence-dot.low{background:#c4821a}
+
+/* Accounts & import log */
+.accounts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:24px}
+.account-card{background:var(--surface);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);border-left:4px solid var(--border)}
+.account-card.ok{border-left-color:var(--green)}
+.account-card.missing{border-left-color:var(--red)}
+.account-card.partial{border-left-color:var(--yellow)}
+.account-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.account-name{font-size:14px;font-weight:500}
+.account-owner{font-size:11px;color:var(--text3);margin-bottom:4px}
+.account-status{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
+.account-status.ok{background:#e8f4ed;color:#2d7a56}
+.account-status.missing{background:#fbeaea;color:#b83c3c}
+.account-status.partial{background:#fff8e6;color:#7a5e00}
+.account-last{font-size:12px;color:var(--text2);margin-top:6px}
+.account-range{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* Import log */
+.import-log{background:var(--surface);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow)}
+.import-log-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--surface2);font-size:13px}
+.import-log-row:last-child{border-bottom:none}
+.import-log-icon{font-size:18px;flex-shrink:0}
+.import-log-main{flex:1;min-width:0}
+.import-log-file{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.import-log-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.import-log-count{font-size:12px;color:var(--text2);white-space:nowrap;text-align:right}
+.import-log-empty{text-align:center;padding:30px;color:var(--text3);font-size:13px}
 </style>
 </head>
 <body>
@@ -223,6 +250,7 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
       <button class="top-nav-btn active" onclick="switchView('overview',this)">Översikt</button>
       <button class="top-nav-btn" onclick="switchView('budget',this)">Budget</button>
       <button class="top-nav-btn" onclick="switchView('transactions',this)">Transaktioner</button>
+      <button class="top-nav-btn" onclick="switchView('accounts',this)">Konton</button>
     </div>
 
     <!-- Month selector (shared across views) -->
@@ -291,6 +319,15 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
       <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center" id="txnCount"></div>
     </div>
     </div><!-- end view-transactions -->
+
+    <!-- ACCOUNTS VIEW -->
+    <div id="view-accounts" style="display:none">
+      <div class="section-h" style="margin-bottom:16px">Konton</div>
+      <div class="accounts-grid" id="accountsGrid"></div>
+      <div class="section-h" style="margin-bottom:16px">Importhistorik</div>
+      <div class="import-log" id="importLog"></div>
+    </div>
+
   </div><!-- end dashboardContent -->
 
   <div id="emptyState" style="display:none">
@@ -317,9 +354,19 @@ const ALL_CATS = Object.keys(CAT_COLORS);
 
 let TXNS = [];
 let BUDGET = {};
-let LEARNED = {};        // {mottagarnyckel: kategori} — inlärd från manuella val
+let LEARNED = {};
+let IMPORT_LOG = [];     // [{date, filename, type, account, count, fromDate, toDate}]
 let activeMonth = 'all';
 let activeView = 'overview';
+
+// Konfigurerade konton — checklistan
+const ACCOUNT_CONFIG = [
+  {id:'nordea',    name:'Lönekonto',         owner:'Hannes', type:'Bank',        color:'#2d5a8e'},
+  {id:'norwegian', name:'Norwegian Kreditkort', owner:'Hannes & Eva', type:'Kreditkort', color:'#b83c3c'},
+  {id:'swedbank_mat', name:'Vardagskonto',    owner:'Gemensamt', type:'Kort',     color:'#2d7a56'},
+  {id:'eva_lon',   name:'Lönekonto',         owner:'Eva',    type:'Bank',        color:'#7b52b8'},
+  {id:'eva_spark', name:'Sparkonto',         owner:'Eva',    type:'Bank',        color:'#3a8fa3'},
+];
 
 
 // ===== BUDGET =====
@@ -348,11 +395,12 @@ function switchView(view, el){
   document.getElementById('view-overview').style.display     = view==='overview'     ? '' : 'none';
   document.getElementById('view-budget').style.display       = view==='budget'       ? '' : 'none';
   document.getElementById('view-transactions').style.display = view==='transactions' ? '' : 'none';
-  // Lazy — rita bara det som faktiskt visas
+  document.getElementById('view-accounts').style.display     = view==='accounts'     ? '' : 'none';
   requestAnimationFrame(() => {
     if(view==='budget')       renderBudgetView();
     if(view==='overview')     rebuildCharts();
     if(view==='transactions') renderTxns();
+    if(view==='accounts')     renderAccountsView();
   });
 }
 
@@ -504,6 +552,117 @@ function smartCategory(desc){
   return {cat: ruleCat, confident, source: 'rules'};
 }
 
+
+// ===== IMPORTLOGG =====
+function loadImportLog(){
+  const saved = localStorage.getItem('ekonomi_importlog');
+  IMPORT_LOG = saved ? JSON.parse(saved) : [];
+}
+
+function saveImportLog(){
+  localStorage.setItem('ekonomi_importlog', JSON.stringify(IMPORT_LOG));
+}
+
+function addImportLogEntry(filename, type, accName, txns){
+  const dates = txns.map(t=>t.date).filter(Boolean).sort();
+  IMPORT_LOG.unshift({
+    date: new Date().toISOString(),
+    filename,
+    type,
+    account: accName,
+    count: txns.length,
+    fromDate: dates[0] || '?',
+    toDate: dates[dates.length-1] || '?'
+  });
+  // Behåll max 50 poster
+  if(IMPORT_LOG.length > 50) IMPORT_LOG = IMPORT_LOG.slice(0, 50);
+  saveImportLog();
+}
+
+// ===== KONTOÖVERSIKT =====
+function renderAccountsView(){
+  // Bygg kontoöversikt baserat på importlogg och TXNS
+  const accTypes = {
+    'nordea':      t => t.acc==='Bank' && t.desc.toUpperCase().includes('LÖN') || (t.acc==='Bank' && !t.desc.toUpperCase().includes('BARNBDR')),
+    'norwegian':   t => t.acc==='Kreditkort',
+    'swedbank_mat':t => t.acc==='Kort',
+    'eva_lon':     t => false, // inte importerat än
+    'eva_spark':   t => false, // inte importerat än
+  };
+
+  // Hitta senaste import per konto från importloggen
+  const lastImport = {};
+  IMPORT_LOG.forEach(entry => {
+    const accId = guessAccountId(entry.account, entry.filename);
+    if(!lastImport[accId]) lastImport[accId] = entry;
+  });
+
+  // Rendera konto-kort
+  document.getElementById('accountsGrid').innerHTML = ACCOUNT_CONFIG.map(acc => {
+    const last = lastImport[acc.id];
+    const hasTxns = TXNS.some(t => t.acc === acc.type || (acc.id === 'nordea' && t.acc === 'Bank'));
+    const status = last ? 'ok' : (hasTxns ? 'partial' : 'missing');
+    const statusLabel = last ? 'Uppladdad' : (hasTxns ? 'Delvis' : 'Saknas');
+    const icon = last ? '✓' : (hasTxns ? '~' : '!');
+
+    return '<div class="account-card '+status+'">' +
+      '<div class="account-card-header">' +
+        '<div>' +
+          '<div class="account-owner">'+acc.owner+'</div>' +
+          '<div class="account-name">'+acc.name+'</div>' +
+        '</div>' +
+        '<span class="account-status '+status+'">'+icon+' '+statusLabel+'</span>' +
+      '</div>' +
+      (last ?
+        '<div class="account-last">Senast: '+last.filename+'</div>' +
+        '<div class="account-range">'+last.fromDate+' → '+last.toDate+' · '+last.count+' transaktioner</div>'
+        :
+        '<div class="account-last" style="color:var(--red)">Inget utdrag uppladdat än</div>'
+      ) +
+    '</div>';
+  }).join('');
+
+  // Rendera importlogg
+  const logEl = document.getElementById('importLog');
+  if(!IMPORT_LOG.length){
+    logEl.innerHTML = '<div class="import-log-empty">Ingen importhistorik än — ladda upp ditt första utdrag!</div>';
+    return;
+  }
+
+  const monthNames = {'01':'jan','02':'feb','03':'mar','04':'apr','05':'maj','06':'jun',
+                      '07':'jul','08':'aug','09':'sep','10':'okt','11':'nov','12':'dec'};
+
+  logEl.innerHTML = IMPORT_LOG.map(entry => {
+    const d = new Date(entry.date);
+    const when = d.toLocaleDateString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const icons = {Kort:'💳', Bank:'🏦', Kreditkort:'💳', Importerat:'📄'};
+    const icon = icons[entry.account] || '📄';
+    const [fy,fm] = (entry.fromDate||'').split('-');
+    const [ty,tm] = (entry.toDate||'').split('-');
+    const range = (fy&&fm&&ty&&tm) ?
+      monthNames[fm]+' '+fy+(fm!==tm||fy!==ty?' → '+monthNames[tm]+' '+ty:'') : '';
+
+    return '<div class="import-log-row">' +
+      '<div class="import-log-icon">'+icon+'</div>' +
+      '<div class="import-log-main">' +
+        '<div class="import-log-file">'+entry.filename+'</div>' +
+        '<div class="import-log-meta">'+when+' · '+entry.account+(range?' · '+range:'')+'</div>' +
+      '</div>' +
+      '<div class="import-log-count">+'+entry.count+' transaktioner</div>' +
+    '</div>';
+  }).join('');
+}
+
+function guessAccountId(accName, filename){
+  const f = (filename||'').toLowerCase();
+  const a = (accName||'').toLowerCase();
+  if(a.includes('kreditkort') || f.includes('norwegian') || f.includes('statement')) return 'norwegian';
+  if(a.includes('kort') || f.includes('swedbank') || f.includes('transaktioner')) return 'swedbank_mat';
+  if(a.includes('bank') && f.includes('nordea')) return 'nordea';
+  if(a.includes('bank')) return 'nordea';
+  return 'nordea';
+}
+
 // ===== JSONBIN =====
 function getKeys(){ return {secret:localStorage.getItem('jb_secret'),bin:localStorage.getItem('jb_bin')}; }
 
@@ -624,6 +783,8 @@ function autoCategory(desc){
 
 // ===== UPLOAD =====
 let pendingTxns=[];
+let lastUploadedFile="";
+let lastUploadedType="";
 function openModal(){ document.getElementById('modalOverlay').classList.add('open'); }
 function closeModal(){
   document.getElementById('modalOverlay').classList.remove('open');
@@ -842,6 +1003,8 @@ function parsePDFRaw(text){
   return txns;
 }
 function showPreview(txns,filename,type){
+  lastUploadedFile = filename;
+  lastUploadedType = type;
   if(!txns.length){ alert('Hittade inga transaktioner.'); return; }
   const existingKeys = new Set(TXNS.map(t => t.date+'|'+t.desc+'|'+t.amt));
   const newTxns = txns.filter(t => !existingKeys.has(t.date+'|'+t.desc+'|'+t.amt));
@@ -929,8 +1092,9 @@ function showPreview(txns,filename,type){
 }
 
 async function importTransactions(){
-  // Lär av alla bekräftade kategorier
   pendingTxns.forEach(t => learnCategory(t.desc, t.cat));
+  // Logga importen
+  addImportLogEntry(lastUploadedFile, lastUploadedType, pendingTxns[0]?.acc || 'Okänt', pendingTxns);
   TXNS=[...pendingTxns,...TXNS].sort((a,b)=>b.date.localeCompare(a.date));
   closeModal();
   await saveToCloud();
@@ -1067,8 +1231,9 @@ function changeCat(idx,cat){
 // ===== INIT =====
 loadBudget();
 loadLearned();
+loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.27-1947</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.27-2009</div>
 </body>
 </html>
