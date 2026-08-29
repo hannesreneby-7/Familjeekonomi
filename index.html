@@ -187,6 +187,10 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
 .import-log-meta{font-size:11px;color:var(--text3);margin-top:2px}
 .import-log-count{font-size:12px;color:var(--text2);white-space:nowrap;text-align:right}
 .import-log-empty{text-align:center;padding:30px;color:var(--text3);font-size:13px}
+
+.reset-btn{background:#b83c3c;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:12px;width:100%}
+.reset-btn:hover{background:#9a2f2f}
+.reset-warning{background:#fbeaea;border:1px solid #e8a0a0;border-radius:8px;padding:10px 14px;font-size:12px;color:#7a2020;margin-top:10px;display:none}
 </style>
 </head>
 <body>
@@ -241,6 +245,17 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
     <label>Bin ID</label>
     <input type="text" id="inputBinId" placeholder="6839f1e2c2ef...">
     <button class="save-btn" onclick="saveKeys()">Spara & anslut</button>
+
+    <hr style="border:none;border-top:1px solid #f0d88a;margin:16px 0">
+    <div style="font-size:12px;font-weight:600;color:#4a3700;margin-bottom:6px">⚠️ Farlig zon</div>
+    <button class="reset-btn" onclick="showResetWarning()">🗑 Nollställ all data</button>
+    <div class="reset-warning" id="resetWarning">
+      <strong>Är du säker?</strong> Detta raderar alla transaktioner, kategorier och inlärda regler permanent — både lokalt och i JSONBin. Det går inte att ångra!
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="confirmReset()" style="background:#b83c3c;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;flex:1">Ja, radera allt</button>
+        <button onclick="hideResetWarning()" style="background:none;border:1px solid #e8a0a0;border-radius:6px;padding:6px 14px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;color:#7a2020;flex:1">Avbryt</button>
+      </div>
+    </div>
   </div>
 
   <div id="dashboardContent" style="display:none">
@@ -677,6 +692,51 @@ function guessAccountId(accName, filename){
   if(a.includes('bank') && f.includes('nordea')) return 'nordea';
   if(a.includes('bank')) return 'nordea';
   return 'nordea';
+}
+
+
+// ===== NOLLSTÄLL =====
+function showResetWarning(){
+  document.getElementById('resetWarning').style.display = 'block';
+}
+function hideResetWarning(){
+  document.getElementById('resetWarning').style.display = 'none';
+}
+async function confirmReset(){
+  hideResetWarning();
+  setSyncStatus('saving', '⟳ Nollställer...');
+
+  // 1. Töm JSONBin
+  const k = getKeys();
+  if(k.secret && k.bin){
+    try{
+      await fetch('https://api.jsonbin.io/v3/b/'+k.bin, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json','X-Master-Key':k.secret},
+        body: JSON.stringify({transaktioner:[],budget:{},learned:{}})
+      });
+    } catch(e){ console.log('JSONBin reset failed:', e); }
+  }
+
+  // 2. Rensa localStorage
+  localStorage.removeItem('ekonomi_cache');
+  localStorage.removeItem('ekonomi_txns');
+  localStorage.removeItem('ekonomi_budget');
+  localStorage.removeItem('ekonomi_learned');
+  localStorage.removeItem('ekonomi_importlog');
+
+  // 3. Nollställ state
+  TXNS = [];
+  BUDGET = {};
+  LEARNED = {};
+  IMPORT_LOG = [];
+
+  // 4. Stäng inställningar och visa tom dashboard
+  document.getElementById('setupBanner').style.display = 'none';
+  setSyncStatus('ok', '✓ Nollställd');
+  showEmpty();
+
+  alert('✓ All data är raderad. Ladda upp nya kontoutdrag för att börja om.');
 }
 
 // ===== JSONBIN =====
@@ -1243,6 +1303,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-1749</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-1759</div>
 </body>
 </html>
