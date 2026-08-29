@@ -1136,14 +1136,14 @@ function showPreview(txns,filename,type){
 }
 
 async function importTransactions(){
+  const importCount = pendingTxns.length; // spara INNAN closeModal nollställer
   pendingTxns.forEach(t => learnCategory(t.desc, t.cat));
-  // Logga importen
   addImportLogEntry(lastUploadedFile, lastUploadedType, pendingTxns[0]?.acc || 'Okänt', pendingTxns);
   TXNS=[...pendingTxns,...TXNS].sort((a,b)=>b.date.localeCompare(a.date));
   closeModal();
   await saveToCloud();
   showDashboard();
-  alert('✓ '+pendingTxns.length+' transaktioner importerade och sparade!');
+  alert('✓ '+importCount+' transaktioner importerade och sparade!');
 }
 
 // ===== CHARTS =====
@@ -1301,6 +1301,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-1803</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-1807</div>
 </body>
 </html>
