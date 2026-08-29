@@ -1351,7 +1351,7 @@ function showPreview(txns,filename,type){
         const sel = c === t.cat ? ' selected' : '';
         return '<option value="' + c + '"' + sel + '>' + c + '</option>';
       }).join('');
-      const onChange = 'previewChangeCat(' + i + ',this.value)';
+      const onChange = 'previewChangeCat(' + i + ',this.value,this)';
       return '<tr style="background:' + bg + '">' +
         '<td style="white-space:nowrap;color:#9e9484;font-size:11px;padding:6px 10px">' + t.date + '</td>' +
         '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 10px">' +
@@ -1541,22 +1541,24 @@ function renderTxns(){
 let saveTimer=null;
 
 
-function previewChangeCat(idx, cat){
+function previewChangeCat(idx, cat, el){
   const desc = pendingTxns[idx].desc;
   pendingTxns[idx].cat = cat;
   learnCategory(desc, cat);
+  if(el){ el.style.color = CAT_COLORS[cat] || '#888'; }
 
   // Hitta liknande i pendingTxns
   const key = descKey(desc);
-  const similar = pendingTxns.filter((t,i) => i !== idx && descKey(t.desc) === key && t.cat !== cat);
+  const similar = pendingTxns.filter(function(t,i){ return i !== idx && descKey(t.desc) === key && t.cat !== cat; });
 
   if(similar.length > 0){
     const msg = 'Vill du ändra alla ' + (similar.length+1) + ' transaktioner från "' + desc + '" till "' + cat + '"?';
     if(confirm(msg)){
-      similar.forEach(t => { t.cat = cat; });
-      // Uppdatera dropdowns i preview
-      document.querySelectorAll('.cat-sel').forEach(function(sel, i){
-        if(pendingTxns[i] && descKey(pendingTxns[i].desc) === key){
+      similar.forEach(function(t){ t.cat = cat; });
+      // Uppdatera dropdowns med data-idx
+      document.querySelectorAll('.cat-sel[data-idx]').forEach(function(sel){
+        const selIdx = parseInt(sel.getAttribute('data-idx'));
+        if(pendingTxns[selIdx] && descKey(pendingTxns[selIdx].desc) === key){
           sel.value = cat;
           sel.style.color = CAT_COLORS[cat] || '#888';
         }
@@ -1601,6 +1603,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2032</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2039</div>
 </body>
 </html>
