@@ -1555,16 +1555,66 @@ function previewChangeCat(idx, cat, el){
     const msg = 'Vill du ändra alla ' + (similar.length+1) + ' transaktioner från "' + desc + '" till "' + cat + '"?';
     if(confirm(msg)){
       similar.forEach(function(t){ t.cat = cat; });
-      // Uppdatera dropdowns med data-idx
-      document.querySelectorAll('.cat-sel[data-idx]').forEach(function(sel){
-        const selIdx = parseInt(sel.getAttribute('data-idx'));
-        if(pendingTxns[selIdx] && descKey(pendingTxns[selIdx].desc) === key){
-          sel.value = cat;
-          sel.style.color = CAT_COLORS[cat] || '#888';
-        }
-      });
+      // Rita om hela preview så dropdownsen stämmer
+      redrawPreview();
     }
   }
+}
+
+function redrawPreview(){
+  // Dela upp i säkra/osäkra och rita om
+  const confirmed = pendingTxns.filter(function(t){ return t._confident; });
+  const uncertain = pendingTxns.filter(function(t){ return !t._confident; });
+  const previewEl = document.getElementById('parseResult');
+  const infoEl = previewEl.querySelector('.parse-info');
+  const infoHtml = infoEl ? infoEl.outerHTML : '';
+
+  function makeRowsRedraw(list){
+    return list.map(function(t){
+      const i   = pendingTxns.indexOf(t);
+      const col = CAT_COLORS[t.cat] || '#888';
+      const bg  = t._confident ? '#f4fbf7' : '#fffbf0';
+      const opts = ALL_CATS.map(function(c){
+        return '<option value="'+c+'"'+(c===t.cat?' selected':'')+'>'+c+'</option>';
+      }).join('');
+      return '<tr style="background:'+bg+'">' +
+        '<td style="white-space:nowrap;color:#9e9484;font-size:11px;padding:6px 10px">'+t.date+'</td>' +
+        '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 10px">'+
+          '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:'+(t._confident?'#2d7a56':'#c4821a')+'"></span>'+t.desc+
+        '</td>' +
+        '<td style="text-align:right;white-space:nowrap;padding:6px 10px">'+Math.abs(t.amt).toFixed(0)+' kr</td>' +
+        '<td style="padding:6px 10px"><select class="cat-sel" data-idx="'+i+'" onchange="previewChangeCat('+i+',this.value,this)" style="color:'+col+'">'+opts+'</select></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function makeSectionRedraw(list, isConfident){
+    if(!list.length) return '';
+    const bgColor  = isConfident ? '#e8f4ed' : '#fff8e6';
+    const txtColor = isConfident ? '#2d7a56' : '#7a5e00';
+    const btnColor = isConfident ? '#2d7a56' : '#c4821a';
+    const label = isConfident ? '✓ '+list.length+' känns igen' : '? '+list.length+' nya mottagare — granska och justera';
+    return '<div style="margin-bottom:10px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:'+bgColor+';color:'+txtColor+';font-size:12px;font-weight:500;margin-bottom:4px">' +
+        '<span>'+label+'</span>' +
+      '</div>' +
+      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">' +
+        '<thead><tr style="background:#ede9e0">' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;color:#9e9484">Datum</th>' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;color:#9e9484">Mottagare</th>' +
+          '<th style="padding:5px 10px;text-align:right;font-size:10px;color:#9e9484">Belopp</th>' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;color:#9e9484">Kategori</th>' +
+        '</tr></thead>' +
+        '<tbody>'+makeRowsRedraw(list)+'</tbody>' +
+      '</table></div>' +
+    '</div>';
+  }
+
+  previewEl.innerHTML = infoHtml +
+    '<div style="max-height:380px;overflow-y:auto">' +
+      makeSectionRedraw(confirmed, true) +
+      makeSectionRedraw(uncertain, false) +
+    '</div>';
 }
 
 function bulkUpdatePending(idx, cat){
@@ -1603,6 +1653,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2039</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2047</div>
 </body>
 </html>
