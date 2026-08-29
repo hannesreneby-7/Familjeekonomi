@@ -781,11 +781,8 @@ async function runAIAnalysis(){
     const text = data.content?.[0]?.text || 'Kunde inte generera analys.';
 
     // Formatera som HTML-paragrafer
-    const formatted = text.split('
-
-').filter(p=>p.trim())
-      .map(p => '<p>'+p.replace(/
-/g,'<br>')+'</p>').join('');
+    const formatted = text.split('\n\n').filter(function(p){return p.trim();})
+      .map(function(p){ return '<p>'+p.replace(/\n/g,'<br>')+'</p>'; }).join('');
 
     responseEl.innerHTML = formatted;
     responseEl.style.display = 'block';
@@ -1579,6 +1576,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2023</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2024</div>
 </body>
 </html>
