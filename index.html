@@ -747,34 +747,33 @@ async function runAIAnalysis(){
                       '06':'juni','07':'juli','08':'augusti','09':'september','10':'oktober',
                       '11':'november','12':'december'};
 
-  const prompt = `Du är en personlig ekonomirådgivare för en svensk familj. Analysera deras ekonomi för ${monthNames[mo]} ${y}.
+  // Bygg prompt utan nästlade backticks
+  const catLines = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(function(entry){
+    const cat = entry[0], val = entry[1];
+    const avg = catAvgs[cat]||0;
+    const diff = val-avg;
+    return '- '+cat+': '+Math.round(val).toLocaleString('sv-SE')+' kr (snitt: '+Math.round(avg).toLocaleString('sv-SE')+' kr, '+(diff>0?'+':'')+Math.round(diff).toLocaleString('sv-SE')+' kr)';
+  }).join('\n');
 
-SAMMANFATTNING:
-- Inkomster: ${Math.round(totalInc).toLocaleString('sv-SE')} kr
-- Utgifter: ${Math.round(totalExp).toLocaleString('sv-SE')} kr
-- Netto: ${Math.round(totalInc-totalExp).toLocaleString('sv-SE')} kr
+  const top5Lines = top5.map(function(t,i){
+    return (i+1)+'. '+t.desc+': '+Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')+' kr ('+t.cat+')';
+  }).join('\n');
 
-UTGIFTER PER KATEGORI (denna månad vs månadssnitt):
-${Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,val]) => {
-  const avg = catAvgs[cat]||0;
-  const diff = val-avg;
-  return `- ${cat}: ${Math.round(val).toLocaleString('sv-SE')} kr (snitt: ${Math.round(avg).toLocaleString('sv-SE')} kr, ${diff>0?'+':''}${Math.round(diff).toLocaleString('sv-SE')} kr)`;
-}).join('
-')}
+  const prompt = 'Du är en personlig ekonomirådgivare för en svensk familj. Analysera deras ekonomi för '+monthNames[mo]+' '+y+'.\n\n'+
+    'SAMMANFATTNING:\n'+
+    '- Inkomster: '+Math.round(totalInc).toLocaleString('sv-SE')+' kr\n'+
+    '- Utgifter: '+Math.round(totalExp).toLocaleString('sv-SE')+' kr\n'+
+    '- Netto: '+Math.round(totalInc-totalExp).toLocaleString('sv-SE')+' kr\n\n'+
+    'UTGIFTER PER KATEGORI (denna månad vs månadssnitt):\n'+catLines+'\n\n'+
+    'TOPP 5 STÖRSTA KÖP:\n'+top5Lines+'\n\n'+
+    'Skriv en personlig, konkret analys på svenska. Var ärlig och specifik. Lyft fram:\n'+
+    '1. Hur månaden ser ut överlag\n'+
+    '2. Vad som sticker ut (positivt eller negativt) vs snittet\n'+
+    '3. Konkreta besparingstips baserat på datan\n'+
+    '4. En uppmuntrande avslutning\n\n'+
+    'Skriv naturligt och conversationellt, inte som en rapport. Max 250 ord.';
 
-TOPP 5 STÖRSTA KÖP:
-${top5.map((t,i)=>`${i+1}. ${t.desc}: ${Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')} kr (${t.cat})`).join('
-')}
-
-Skriv en personlig, konkret analys på svenska. Var ärlig och specifik. Lyft fram:
-1. Hur månaden ser ut överlag
-2. Vad som sticker ut (positivt eller negativt) vs snittet
-3. Konkreta besparingstips baserat på datan
-4. En uppmuntrande avslutning
-
-Skriv naturligt och conversationellt, inte som en rapport. Max 250 ord.`;
-
-  try {
+    try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -1586,6 +1585,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2015</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2020</div>
 </body>
 </html>
