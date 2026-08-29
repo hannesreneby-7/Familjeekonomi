@@ -718,14 +718,12 @@ async function confirmReset(){
     } catch(e){ console.log('JSONBin reset failed:', e); }
   }
 
-  // 2. Rensa localStorage
-  localStorage.removeItem('ekonomi_cache');
-  localStorage.removeItem('ekonomi_txns');
-  localStorage.removeItem('ekonomi_budget');
-  localStorage.removeItem('ekonomi_learned');
-  localStorage.removeItem('ekonomi_importlog');
+  // 2. Rensa ALL localStorage för appen
+  Object.keys(localStorage).forEach(key => {
+    if(key.startsWith('ekonomi_')) localStorage.removeItem(key);
+  });
 
-  // 3. Nollställ state
+  // 3. Nollställ all state i minnet
   TXNS = [];
   BUDGET = {};
   LEARNED = {};
@@ -1303,6 +1301,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-1759</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-1803</div>
 </body>
 </html>
