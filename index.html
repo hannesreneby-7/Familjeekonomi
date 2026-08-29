@@ -528,6 +528,9 @@ function loadLearned(){
 
 function saveLearned(){
   localStorage.setItem('ekonomi_learned', JSON.stringify(LEARNED));
+  // Synka till cloud med debounce
+  clearTimeout(learnSaveTimer);
+  learnSaveTimer = setTimeout(() => saveToCloud(false), 3000);
 }
 
 function learnCategory(desc, cat){
@@ -718,6 +721,7 @@ async function loadFromCloud(){
       const c = JSON.parse(cached);
       TXNS   = c.transaktioner || [];
       BUDGET = c.budget || {};
+      if(c.learned) LEARNED = c.learned;
       if(TXNS.length > 0){
         showDashboard();
         setSyncStatus('saving','⟳ Uppdaterar...');
@@ -739,6 +743,7 @@ async function loadFromCloud(){
     if(newJson !== oldJson){
       TXNS   = data.transaktioner || [];
       BUDGET = data.budget || {};
+      if(data.learned) { LEARNED = data.learned; localStorage.setItem('ekonomi_learned', JSON.stringify(LEARNED)); }
       localStorage.setItem('ekonomi_cache', newJson);
       if(TXNS.length === 0){ showEmpty(); }
       else { showDashboard(); }
@@ -758,11 +763,11 @@ async function saveToCloud(showStatus=true){
     const r=await fetch('https://api.jsonbin.io/v3/b/'+k.bin,{
       method:'PUT',
       headers:{'Content-Type':'application/json','X-Master-Key':k.secret},
-      body:JSON.stringify({transaktioner:TXNS,budget:BUDGET})
+      body:JSON.stringify({transaktioner:TXNS,budget:BUDGET,learned:LEARNED})
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
     // Uppdatera cache när vi sparar
-    localStorage.setItem('ekonomi_cache', JSON.stringify({transaktioner:TXNS,budget:BUDGET}));
+    localStorage.setItem('ekonomi_cache', JSON.stringify({transaktioner:TXNS,budget:BUDGET,learned:LEARNED}));
     if(showStatus) setSyncStatus('ok','✓ Sparad '+new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'}));
   } catch(e){
     setSyncStatus('error','✗ Sparning misslyckades');
@@ -849,26 +854,25 @@ function handleFile(file){
   }
 }
 function parseCSV(buffer){
-  // Robust encoding detection
-  // 1. Try UTF-8 with BOM stripping (Nordea uses UTF-8 with BOM)
-  // 2. If result has garbage chars, try windows-1252 (Swedbank uses latin-1)
-  const utf8text = new TextDecoder('utf-8').decode(buffer);
-  const win1252text = new TextDecoder('windows-1252').decode(buffer);
-
-  // Check if UTF-8 looks clean: no replacement chars AND no garbled Swedish
-  const utf8clean = !utf8text.includes('\uFFFD') && !win1252text.startsWith('\u00EF\u00BB\u00BF');
-  let text = utf8clean ? utf8text : win1252text;
-
-  // Strip BOM (\uFEFF) if present
-  if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-
-  // Fix remaining garbled chars from wrong encoding detection
-  // These are the most common: Lön→Lön, Kortköp→Kortköp etc
-  // We detect garbling by checking for the pattern Ã followed by a combining char
-  if(text.includes('Ã\u00B6') || text.includes('Ã\u00A4') || text.includes('Ã\u00C5')){
-    // Re-decode as windows-1252
-    text = new TextDecoder('windows-1252').decode(buffer);
-    if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  // Encoding detection:
+  // Nordea = UTF-8 with BOM (EF BB BF)
+  // Swedbank = windows-1252 (latin-1), no BOM
+  //
+  // Strategy: check first 3 bytes for UTF-8 BOM
+  const bytes = new Uint8Array(buffer);
+  const hasBOM = bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF;
+  let text;
+  if(hasBOM){
+    // UTF-8 with BOM → Nordea
+    text = new TextDecoder('utf-8').decode(buffer.slice(3)); // slice off BOM
+  } else {
+    // No BOM → try UTF-8, if garbled use windows-1252
+    const tryUtf8 = new TextDecoder('utf-8').decode(buffer);
+    if(tryUtf8.includes('\uFFFD') || tryUtf8.includes('Ã¶') || tryUtf8.includes('Ã¤')){
+      text = new TextDecoder('windows-1252').decode(buffer);
+    } else {
+      text = tryUtf8;
+    }
   }
 
   const lines = text.trim().split(/\r?\n/);
@@ -1162,7 +1166,7 @@ function rebuildCharts(){
 }
 
 // ===== TRANSACTIONS =====
-let currentPage=1,activeTab='all',searchTimer=null;
+let currentPage=1,activeTab='all',searchTimer=null,learnSaveTimer=null;
 const PAGE_SIZE=25;
 function setTab(acc,el){activeTab=acc;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');currentPage=1;renderTxns();}
 function getFiltered(){
@@ -1239,6 +1243,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-1739</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-1749</div>
 </body>
 </html>
