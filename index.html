@@ -1555,8 +1555,12 @@ function previewChangeCat(idx, cat, el){
     const msg = 'Vill du ändra alla ' + (similar.length+1) + ' transaktioner från "' + desc + '" till "' + cat + '"?';
     if(confirm(msg)){
       similar.forEach(function(t){ t.cat = cat; });
-      // Rita om hela preview så dropdownsen stämmer
+      // Spara scroll-position och rita om
+      const previewContainer = document.querySelector('#parseResult div[style*="overflow-y"]');
+      const scrollTop = previewContainer ? previewContainer.scrollTop : 0;
       redrawPreview();
+      const newContainer = document.querySelector('#parseResult div[style*="overflow-y"]');
+      if(newContainer) newContainer.scrollTop = scrollTop;
     }
   }
 }
@@ -1653,6 +1657,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2047</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2050</div>
 </body>
 </html>
