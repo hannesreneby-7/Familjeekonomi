@@ -388,6 +388,44 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
       <div class="import-log" id="importLog"></div>
     </div>
 
+    <!-- RAPPORT VIEW -->
+    <div id="view-report" style="display:none">
+      <div class="ai-card">
+        <div class="ai-card-header">
+          <div class="ai-card-title">&#10022; AI-analys</div>
+          <div class="ai-badge">Powered by Claude</div>
+        </div>
+        <p style="font-size:13px;color:#9e9484;margin-bottom:16px">Välj en månad nedan och klicka för att få en personlig analys av er ekonomi.</p>
+        <button class="ai-analyze-btn" id="analyzeBtn" onclick="runAIAnalysis()">&#10022; Analysera månaden</button>
+        <div class="ai-thinking" id="aiThinking">
+          <div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div>
+          <span>Claude analyserar er ekonomi...</span>
+        </div>
+        <div class="ai-response" id="aiResponse"></div>
+      </div>
+      <div class="report-card">
+        <div class="report-header">
+          <div class="report-title">Månadsrapport</div>
+          <select class="report-month-select" id="reportMonthSelect" onchange="renderReport()"></select>
+        </div>
+        <div class="report-kpis" id="reportKpis"></div>
+        <div class="report-section">
+          <h3>Kategori vs snitt</h3>
+          <div id="reportCompare"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="report-section">
+            <h3>Topp 10 &mdash; största köp</h3>
+            <ul class="top-list" id="reportTop10"></ul>
+          </div>
+          <div class="report-section">
+            <h3>Återkommande kostnader</h3>
+            <ul class="top-list" id="reportRecurring"></ul>
+          </div>
+        </div>
+      </div>
+    </div><!-- end view-report -->
+
   </div><!-- end dashboardContent -->
 
   <div id="emptyState" style="display:none">
@@ -1284,6 +1322,51 @@ function parseCSV(buffer){
   return txns;
 }
 
+
+function parseXLSX(buffer){
+  const wb = XLSX.read(buffer, {type:'array', cellDates:true});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+  if(!rows.length){ alert('Tom Excel-fil.'); return []; }
+
+  let headerRow = 0;
+  for(let i=0;i<Math.min(5,rows.length);i++){
+    const r = rows[i].map(function(c){ return String(c).toLowerCase(); });
+    if(r.some(function(c){ return c.includes('transactiondate')||c.includes('text')||c.includes('amount'); })){
+      headerRow=i; break;
+    }
+  }
+
+  const headers = rows[headerRow].map(function(c){ return String(c).toLowerCase().trim(); });
+  const dateCol = headers.findIndex(function(h){ return h.includes('transactiondate')||h.includes('date'); });
+  const descCol = headers.findIndex(function(h){ return h==='text'||h.includes('description')||h.includes('beskrivning'); });
+  const amtCol  = headers.findIndex(function(h){ return h==='amount'||h==='belopp'; });
+
+  if(dateCol<0||amtCol<0){ alert('Kunde inte tolka Excel-filen.'); return []; }
+
+  const txns=[];
+  for(let i=headerRow+1;i<rows.length;i++){
+    const row=rows[i];
+    if(!row[dateCol]) continue;
+    let dateStr='';
+    const rawDate=row[dateCol];
+    if(rawDate instanceof Date){
+      dateStr=rawDate.toISOString().slice(0,10);
+    } else {
+      dateStr=String(rawDate).slice(0,10).replace(/\//g,'-');
+    }
+    if(!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) continue;
+    const amt=parseFloat(String(row[amtCol]).replace(',','.'));
+    if(isNaN(amt)) continue;
+    const desc=String(row[descCol]||'Okänd').trim();
+    if(!desc||desc.length<2) continue;
+    const du=desc.toUpperCase();
+    if(du.includes('FROM RENEBY')||du.includes('RENEBY HANNES')) continue;
+    txns.push({date:dateStr, acc:'Kreditkort', amt, desc, cat:autoCategory(desc)});
+  }
+  return txns;
+}
+
 function parsePDFRaw(text){
   const txns = [];
   const lines = text.split(/[\n\r]+/);
@@ -1657,6 +1740,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2050</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2100</div>
 </body>
 </html>
