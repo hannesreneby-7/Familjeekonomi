@@ -191,6 +191,50 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
 .reset-btn{background:#b83c3c;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:12px;width:100%}
 .reset-btn:hover{background:#9a2f2f}
 .reset-warning{background:#fbeaea;border:1px solid #e8a0a0;border-radius:8px;padding:10px 14px;font-size:12px;color:#7a2020;margin-top:10px;display:none}
+
+/* Månadsrapport */
+.report-card{background:var(--surface);border-radius:var(--radius);padding:24px 28px;box-shadow:var(--shadow);margin-bottom:16px}
+.report-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.report-title{font-family:'DM Serif Display',serif;font-size:22px;font-weight:400}
+.report-month-select{border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--surface);color:var(--text);outline:none}
+.report-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.report-kpi{background:var(--surface2);border-radius:10px;padding:14px 16px;text-align:center}
+.report-kpi-val{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:-.5px;margin-bottom:4px}
+.report-kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
+.report-section{margin-bottom:20px}
+.report-section h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:12px}
+.report-compare-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px}
+.report-compare-label{width:140px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.report-compare-bar-wrap{flex:1;background:var(--surface2);border-radius:4px;height:8px;position:relative}
+.report-compare-bar-curr{height:100%;border-radius:4px;position:absolute;top:0;left:0}
+.report-compare-bar-avg{position:absolute;top:-3px;height:14px;width:2px;background:var(--text3);border-radius:1px}
+.report-compare-val{font-size:12px;font-weight:500;min-width:60px;text-align:right;white-space:nowrap}
+.report-compare-diff{font-size:11px;min-width:55px;text-align:right;white-space:nowrap}
+.diff-up{color:var(--red)}.diff-down{color:var(--green)}.diff-eq{color:var(--text3)}
+.top-list{list-style:none}
+.top-list li{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--surface2);font-size:13px}
+.top-list li:last-child{border-bottom:none}
+.top-list .rank{font-size:11px;color:var(--text3);min-width:20px}
+.top-list .desc{flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 10px}
+.top-list .amt{font-weight:500;color:var(--text);white-space:nowrap}
+.recur-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:#e8eef6;color:#2d5a8e;white-space:nowrap}
+
+/* AI-analys */
+.ai-card{background:linear-gradient(135deg,#1a1710 0%,#2d2a20 100%);border-radius:var(--radius);padding:24px 28px;box-shadow:var(--shadow);margin-bottom:16px;color:#f4f1eb}
+.ai-card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.ai-card-title{font-family:'DM Serif Display',serif;font-size:20px;font-weight:400}
+.ai-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;font-size:11px;color:#b8c4a0}
+.ai-analyze-btn{background:#2d5a8e;color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s}
+.ai-analyze-btn:hover{background:#3a6fa8}
+.ai-analyze-btn:disabled{opacity:.5;cursor:default}
+.ai-response{margin-top:16px;font-size:14px;line-height:1.7;color:#e8e4d8;display:none}
+.ai-response p{margin-bottom:12px}
+.ai-response strong{color:#f4f1eb}
+.ai-thinking{display:none;align-items:center;gap:10px;margin-top:16px;font-size:13px;color:#9e9484}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:#b8c4a0;animation:pulse 1.2s infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}
+.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
 </style>
 </head>
 <body>
@@ -266,6 +310,7 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
       <button class="top-nav-btn" onclick="switchView('budget',this)">Budget</button>
       <button class="top-nav-btn" onclick="switchView('transactions',this)">Transaktioner</button>
       <button class="top-nav-btn" onclick="switchView('accounts',this)">Konton</button>
+      <button class="top-nav-btn" onclick="switchView('report',this)">Månadsrapport</button>
     </div>
 
     <!-- Month selector (shared across views) -->
@@ -363,6 +408,7 @@ const CAT_COLORS = {
   'Restaurang & café':'#d45c2a','Hälsa & apotek':'#5a9e4b',
   'Boende & el':'#7a6a3e','Sparande & investeringar':'#1a5e7a',
   'Resor':'#6b3a8e','Bilkostnader':'#8e5a2d',
+  'Frisör & skönhet':'#c4627a','Hemmet':'#6b7a3e',
   'Inkomst':'#1a7a3e','Intern överföring':'#b0a898','Övrigt':'#888780',
 };
 const ALL_CATS = Object.keys(CAT_COLORS);
@@ -411,11 +457,13 @@ function switchView(view, el){
   document.getElementById('view-budget').style.display       = view==='budget'       ? '' : 'none';
   document.getElementById('view-transactions').style.display = view==='transactions' ? '' : 'none';
   document.getElementById('view-accounts').style.display     = view==='accounts'     ? '' : 'none';
+  document.getElementById('view-report').style.display       = view==='report'       ? '' : 'none';
   requestAnimationFrame(() => {
     if(view==='budget')       renderBudgetView();
     if(view==='overview')     rebuildCharts();
     if(view==='transactions') renderTxns();
     if(view==='accounts')     renderAccountsView();
+    if(view==='report')       { buildReportMonthSelector(); renderReport(); }
   });
 }
 
@@ -529,6 +577,233 @@ function renderBudgetView(){
   }).join('');
 }
 
+
+
+// ===== MÅNADSRAPPORT =====
+function buildReportMonthSelector(){
+  const months = [...new Set(TXNS.map(t=>t.date.slice(0,7)))].sort().reverse();
+  const sel = document.getElementById('reportMonthSelect');
+  if(!sel) return;
+  sel.innerHTML = months.map(m => {
+    const [y,mo] = m.split('-');
+    const names = {'01':'Januari','02':'Februari','03':'Mars','04':'April','05':'Maj',
+                   '06':'Juni','07':'Juli','08':'Augusti','09':'September','10':'Oktober',
+                   '11':'November','12':'December'};
+    return '<option value="'+m+'">'+(names[mo]||mo)+' '+y+'</option>';
+  }).join('');
+  renderReport();
+}
+
+function renderReport(){
+  const sel = document.getElementById('reportMonthSelect');
+  if(!sel) return;
+  const month = sel.value;
+  if(!month) return;
+
+  const expenses = t => t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring';
+  const months = [...new Set(TXNS.map(t=>t.date.slice(0,7)))].sort();
+
+  const currTxns = TXNS.filter(t => t.date.startsWith(month));
+  const currExp  = currTxns.filter(expenses);
+  const currInc  = currTxns.filter(t => t.amt > 0 && t.cat === 'Inkomst');
+
+  const totalExp = currExp.reduce((s,t) => s+Math.abs(t.amt), 0);
+  const totalInc = currInc.reduce((s,t) => s+t.amt, 0);
+  const net = totalInc - totalExp;
+  const fmt = n => Math.round(Math.abs(n)).toLocaleString('sv-SE')+' kr';
+
+  // Snitt från alla andra månader
+  const otherMonths = months.filter(m => m !== month);
+  function catAvg(cat){
+    if(!otherMonths.length) return 0;
+    const total = otherMonths.reduce((s,m) => {
+      return s + TXNS.filter(t => t.date.startsWith(m) && t.cat===cat && expenses(t))
+                     .reduce((ss,t) => ss+Math.abs(t.amt), 0);
+    }, 0);
+    return total / otherMonths.length;
+  }
+
+  // KPIs
+  const avgExpAll = otherMonths.length
+    ? otherMonths.reduce((s,m) => s + TXNS.filter(t=>t.date.startsWith(m)&&expenses(t)).reduce((ss,t)=>ss+Math.abs(t.amt),0), 0) / otherMonths.length
+    : totalExp;
+  const diffVsAvg = totalExp - avgExpAll;
+
+  document.getElementById('reportKpis').innerHTML = `
+    <div class="report-kpi">
+      <div class="report-kpi-val" style="color:var(--red)">−${fmt(totalExp)}</div>
+      <div class="report-kpi-label">Utgifter</div>
+    </div>
+    <div class="report-kpi">
+      <div class="report-kpi-val" style="color:var(--green)">+${fmt(totalInc)}</div>
+      <div class="report-kpi-label">Inkomster</div>
+    </div>
+    <div class="report-kpi">
+      <div class="report-kpi-val" style="color:${diffVsAvg>0?'var(--red)':'var(--green)'}">
+        ${diffVsAvg>0?'+':''}${Math.round(diffVsAvg).toLocaleString('sv-SE')} kr
+      </div>
+      <div class="report-kpi-label">vs månadssnitt</div>
+    </div>`;
+
+  // Kategori vs snitt
+  const catTotals = {};
+  currExp.forEach(t => { catTotals[t.cat] = (catTotals[t.cat]||0) + Math.abs(t.amt); });
+  const sorted = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+  const maxVal = Math.max(...sorted.map(([,v])=>v), ...sorted.map(([c])=>catAvg(c)));
+
+  document.getElementById('reportCompare').innerHTML = sorted.map(([cat,val]) => {
+    const avg = catAvg(cat);
+    const diff = val - avg;
+    const pctOfMax = (val/maxVal*100).toFixed(1);
+    const avgPct = (avg/maxVal*100).toFixed(1);
+    const color = CAT_COLORS[cat] || '#888';
+    const diffTxt = avg===0 ? '' : (diff>0?'▲':'▼')+Math.round(Math.abs(diff)).toLocaleString('sv-SE')+' kr';
+    const diffClass = diff>500?'diff-up':diff<-500?'diff-down':'diff-eq';
+    return `<div class="report-compare-row">
+      <div class="report-compare-label">${cat}</div>
+      <div class="report-compare-bar-wrap">
+        <div class="report-compare-bar-curr" style="width:${pctOfMax}%;background:${color}60"></div>
+        ${avg>0?`<div class="report-compare-bar-avg" style="left:${avgPct}%"></div>`:''}
+      </div>
+      <div class="report-compare-val">${Math.round(val).toLocaleString('sv-SE')} kr</div>
+      <div class="report-compare-diff ${diffClass}">${diffTxt}</div>
+    </div>`;
+  }).join('');
+
+  // Topp 10
+  const top10 = [...currExp].sort((a,b)=>Math.abs(b.amt)-Math.abs(a.amt)).slice(0,10);
+  document.getElementById('reportTop10').innerHTML = top10.map((t,i) => `
+    <li>
+      <span class="rank">${i+1}</span>
+      <span class="desc" title="${t.desc}">${t.desc}</span>
+      <span class="amt">−${Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')} kr</span>
+    </li>`).join('');
+
+  // Återkommande — köp som förekommer i minst 2 månader
+  const descMonths = {};
+  TXNS.filter(expenses).forEach(t => {
+    const key = t.desc.slice(0,20).toUpperCase();
+    if(!descMonths[key]) descMonths[key] = {desc:t.desc, months:new Set(), total:0, count:0};
+    descMonths[key].months.add(t.date.slice(0,7));
+    descMonths[key].total += Math.abs(t.amt);
+    descMonths[key].count++;
+  });
+  const recurring = Object.values(descMonths)
+    .filter(d => d.months.size >= 2)
+    .sort((a,b) => b.total/b.count - a.total/a.count)
+    .slice(0,10);
+
+  document.getElementById('reportRecurring').innerHTML = recurring.map(r => `
+    <li>
+      <span class="desc" title="${r.desc}">${r.desc}</span>
+      <span class="recur-badge">${r.months.size} mån</span>
+      <span class="amt">~${Math.round(r.total/r.count).toLocaleString('sv-SE')} kr/mån</span>
+    </li>`).join('');
+}
+
+// ===== AI-ANALYS =====
+async function runAIAnalysis(){
+  const sel = document.getElementById('reportMonthSelect');
+  const month = sel?.value;
+  if(!month){ alert('Välj en månad först.'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  const thinking = document.getElementById('aiThinking');
+  const responseEl = document.getElementById('aiResponse');
+
+  btn.disabled = true;
+  thinking.style.display = 'flex';
+  responseEl.style.display = 'none';
+
+  // Sammanställ data för Claude
+  const months = [...new Set(TXNS.map(t=>t.date.slice(0,7)))].sort();
+  const expenses = t => t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring';
+
+  const currTxns = TXNS.filter(t => t.date.startsWith(month));
+  const currExp  = currTxns.filter(expenses);
+  const currInc  = currTxns.filter(t => t.amt>0 && t.cat==='Inkomst');
+  const totalExp = currExp.reduce((s,t)=>s+Math.abs(t.amt),0);
+  const totalInc = currInc.reduce((s,t)=>s+t.amt,0);
+
+  // Kategori-summering
+  const catTotals = {};
+  currExp.forEach(t => { catTotals[t.cat]=(catTotals[t.cat]||0)+Math.abs(t.amt); });
+
+  // Snitt per kategori
+  const otherMonths = months.filter(m=>m!==month);
+  const catAvgs = {};
+  Object.keys(catTotals).forEach(cat => {
+    if(!otherMonths.length){ catAvgs[cat]=0; return; }
+    catAvgs[cat] = otherMonths.reduce((s,m)=>
+      s+TXNS.filter(t=>t.date.startsWith(m)&&t.cat===cat&&expenses(t)).reduce((ss,t)=>ss+Math.abs(t.amt),0),0
+    ) / otherMonths.length;
+  });
+
+  // Topp 5 köp
+  const top5 = [...currExp].sort((a,b)=>Math.abs(b.amt)-Math.abs(a.amt)).slice(0,5);
+
+  const [y,mo] = month.split('-');
+  const monthNames = {'01':'januari','02':'februari','03':'mars','04':'april','05':'maj',
+                      '06':'juni','07':'juli','08':'augusti','09':'september','10':'oktober',
+                      '11':'november','12':'december'};
+
+  const prompt = `Du är en personlig ekonomirådgivare för en svensk familj. Analysera deras ekonomi för ${monthNames[mo]} ${y}.
+
+SAMMANFATTNING:
+- Inkomster: ${Math.round(totalInc).toLocaleString('sv-SE')} kr
+- Utgifter: ${Math.round(totalExp).toLocaleString('sv-SE')} kr
+- Netto: ${Math.round(totalInc-totalExp).toLocaleString('sv-SE')} kr
+
+UTGIFTER PER KATEGORI (denna månad vs månadssnitt):
+${Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,val]) => {
+  const avg = catAvgs[cat]||0;
+  const diff = val-avg;
+  return `- ${cat}: ${Math.round(val).toLocaleString('sv-SE')} kr (snitt: ${Math.round(avg).toLocaleString('sv-SE')} kr, ${diff>0?'+':''}${Math.round(diff).toLocaleString('sv-SE')} kr)`;
+}).join('
+')}
+
+TOPP 5 STÖRSTA KÖP:
+${top5.map((t,i)=>`${i+1}. ${t.desc}: ${Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')} kr (${t.cat})`).join('
+')}
+
+Skriv en personlig, konkret analys på svenska. Var ärlig och specifik. Lyft fram:
+1. Hur månaden ser ut överlag
+2. Vad som sticker ut (positivt eller negativt) vs snittet
+3. Konkreta besparingstips baserat på datan
+4. En uppmuntrande avslutning
+
+Skriv naturligt och conversationellt, inte som en rapport. Max 250 ord.`;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{role:'user', content:prompt}]
+      })
+    });
+    const data = await r.json();
+    const text = data.content?.[0]?.text || 'Kunde inte generera analys.';
+
+    // Formatera som HTML-paragrafer
+    const formatted = text.split('
+
+').filter(p=>p.trim())
+      .map(p => '<p>'+p.replace(/
+/g,'<br>')+'</p>').join('');
+
+    responseEl.innerHTML = formatted;
+    responseEl.style.display = 'block';
+  } catch(e) {
+    responseEl.innerHTML = '<p style="color:#f08080">Kunde inte ansluta till AI. Försök igen.</p>';
+    responseEl.style.display = 'block';
+  }
+
+  thinking.style.display = 'none';
+  btn.disabled = false;
+}
 
 // ===== INLÄRNING =====
 function descKey(desc){
@@ -862,6 +1137,16 @@ function autoCategory(desc){
   if(d.includes('SWISH INBETALNING') && !d.includes('BARNBIDRAG')){
     return 'Intern överföring';
   }
+  // Frisör & skönhet
+  if(['RANELLA','HAIR','FRISÖR','SALONG','TSOLMON','MASSAGE',
+      'RITUALS','DERMAROME','MEDLEY','KRONANS APOTEK'].some(k=>d.includes(k)))
+    return 'Frisör & skönhet';
+
+  // Hemmet
+  if(['BYGGMAX','BILTEMA','JULA','PLANTAGEN','IKEA','HORNBACH',
+      'K-RAUTA','BAUHAUS','CLAS OHLSON','XS LEKSAKER'].some(k=>d.includes(k)))
+    return 'Hemmet';
+
   for(const [cat,kws] of Object.entries(CAT_RULES))
     for(const kw of kws)
       if(d.includes(kw.toUpperCase())) return cat;
@@ -1301,6 +1586,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-1807</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2015</div>
 </body>
 </html>
