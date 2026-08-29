@@ -838,10 +838,17 @@ function handleFile(file){
   }
 }
 function parseCSV(buffer){
-  // Try windows-1252 first (Swedbank), then utf-8-sig (Nordea)
+  // Detect encoding: try UTF-8 first (Nordea), fallback to windows-1252 (Swedbank)
   let text = '';
-  try { text = new TextDecoder('windows-1252').decode(buffer); }
-  catch(e) { text = new TextDecoder('utf-8').decode(buffer); }
+  const utf8 = new TextDecoder('utf-8').decode(buffer);
+  // If UTF-8 decoding produces replacement chars, use windows-1252 instead
+  if(utf8.includes('\uFFFD') || (utf8.includes('Ã') && utf8.includes('¶'))){
+    text = new TextDecoder('windows-1252').decode(buffer);
+  } else {
+    text = utf8;
+  }
+  // Remove BOM if present
+  if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
 
   const lines = text.trim().split(/\r?\n/);
   let startLine = 0;
@@ -1233,12 +1240,35 @@ function renderTxns(){
   document.getElementById('txnCount').textContent='Visar '+slice.length+' av '+filtered.length+' transaktioner';
 }
 let saveTimer=null;
-function changeCat(idx,cat){
-  learnCategory(TXNS[idx].desc, cat);
-  TXNS[idx].cat=cat;
+
+function bulkUpdatePending(idx, cat){
+  const key = descKey(pendingTxns[idx].desc);
+  pendingTxns.forEach((t, i) => {
+    if(i !== idx && descKey(t.desc) === key) t.cat = cat;
+  });
+}
+
+function changeCat(idx, cat){
+  const desc = TXNS[idx].desc;
+  const key  = descKey(desc);
+  learnCategory(desc, cat);
+  TXNS[idx].cat = cat;
+
+  // Hitta liknande transaktioner med samma mottagarnyckel och annan kategori
+  const similar = TXNS.filter((t, i) => i !== idx && descKey(t.desc) === key && t.cat !== cat);
+
+  if(similar.length > 0){
+    const names = [...new Set(similar.map(t => t.desc))].slice(0,3).join(', ');
+    const msg = `Vill du ändra alla ${similar.length} transaktioner från "${desc}" till "${cat}"?\n(${names}${similar.length > 3 ? '...' : ''})`;
+    if(confirm(msg)){
+      similar.forEach(t => { t.cat = cat; });
+      learnCategory(desc, cat);
+    }
+  }
+
   renderTxns();
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>saveToCloud(),2000);
+  saveTimer = setTimeout(() => saveToCloud(), 2000);
 }
 
 // ===== INIT =====
@@ -1247,6 +1277,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.28-0618</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-1720</div>
 </body>
 </html>
