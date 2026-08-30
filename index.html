@@ -659,6 +659,40 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
   .budget-grid { grid-template-columns: 1fr; }
   .accounts-grid { grid-template-columns: 1fr; }
 }
+
+/* Klickbar kategorilista */
+.cat-item { cursor: pointer; transition: opacity .15s; }
+.cat-item:hover { opacity: .75; }
+.cat-expand {
+  display: none;
+  margin-top: 8px;
+  margin-left: 16px;
+  border-left: 2px solid var(--sand);
+  padding-left: 12px;
+}
+.cat-expand.open { display: block; }
+.cat-expand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--bg);
+  font-size: 12px;
+  gap: 8px;
+}
+.cat-expand-row:last-child { border-bottom: none; }
+.cat-expand-desc {
+  flex: 1;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cat-expand-date { color: var(--ink-4); font-size: 11px; white-space: nowrap; }
+.cat-expand-amt { font-weight: 500; white-space: nowrap; color: var(--red); }
+.cat-expand-more { font-size: 11px; color: var(--ink-4); padding: 4px 0; text-align: center; }
+.cat-chevron { font-size: 10px; color: var(--ink-4); margin-left: 4px; transition: transform .2s; }
+.cat-chevron.open { transform: rotate(180deg); }
 </style>
 </head>
 <body>
@@ -1165,6 +1199,47 @@ function renderReport(){
     '</li>';
   });
   document.getElementById('reportRecurring').innerHTML = recurHtml;
+}
+
+
+function toggleCatExpand(id, cat){
+  var el = document.getElementById(id);
+  var chev = document.getElementById('chev-'+id);
+  if(!el) return;
+
+  if(el.classList.contains('open')){
+    el.classList.remove('open');
+    if(chev) chev.classList.remove('open');
+    return;
+  }
+
+  // Bygg innehållet
+  var src = filteredByMonth();
+  var txns = src.filter(function(t){
+    return t.cat === cat && t.amt < 0;
+  }).sort(function(a,b){ return Math.abs(b.amt)-Math.abs(a.amt); });
+
+  if(!txns.length){
+    el.innerHTML = '<div class="cat-expand-more">Inga transaktioner</div>';
+  } else {
+    var shown = txns.slice(0, 20);
+    var html = shown.map(function(t){
+      var d = new Date(t.date);
+      var ds = d.toLocaleDateString('sv-SE',{day:'numeric',month:'short'});
+      return '<div class="cat-expand-row">' +
+        '<span class="cat-expand-date">'+ds+'</span>' +
+        '<span class="cat-expand-desc" title="'+t.desc+'">'+t.desc+'</span>' +
+        '<span class="cat-expand-amt">-'+Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')+' kr</span>' +
+      '</div>';
+    }).join('');
+    if(txns.length > 20){
+      html += '<div class="cat-expand-more">...och '+(txns.length-20)+' till</div>';
+    }
+    el.innerHTML = html;
+  }
+
+  el.classList.add('open');
+  if(chev) chev.classList.add('open');
 }
 
 // ===== INLÄRNING =====
@@ -2000,9 +2075,20 @@ function rebuildCharts(){
       tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+Math.round(ctx.raw).toLocaleString('sv-SE')+' kr'}}}}});
 
   const maxV=sorted[0]?.[1]||1;
-  document.getElementById('catBars').innerHTML=sorted.map(([cat,val])=>
-    '<div class="cat-item"><div class="cat-dot" style="background:'+(CAT_COLORS[cat]||'#888')+'"></div><div class="cat-name">'+cat+'</div><div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:'+(val/maxV*100).toFixed(1)+'%;background:'+(CAT_COLORS[cat]||'#888')+'"></div></div><div class="cat-amount">'+Math.round(val).toLocaleString('sv-SE')+' kr</div></div>'
-  ).join('');
+  document.getElementById('catBars').innerHTML = sorted.map(function(entry){
+    var cat = entry[0], val = entry[1];
+    var color = CAT_COLORS[cat] || '#888';
+    var pct = (val/maxV*100).toFixed(1);
+    var id = 'cat-expand-' + cat.replace(/[^a-z0-9]/gi,'_');
+    return '<div class="cat-item" onclick="toggleCatExpand(\'' + id + '\',\'' + cat + '\')">' +
+      '<div class="cat-dot" style="background:' + color + '"></div>' +
+      '<div class="cat-name">' + cat + '</div>' +
+      '<div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+      '<div class="cat-amount">' + Math.round(val).toLocaleString('sv-SE') + ' kr</div>' +
+      '<span class="cat-chevron" id="chev-' + id + '">▼</span>' +
+    '</div>' +
+    '<div class="cat-expand" id="' + id + '"></div>';
+  }).join('');
 
   const top5=sorted.slice(0,5).map(([c])=>c);
   const accs=['Kort','Bank','Kreditkort','Importerat'];
@@ -2179,6 +2265,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.30-2006</div>
+<div class="version-tag">v2026.08.30-2013</div>
 </body>
 </html>
