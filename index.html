@@ -693,6 +693,21 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 .cat-expand-more { font-size: 11px; color: var(--ink-4); padding: 4px 0; text-align: center; }
 .cat-chevron { font-size: 10px; color: var(--ink-4); margin-left: 4px; transition: transform .2s; }
 .cat-chevron.open { transform: rotate(180deg); }
+
+.cat-expand-sel {
+  border: 1px solid var(--sand);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-family: inherit;
+  background: white;
+  cursor: pointer;
+  outline: none;
+  color: var(--ink-2);
+  max-width: 160px;
+  flex-shrink: 0;
+}
+.cat-expand-sel:focus { border-color: var(--blue); }
 </style>
 </head>
 <body>
@@ -1213,33 +1228,71 @@ function toggleCatExpand(id, cat){
     return;
   }
 
-  // Bygg innehållet
+  renderCatExpand(id, cat);
+  el.classList.add('open');
+  if(chev) chev.classList.add('open');
+}
+
+function renderCatExpand(id, cat){
+  var el = document.getElementById(id);
+  if(!el) return;
   var src = filteredByMonth();
-  var txns = src.filter(function(t){
-    return t.cat === cat && t.amt < 0;
-  }).sort(function(a,b){ return Math.abs(b.amt)-Math.abs(a.amt); });
+  var txns = src.filter(function(t){ return t.cat === cat && t.amt < 0; })
+               .sort(function(a,b){ return Math.abs(b.amt)-Math.abs(a.amt); });
 
   if(!txns.length){
     el.innerHTML = '<div class="cat-expand-more">Inga transaktioner</div>';
-  } else {
-    var shown = txns.slice(0, 20);
-    var html = shown.map(function(t){
-      var d = new Date(t.date);
-      var ds = d.toLocaleDateString('sv-SE',{day:'numeric',month:'short'});
-      return '<div class="cat-expand-row">' +
-        '<span class="cat-expand-date">'+ds+'</span>' +
-        '<span class="cat-expand-desc" title="'+t.desc+'">'+t.desc+'</span>' +
-        '<span class="cat-expand-amt">-'+Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')+' kr</span>' +
-      '</div>';
-    }).join('');
-    if(txns.length > 20){
-      html += '<div class="cat-expand-more">...och '+(txns.length-20)+' till</div>';
-    }
-    el.innerHTML = html;
+    return;
   }
 
-  el.classList.add('open');
-  if(chev) chev.classList.add('open');
+  var shown = txns.slice(0, 30);
+  var opts = ALL_CATS.map(function(c){
+    return '<option value="'+c+'">'+ c +'</option>';
+  }).join('');
+
+  var rows = shown.map(function(t){
+    var txnIdx = TXNS.indexOf(t);
+    var d = new Date(t.date);
+    var ds = d.toLocaleDateString('sv-SE',{day:'numeric',month:'short'});
+    var opts = ALL_CATS.map(function(c){
+      return '<option value="'+c+'"'+(c===t.cat?' selected':'')+'>'+c+'</option>';
+    }).join('');
+    return '<div class="cat-expand-row">' +
+      '<span class="cat-expand-date">'+ds+'</span>' +
+      '<span class="cat-expand-desc" title="'+t.desc+'">'+t.desc+'</span>' +
+      '<span class="cat-expand-amt">-'+Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')+' kr</span>' +
+      '<select class="cat-expand-sel" data-idx="'+txnIdx+'" data-expand="'+id+'" data-oldcat="'+cat+'" onchange="catExpandChange(this)">' +
+        opts +
+      '</select>' +
+    '</div>';
+  }).join('');
+
+  if(txns.length > 30){
+    rows += '<div class="cat-expand-more">...och '+(txns.length-30)+' till — gå till Transaktioner för fler</div>';
+  }
+  el.innerHTML = rows;
+}
+
+function catExpandChange(sel){
+  var txnIdx  = parseInt(sel.getAttribute('data-idx'));
+  var expandId = sel.getAttribute('data-expand');
+  var oldCat  = sel.getAttribute('data-oldcat');
+  var newCat  = sel.value;
+  if(txnIdx < 0 || txnIdx >= TXNS.length) return;
+  learnCategory(TXNS[txnIdx].desc, newCat);
+  TXNS[txnIdx].cat = newCat;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){ saveToCloud(); }, 2000);
+  // Rita om diagrammen och listan
+  rebuildCharts();
+  // Rita om expand-listan för gamla kategorin (nu utan denna transaktion)
+  renderCatExpand(expandId, oldCat);
+  // Öppna den nya kategorins expand om den finns
+  var newId = 'cat-expand-' + newCat.replace(/[^a-z0-9]/gi,'_');
+  var newEl = document.getElementById(newId);
+  if(newEl && newEl.classList.contains('open')){
+    renderCatExpand(newId, newCat);
+  }
 }
 
 // ===== INLÄRNING =====
@@ -2265,6 +2318,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.30-2013</div>
+<div class="version-tag">v2026.08.30-2020</div>
 </body>
 </html>
