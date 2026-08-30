@@ -1464,22 +1464,11 @@ async function confirmReset(){
 }
 
 // ===== JSONBIN =====
-function getKeys(){ return {secret:localStorage.getItem('jb_secret'),bin:localStorage.getItem('jb_bin')}; }
+function getKeys(){ return {}; } // Används inte längre — Supabase är inbyggt
 
-function saveKeys(){
-  const s=document.getElementById('inputSecretKey').value.trim();
-  const b=document.getElementById('inputBinId').value.trim();
-  if(!s||!b){ alert('Fyll i båda fälten.'); return; }
-  localStorage.setItem('jb_secret',s);
-  localStorage.setItem('jb_bin',b);
-  document.getElementById('setupBanner').style.display='none';
-  loadFromCloud();
-}
+// saveKeys() borttagen — Supabase är inbyggt
 
 function showSetup(){
-  const k=getKeys();
-  if(k.secret) document.getElementById('inputSecretKey').value=k.secret;
-  if(k.bin)    document.getElementById('inputBinId').value=k.bin;
   document.getElementById('setupBanner').style.display='block';
   window.scrollTo(0,0);
 }
@@ -2186,6 +2175,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.30-1914</div>
+<div class="version-tag">v2026.08.30-1917</div>
 </body>
 </html>
