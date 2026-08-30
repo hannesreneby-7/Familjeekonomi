@@ -1585,6 +1585,10 @@ function autoCategory(desc){
   if(d.includes('SWISH INBETALNING') && !d.includes('BARNBIDRAG')){
     return 'Intern överföring';
   }
+  // Kreditkortsbetalningar = intern överföring
+  if(d === 'INBETALNING' || d.startsWith('INBETALNING ') || d.includes('BETALNING KREDITKORT')){
+    return 'Intern överföring';
+  }
   // Bränsle
   if(['PREEM','OKQ8','CIRCLE K','SHELL','ST1','QSTAR','SHELL'].some(function(k){ return d.includes(k); }))
     return 'Bränsle';
@@ -1876,7 +1880,7 @@ function showPreview(txns,filename,type){
           '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:' +
           (t._confident ? '#2d7a56' : '#c4821a') + '"></span>' + t.desc +
         '</td>' +
-        '<td style="text-align:right;white-space:nowrap;padding:6px 10px">' + Math.abs(t.amt).toFixed(0) + ' kr</td>' +
+        '<td style="text-align:right;white-space:nowrap;padding:6px 10px;font-weight:500;color:'+(t.amt>0?'#1A6B4A':'#C0392B')+'">'+(t.amt>0?'+':'-')+Math.abs(t.amt).toFixed(0)+' kr</td>' +
         '<td style="padding:6px 10px"><select class="cat-sel" onchange="' + onChange + '" style="color:' + col + '">' + opts + '</select></td>' +
       '</tr>';
     }).join('');
@@ -2175,6 +2179,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.30-1917</div>
+<div class="version-tag">v2026.08.30-1937</div>
 </body>
 </html>
