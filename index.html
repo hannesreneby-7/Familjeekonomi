@@ -706,13 +706,9 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 
 <div class="main">
   <div class="setup-banner" id="setupBanner" style="display:none">
-    <h3>🔑 Koppla till JSONBin</h3>
-    <p>Klistra in dina JSONBin-uppgifter. Dessa sparas bara i din webbläsare — aldrig i koden.</p>
-    <label>Secret Key (börjar med $2b$...)</label>
-    <input type="password" id="inputSecretKey" placeholder="$2b$10$...">
-    <label>Bin ID</label>
-    <input type="text" id="inputBinId" placeholder="6839f1e2c2ef...">
-    <button class="save-btn" onclick="saveKeys()">Spara & anslut</button>
+    <h3>⚙ Inställningar</h3>
+    <p style="font-size:12px;color:var(--ink-3);margin-bottom:12px">Appen är ansluten till Supabase (EU). Data lagras säkert och delas med alla som har tillgång till appen.</p>
+    <button class="save-btn" onclick="loadFromCloud()">Synka nu</button>
 
     <hr style="border:none;border-top:1px solid #f0d88a;margin:16px 0">
     <div style="font-size:12px;font-weight:600;color:#4a3700;margin-bottom:6px">⚠️ Farlig zon</div>
@@ -874,6 +870,10 @@ const CAT_COLORS = {
   'Inkomst':'#1a7a3e','Intern överföring':'#b0a898','Övrigt':'#888780',
 };
 const ALL_CATS = Object.keys(CAT_COLORS);
+
+// Supabase config
+const SUPA_URL = 'https://ysowzitqqxxvsxfzdssj.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlzb3d6aXRxcXh4dnN4Znpkc3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxMTA1NjIsImV4cCI6MjEwMzY4NjU2Mn0.q7kBbs4711FkebbJZHScF-fiKDzzaFRQSYTSTJ1smNQ';
 
 let TXNS = [];
 let BUDGET = {};
@@ -1430,17 +1430,19 @@ async function confirmReset(){
   hideResetWarning();
   setSyncStatus('saving', '⟳ Nollställer...');
 
-  // 1. Töm JSONBin
-  const k = getKeys();
-  if(k.secret && k.bin){
-    try{
-      await fetch('https://api.jsonbin.io/v3/b/'+k.bin, {
-        method:'PUT',
-        headers:{'Content-Type':'application/json','X-Master-Key':k.secret},
-        body: JSON.stringify({transaktioner:[],budget:{},learned:LEARNED})
-      });
-    } catch(e){ console.log('JSONBin reset failed:', e); }
-  }
+  // 1. Töm Supabase
+  try{
+    await fetch(SUPA_URL+'/rest/v1/ekonomi?id=eq.main', {
+      method: 'PATCH',
+      headers:{
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer '+SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({data:{t:[],b:{},l:LEARNED}})
+    });
+  } catch(e){ console.log('Supabase reset failed:', e); }
 
   // 2. Rensa ALL localStorage för appen
   Object.keys(localStorage).forEach(key => {
@@ -1489,43 +1491,43 @@ function setSyncStatus(state,text){
 }
 
 async function loadFromCloud(){
-  const k=getKeys();
-  if(!k.secret||!k.bin){
-    document.getElementById('setupBanner').style.display='block';
-    showEmpty();
-    return;
-  }
+  setSyncStatus('saving','⟳ Ansluter...');
 
-  // ── STEG 1: Visa cachad data omedelbart ──
+  // Visa cachad data direkt
   const cached = localStorage.getItem('ekonomi_cache');
   if(cached){
     try{
       const c = JSON.parse(cached);
-      TXNS   = c.transaktioner || [];
-      BUDGET = c.budget || {};
-      if(c.learned) LEARNED = c.learned;
-      if(TXNS.length > 0){
-        showDashboard();
-        setSyncStatus('saving','⟳ Uppdaterar...');
-      }
-    } catch(e){ /* ignorera trasig cache */ }
+      if(c.t){ TXNS = c.t.map(function(r){ return {date:r[0],acc:r[1],amt:r[2],desc:r[3],cat:r[4]}; }); }
+      else { TXNS = c.transaktioner || []; }
+      BUDGET = c.b || c.budget || {};
+      if(c.l || c.learned) LEARNED = c.l || c.learned;
+      if(TXNS.length > 0){ showDashboard(); setSyncStatus('saving','⟳ Uppdaterar...'); }
+    } catch(e){}
   }
 
-  // ── STEG 2: Hämta från JSONBin i bakgrunden ──
+  // Hämta från Supabase
   try{
-    const r = await fetch('https://api.jsonbin.io/v3/b/'+k.bin+'/latest',{
-      headers:{'X-Master-Key':k.secret,'X-Bin-Meta':'false'}
+    const r = await fetch(SUPA_URL+'/rest/v1/ekonomi?id=eq.main&select=data', {
+      headers:{
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer '+SUPA_KEY
+      }
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
-    const data = await r.json();
+    const rows = await r.json();
+    if(!rows.length) throw new Error('Ingen data');
+    const data = rows[0].data;
 
-    // Uppdatera bara om datan faktiskt ändrats
     const newJson = JSON.stringify(data);
     const oldJson = localStorage.getItem('ekonomi_cache');
+
     if(newJson !== oldJson){
-      TXNS   = data.transaktioner || [];
-      BUDGET = data.budget || {};
-      if(data.learned) { LEARNED = data.learned; localStorage.setItem('ekonomi_learned', JSON.stringify(LEARNED)); }
+      if(data.t){ TXNS = data.t.map(function(r){ return {date:r[0],acc:r[1],amt:r[2],desc:r[3],cat:r[4]}; }); }
+      else { TXNS = data.transaktioner || []; }
+      BUDGET = data.b || data.budget || {};
+      var ld = data.l || data.learned;
+      if(ld){ LEARNED = ld; localStorage.setItem('ekonomi_learned', JSON.stringify(LEARNED)); }
       localStorage.setItem('ekonomi_cache', newJson);
       if(TXNS.length === 0){ showEmpty(); }
       else { showDashboard(); }
@@ -1538,21 +1540,29 @@ async function loadFromCloud(){
 }
 
 async function saveToCloud(showStatus=true){
-  const k=getKeys();
-  if(!k.secret||!k.bin) return;
   if(showStatus) setSyncStatus('saving','⟳ Sparar...');
+  const payload = {
+    t: TXNS.map(function(t){ return [t.date,t.acc,t.amt,t.desc,t.cat]; }),
+    b: BUDGET,
+    l: LEARNED
+  };
+  // Uppdatera cache
+  localStorage.setItem('ekonomi_cache', JSON.stringify(payload));
   try{
-    const r=await fetch('https://api.jsonbin.io/v3/b/'+k.bin,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json','X-Master-Key':k.secret},
-      body:JSON.stringify({transaktioner:TXNS,budget:BUDGET,learned:LEARNED})
+    const r = await fetch(SUPA_URL+'/rest/v1/ekonomi?id=eq.main', {
+      method: 'PATCH',
+      headers:{
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer '+SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({data: payload})
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
-    // Uppdatera cache när vi sparar
-    localStorage.setItem('ekonomi_cache', JSON.stringify({transaktioner:TXNS,budget:BUDGET,learned:LEARNED}));
     if(showStatus) setSyncStatus('ok','✓ Sparad '+new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'}));
   } catch(e){
-    setSyncStatus('error','✗ Sparning misslyckades');
+    setSyncStatus('error','✗ Sparning misslyckades: '+e.message);
   }
 }
 
@@ -2176,6 +2186,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.30-1820</div>
+<div class="version-tag">v2026.08.30-1909</div>
 </body>
 </html>
