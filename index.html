@@ -438,14 +438,14 @@ input.si:focus,select.fs:focus{border-color:var(--accent)}
 </div>
 
 <script>
-const CAT_RULES = {"Mat & dagligvaror":["ICA","COOP","LIDL","HEMKOP","MAXI","WILLYS","NETTO","MATHEM","CONVINI","PRIS NYCKELKUND","CITY GROSS","GRONA LUND MAT"],"Restaurang & café":["RESTAURANG","SUSHI","BURGER","MCD","MAX BURGER","PIZZA","KEBAB","THAI","CAFE","COFFEE","HOLY GREENS","HEAT","HAMBURGERI","TZATZIKI","WAYNES","ITAMAE","OMG SUSHI","PINCHOS","RICHE","KUNG CARLS","SLAKTBAREN","MASALA","RISTORANTE","SUBWAY","WAL*JACK","OLEARYS","PREPP","KOKPUNKT","NAKED JUICEBAR","PRIMA NAPOLETAN","MEKI FOOD","INDOCHINE","ESPRESSO HOUSE","CENTRALKONDITORI","BRANES RESTAURAN","LEKHYTTANS","LULU"],"Kollektivtrafik":["SL","VÄSTTRAFIK","SJ.SE","FLYTOGET","RUTERAPPEN","RUTER"],"Resor":["SAS","NORWEGIAN AI","SWEDAVIA","AIRPORT TAXI","NOVOTEL","WALKTHROUGH","SBB BAHNHOF","BOLT.EU","UBER","TAXI STOCKHOLM","AIMO PARK","DUTY FREE","AVOLTA","SSP S.A.","RIO REAL GOLF HOTEL"],"Bilkostnader":["PREEM","OKQ8","CIRCLE K","SHELL","ST1","QSTAR","PARKSTER","PARKMAN","EASYPARK","BILTEMA","STIVENBILVERKSTAD","TRANSPORTSTYR","BG 250-5683","BG 282-4647","BG 809-2934","BG 316-7541","BG 5051-6822","LINDEROTHS CYKEL"],"Kläder & shopping":["LINDEX","H&M","ZARA","STADIUM","XXL","INTERSPORT","AHLENS","NORMAL","RUSTA","LAGERHAUS","JULA","VOLT","RITUALS","KANDYZ","GODISGALLERIAN","STOP N SHOP","MICHA ADAM","SOLTORGET","BYGGMAX","DERMAROME","AMAZON","DUTY FREE"],"Nöje & fritid":["JUMPYARD","SYSTEMBOLAGET","NACKA TOBAK","BIOGRAF","ROMME","FJARILSHUSET","PRESSBYRAN","7-ELEVEN","STOCKHOLM LIVE","GRONA LUND","BIBLIOTEKET","3ARENA","SPORTSBAR","FLOTTSBRO","NEW BOWL","FILMSTADEN","GUSTAVSBERGSBAD","BADMINTONSTADIO","W*BRANAS","MEDLEY"],"Barn & familj":["BOO FOTB","BOO HOCK","NACKA GYMN","WAYNES ICE","PINGIS","SVENSKALAG","TRE KRONOR","DIREKTEN","HAPPIES LEKSAKE","HANVIKENS","ICE ACADEMY","ZETTLE_*BOO HOCKEY"],"Streaming & prenumerationer":["NETFLIX","SPOTIFY","BOOKBEAT","HBOMAX","APPLE.COM","HALLON","TELE2","COMVIQ","UNIONEN","GOOGLE ONE","TV4"],"Hälsa & apotek":["APOTEK","KRONANS","VACCIN","LÄKARE","TANDLÄK","RANELLA","MEDLEY","SVEA VACCIN","MABRA"],"Boende & el":["TIBBER","VATTENFALL","BOSTADS","BOO ENERGI","NORDEA VARDAG","NACKA SALTSJ","BYGGMAX","VERISURE"],"Sparande & investeringar":["AVANZA","NORDNET"],"Inkomst":["LÖN","BARNBDR","BARNBIDRAG","FÖRSÄKRINGSK","SKATTEVERKET","FKASSA"]};
+const CAT_RULES = {"Mat & dagligvaror":["ICA","COOP","LIDL","HEMKOP","MAXI","WILLYS","NETTO","MATHEM","CONVINI","PRIS NYCKELKUND","CITY GROSS","GRONA LUND MAT"],"Restaurang & café":["RESTAURANG","SUSHI","BURGER","MCD","MAX BURGER","PIZZA","KEBAB","THAI","CAFE","COFFEE","HOLY GREENS","HEAT","HAMBURGERI","TZATZIKI","WAYNES","ITAMAE","OMG SUSHI","PINCHOS","RICHE","KUNG CARLS","SLAKTBAREN","MASALA","RISTORANTE","SUBWAY","WAL*JACK","OLEARYS","PREPP","KOKPUNKT","NAKED JUICEBAR","PRIMA NAPOLETAN","MEKI FOOD","INDOCHINE","ESPRESSO HOUSE","CENTRALKONDITORI","BRANES RESTAURAN","LEKHYTTANS","LULU"],"Kollektivtrafik":["SL","VÄSTTRAFIK","SJ.SE","FLYTOGET","RUTERAPPEN","RUTER"],"Resor":["SAS","NORWEGIAN AI","SWEDAVIA","AIRPORT TAXI","NOVOTEL","WALKTHROUGH","SBB BAHNHOF","BOLT.EU","UBER","TAXI STOCKHOLM","AIMO PARK","DUTY FREE","AVOLTA","SSP S.A.","RIO REAL GOLF HOTEL"],"Kläder & shopping":["LINDEX","H&M","ZARA","STADIUM","XXL","INTERSPORT","AHLENS","NORMAL","RUSTA","LAGERHAUS","JULA","VOLT","RITUALS","KANDYZ","GODISGALLERIAN","STOP N SHOP","MICHA ADAM","SOLTORGET","BYGGMAX","DERMAROME","AMAZON","DUTY FREE"],"Nöje & fritid":["JUMPYARD","SYSTEMBOLAGET","NACKA TOBAK","BIOGRAF","ROMME","FJARILSHUSET","PRESSBYRAN","7-ELEVEN","STOCKHOLM LIVE","GRONA LUND","BIBLIOTEKET","3ARENA","SPORTSBAR","FLOTTSBRO","NEW BOWL","FILMSTADEN","GUSTAVSBERGSBAD","BADMINTONSTADIO","W*BRANAS","MEDLEY"],"Barn & familj":["BOO FOTB","BOO HOCK","NACKA GYMN","WAYNES ICE","PINGIS","SVENSKALAG","TRE KRONOR","DIREKTEN","HAPPIES LEKSAKE","HANVIKENS","ICE ACADEMY","ZETTLE_*BOO HOCKEY"],"Streaming & prenumerationer":["NETFLIX","SPOTIFY","BOOKBEAT","HBOMAX","APPLE.COM","HALLON","TELE2","COMVIQ","UNIONEN","GOOGLE ONE","TV4"],"Hälsa & apotek":["APOTEK","KRONANS","VACCIN","LÄKARE","TANDLÄK","RANELLA","MEDLEY","SVEA VACCIN","MABRA"],"Boende & el":["TIBBER","VATTENFALL","BOSTADS","BOO ENERGI","NORDEA VARDAG","NACKA SALTSJ","BYGGMAX","VERISURE"],"Sparande & investeringar":["AVANZA","NORDNET"],"Inkomst":["LÖN","BARNBDR","BARNBIDRAG","FÖRSÄKRINGSK","SKATTEVERKET","FKASSA"],"Bränsle":["PREEM","OKQ8","CIRCLE K","SHELL","ST1","QSTAR"],"Parkering & trängsel":["PARKSTER","EASYPARK","PARKMAN","AIMO PARK","TRANSPORTSTYR","BG 250-5683","BG 282-4647","BG 809-2934","BG 316-7541","BG 5051-6822","SWEDAVIA ARN","PARKERING"],"Bilkostnader":["BILTEMA","STIVENBILVERKSTAD","LINDEROTHS CYKEL","BILSERVICE"]};
 const CAT_COLORS = {
   'Mat & dagligvaror':'#2d7a56','Kollektivtrafik':'#4a9e6b',
   'Streaming & prenumerationer':'#7b52b8','Kläder & shopping':'#b83c7a',
   'Nöje & fritid':'#c4821a','Barn & familj':'#3a8fa3',
   'Restaurang & café':'#d45c2a','Hälsa & apotek':'#5a9e4b',
   'Boende & el':'#7a6a3e','Sparande & investeringar':'#1a5e7a',
-  'Resor':'#6b3a8e','Bilkostnader':'#8e5a2d',
+  'Resor':'#6b3a8e','Bilkostnader':'#8e5a2d','Bränsle':'#c47a2d','Parkering & trängsel':'#7a6b2d',
   'Frisör & skönhet':'#c4627a','Hemmet':'#6b7a3e',
   'Inkomst':'#1a7a3e','Intern överföring':'#b0a898','Övrigt':'#888780',
 };
@@ -632,8 +632,8 @@ function renderReport(){
   const month = sel.value;
   if(!month) return;
 
-  const expenses = t => t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring';
-  const months = [...new Set(TXNS.map(t=>t.date.slice(0,7)))].sort();
+  function expenses(t){ return t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring'; }
+  const months = [...new Set(TXNS.map(function(t){ return t.date.slice(0,7); }))].sort();
 
   const currTxns = TXNS.filter(t => t.date.startsWith(month));
   const currExp  = currTxns.filter(expenses);
@@ -648,16 +648,16 @@ function renderReport(){
   const otherMonths = months.filter(m => m !== month);
   function catAvg(cat){
     if(!otherMonths.length) return 0;
-    const total = otherMonths.reduce((s,m) => {
-      return s + TXNS.filter(t => t.date.startsWith(m) && t.cat===cat && expenses(t))
-                     .reduce((ss,t) => ss+Math.abs(t.amt), 0);
+    var total = otherMonths.reduce(function(s,m){
+      return s + TXNS.filter(function(t){ return t.date.startsWith(m) && t.cat===cat && expenses(t); })
+                     .reduce(function(ss,t){ return ss+Math.abs(t.amt); }, 0);
     }, 0);
     return total / otherMonths.length;
   }
 
   // KPIs
-  const avgExpAll = otherMonths.length
-    ? otherMonths.reduce((s,m) => s + TXNS.filter(t=>t.date.startsWith(m)&&expenses(t)).reduce((ss,t)=>ss+Math.abs(t.amt),0), 0) / otherMonths.length
+  var avgExpAll = otherMonths.length
+    ? otherMonths.reduce(function(s,m){ return s + TXNS.filter(function(t){ return t.date.startsWith(m)&&expenses(t); }).reduce(function(ss,t){ return ss+Math.abs(t.amt); },0); }, 0) / otherMonths.length
     : totalExp;
   const diffVsAvg = totalExp - avgExpAll;
 
@@ -680,7 +680,7 @@ function renderReport(){
   // Kategori vs snitt
   const catTotals = {};
   currExp.forEach(t => { catTotals[t.cat] = (catTotals[t.cat]||0) + Math.abs(t.amt); });
-  const sorted = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+  const sorted = Object.entries(catTotals).sort(function(a,b){ return b[1]-a[1]; });
   const maxVal = Math.max(...sorted.map(([,v])=>v), ...sorted.map(([c])=>catAvg(c)));
 
   document.getElementById('reportCompare').innerHTML = sorted.map(([cat,val]) => {
@@ -703,7 +703,7 @@ function renderReport(){
   }).join('');
 
   // Topp 10
-  const top10 = [...currExp].sort((a,b)=>Math.abs(b.amt)-Math.abs(a.amt)).slice(0,10);
+  const top10 = [...currExp].sort(function(a,b){ return Math.abs(b.amt)-Math.abs(a.amt); }).slice(0,10);
   document.getElementById('reportTop10').innerHTML = top10.map((t,i) => `
     <li>
       <span class="rank">${i+1}</span>
@@ -722,7 +722,7 @@ function renderReport(){
   });
   const recurring = Object.values(descMonths)
     .filter(d => d.months.size >= 2)
-    .sort((a,b) => b.total/b.count - a.total/a.count)
+    .sort(function(a,b){ return b.total/b.count - a.total/a.count; })
     .slice(0,10);
 
   document.getElementById('reportRecurring').innerHTML = recurring.map(r => `
@@ -806,17 +806,14 @@ async function runAIAnalysis(){
     'Skriv naturligt och conversationellt, inte som en rapport. Max 250 ord.';
 
     try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+    // Anropar via Netlify function (säker proxy — API-nyckeln är aldrig i webbläsaren)
+    const r = await fetch('/.netlify/functions/analyze', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        messages: [{role:'user', content:prompt}]
-      })
+      body: JSON.stringify({ prompt })
     });
     const data = await r.json();
-    const text = data.content?.[0]?.text || 'Kunde inte generera analys.';
+    const text = data.text || data.error || 'Kunde inte generera analys.';
 
     // Formatera som HTML-paragrafer
     const formatted = text.split('\n\n').filter(function(p){return p.trim();})
@@ -1016,7 +1013,7 @@ async function confirmReset(){
       await fetch('https://api.jsonbin.io/v3/b/'+k.bin, {
         method:'PUT',
         headers:{'Content-Type':'application/json','X-Master-Key':k.secret},
-        body: JSON.stringify({transaktioner:[],budget:{},learned:{}})
+        body: JSON.stringify({transaktioner:[],budget:{},learned:LEARNED})
       });
     } catch(e){ console.log('JSONBin reset failed:', e); }
   }
@@ -1026,11 +1023,11 @@ async function confirmReset(){
     if(key.startsWith('ekonomi_')) localStorage.removeItem(key);
   });
 
-  // 3. Nollställ all state i minnet
+  // 3. Nollställ transaktioner och budget — men BEHÅLL inlärda regler
   TXNS = [];
   BUDGET = {};
-  LEARNED = {};
   IMPORT_LOG = [];
+  // LEARNED behålls medvetet — inlärda kategoriregler ska överleva nollställning
 
   // 4. Stäng inställningar och visa tom dashboard
   document.getElementById('setupBanner').style.display = 'none';
@@ -1165,6 +1162,16 @@ function autoCategory(desc){
   if(d.includes('SWISH INBETALNING') && !d.includes('BARNBIDRAG')){
     return 'Intern överföring';
   }
+  // Bränsle
+  if(['PREEM','OKQ8','CIRCLE K','SHELL','ST1','QSTAR','SHELL'].some(function(k){ return d.includes(k); }))
+    return 'Bränsle';
+
+  // Parkering & trängsel
+  if(['PARKSTER','EASYPARK','PARKMAN','AIMO PARK','TRANSPORTSTYR','BG 250-5683',
+      'BG 282-4647','BG 809-2934','BG 316-7541','BG 5051-6822','PARKERING',
+      'SWEAVIA ARN PARK','SWEDAVIA ARN'].some(function(k){ return d.includes(k); }))
+    return 'Parkering & trängsel';
+
   // Frisör & skönhet
   if(['RANELLA','HAIR','FRISÖR','SALONG','TSOLMON','MASSAGE',
       'RITUALS','DERMAROME','MEDLEY','KRONANS APOTEK'].some(k=>d.includes(k)))
@@ -1236,11 +1243,16 @@ function parseCSV(buffer){
   if(hasBOM){
     // UTF-8 with BOM → Nordea
     text = new TextDecoder('utf-8').decode(buffer.slice(3)); // slice off BOM
+    // Normalisera vanliga encoding-fel för svenska tecken
+    text = text.replace(/Ã¶/g,'ö').replace(/Ã¤/g,'ä').replace(/Ã¥/g,'å')
+               .replace(/Ã–/g,'Ö').replace(/Ã„/g,'Ä').replace(/Ã…/g,'Å');
   } else {
     // No BOM → try UTF-8, if garbled use windows-1252
     const tryUtf8 = new TextDecoder('utf-8').decode(buffer);
     if(tryUtf8.includes('\uFFFD') || tryUtf8.includes('Ã¶') || tryUtf8.includes('Ã¤')){
       text = new TextDecoder('windows-1252').decode(buffer);
+      text = text.replace(/Ã¶/g,'ö').replace(/Ã¤/g,'ä').replace(/Ã¥/g,'å')
+                 .replace(/Ã–/g,'Ö').replace(/Ã„/g,'Ä').replace(/Ã…/g,'Å');
     } else {
       text = tryUtf8;
     }
@@ -1740,6 +1752,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.29-2100</div>
+<div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">v2026.08.30-1716</div>
 </body>
 </html>
