@@ -674,9 +674,9 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
        ondrop="handleDrop(event)">
     <div class="dropzone-icon">📂</div>
     <p>Klicka eller dra hit en fil</p>
-    <small>CSV, PDF eller Excel (.xlsx) · Max 10 MB</small>
+    <small>CSV, PDF eller Excel (.xlsx) · Välj gärna flera filer samtidigt</small>
   </div>
-  <input type="file" id="fileInput" accept=".csv,.pdf,.xlsx" onchange="handleFile(this.files[0])">
+  <input type="file" id="fileInput" accept=".csv,.pdf,.xlsx" multiple onchange="handleFiles(this.files)">
   <div class="parse-result" id="parseResult">
     <div class="parse-info" id="parseInfo"></div>
     <div style="max-height:200px;overflow-y:auto">
@@ -858,7 +858,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 </div>
 
 <script>
-const CAT_RULES = {"Mat & dagligvaror":["ICA","COOP","LIDL","HEMKOP","MAXI","WILLYS","NETTO","MATHEM","CONVINI","PRIS NYCKELKUND","CITY GROSS","GRONA LUND MAT"],"Restaurang & café":["RESTAURANG","SUSHI","BURGER","MCD","MAX BURGER","PIZZA","KEBAB","THAI","CAFE","COFFEE","HOLY GREENS","HEAT","HAMBURGERI","TZATZIKI","WAYNES","ITAMAE","OMG SUSHI","PINCHOS","RICHE","KUNG CARLS","SLAKTBAREN","MASALA","RISTORANTE","SUBWAY","WAL*JACK","OLEARYS","PREPP","KOKPUNKT","NAKED JUICEBAR","PRIMA NAPOLETAN","MEKI FOOD","INDOCHINE","ESPRESSO HOUSE","CENTRALKONDITORI","BRANES RESTAURAN","LEKHYTTANS","LULU"],"Kollektivtrafik":["SL","VÄSTTRAFIK","SJ.SE","FLYTOGET","RUTERAPPEN","RUTER"],"Resor":["SAS","NORWEGIAN AI","SWEDAVIA","AIRPORT TAXI","NOVOTEL","WALKTHROUGH","SBB BAHNHOF","BOLT.EU","UBER","TAXI STOCKHOLM","AIMO PARK","DUTY FREE","AVOLTA","SSP S.A.","RIO REAL GOLF HOTEL"],"Kläder & shopping":["LINDEX","H&M","ZARA","STADIUM","XXL","INTERSPORT","AHLENS","NORMAL","RUSTA","LAGERHAUS","JULA","VOLT","RITUALS","KANDYZ","GODISGALLERIAN","STOP N SHOP","MICHA ADAM","SOLTORGET","BYGGMAX","DERMAROME","AMAZON","DUTY FREE"],"Nöje & fritid":["JUMPYARD","SYSTEMBOLAGET","NACKA TOBAK","BIOGRAF","ROMME","FJARILSHUSET","PRESSBYRAN","7-ELEVEN","STOCKHOLM LIVE","GRONA LUND","BIBLIOTEKET","3ARENA","SPORTSBAR","FLOTTSBRO","NEW BOWL","FILMSTADEN","GUSTAVSBERGSBAD","BADMINTONSTADIO","W*BRANAS","MEDLEY"],"Barn & familj":["BOO FOTB","BOO HOCK","NACKA GYMN","WAYNES ICE","PINGIS","SVENSKALAG","TRE KRONOR","DIREKTEN","HAPPIES LEKSAKE","HANVIKENS","ICE ACADEMY","ZETTLE_*BOO HOCKEY"],"Streaming & prenumerationer":["NETFLIX","SPOTIFY","BOOKBEAT","HBOMAX","APPLE.COM","HALLON","TELE2","COMVIQ","UNIONEN","GOOGLE ONE","TV4"],"Hälsa & apotek":["APOTEK","KRONANS","VACCIN","LÄKARE","TANDLÄK","RANELLA","MEDLEY","SVEA VACCIN","MABRA"],"Boende & el":["TIBBER","VATTENFALL","BOSTADS","BOO ENERGI","NORDEA VARDAG","NACKA SALTSJ","BYGGMAX","VERISURE"],"Sparande & investeringar":["AVANZA","NORDNET"],"Inkomst":["LÖN","BARNBDR","BARNBIDRAG","FÖRSÄKRINGSK","SKATTEVERKET","FKASSA"],"Bränsle":["PREEM","OKQ8","CIRCLE K","SHELL","ST1","QSTAR"],"Parkering & trängsel":["PARKSTER","EASYPARK","PARKMAN","AIMO PARK","TRANSPORTSTYR","BG 250-5683","BG 282-4647","BG 809-2934","BG 316-7541","BG 5051-6822","SWEDAVIA ARN","PARKERING"],"Bilkostnader":["BILTEMA","STIVENBILVERKSTAD","LINDEROTHS CYKEL","BILSERVICE"]};
+const CAT_RULES = {"Mat & dagligvaror":["ICA","COOP","LIDL","HEMKOP","MAXI","WILLYS","NETTO","MATHEM","CONVINI","PRIS NYCKELKUND","CITY GROSS","GRONA LUND MAT"],"Restaurang & café":["OH POKE","ZETTLE_*SKEPPSBR","HOLY GREENS","LULU","LA PASTA VELOCE","BURGER","CAFE","WERMLANDS WARDSHUS","PINCHOS","SUSHI","KEBAB","WAL*JACK","SLAKTBAREN","WH NACKA","RICHE","PRIMA NAPOLETAN","MASALA","PIZZA","BRANES RESTAURAN","MAX BURGER","WAYNES","PREPP","CENTRALKONDITORI","ZETTLE_*NORRKOPI","OLEARYS","STAVSNAS HEMBAGE","COFFEE","LEKHYTTANS","ZETTLE_*I ETT KN","INDOCHINE","ZETTLE_*BARASKEN","NAKED JUICEBAR","RESTAURANG","KOKPUNKT","MEKI FOOD","TZATZIKI","HEAT","RISTORANTE","ZETTLE_*VARDSHUS","SOLTUNA","ITAMAE","KUNG CARLS","OMG SUSHI","ELITE HOTEL","HAMBURGERI","THAI","WERMDO WARDSHUS","SUBWAY","BROD OCH SALT","ESPRESSO HOUSE","MCD"],"Kollektivtrafik":["SL","VÄSTTRAFIK","SJ.SE","FLYTOGET","RUTERAPPEN","RUTER"],"Resor":["TAXI STOCKHOLM","BOLT.EU","AVOLTA","AIRPORT TAXI","DUTY FREE","NORWEGIAN AI","SSP S.A.","UBER","NOVOTEL","RIO REAL GOLF HOTEL","SJ APP","SWEDAVIA","SBB BAHNHOF","WALKTHROUGH","SAS","AIMO PARK","TAMOIL"],"Kläder & shopping":["KANDYZ","DUTY FREE","VOLT","MICHA ADAM","INTERSPORT","LAGERHAUS","DERMAROME","AHLENS","GODISGALLERIAN","STOP N SHOP","LINDEX","STADIUM","RUSTA","ZARA","AMAZON","BROTHERS","XXL","RITUALS","SOLTORGET","GLITTER","BYGGMAX","JULA","NORMAL","H&M"],"Nöje & fritid":["STROMMA","FILMSTADEN","MIJAS GOLF","NEW BOWL","BADMINTONSTADIO","BIOGRAF","KOLMÅRDENS","AB GR","PRESSBYRAN","EKSJÖ BOWLING","7-ELEVEN","NYX*FUNI","3ARENA","MEDLEY","SPORTSBAR","FLOTTSBRO","FJARILSHUSET","W*BRANAS","GRONA LUND","ASTRID LINDGRENS","GUSTAVSBERGSBAD","SYSTEMBOLAGET","STRÖMMMA","SVENSKA GOLFFÖRBUND","FUNI","KOLM","JUMPYARD","SODRA TEATERN","GRONA LUNDS","BIBLIOTEKET","BALTIC PRINCESS","SÖDRA TEATERN","NACKA TOBAK","STOCKHOLM LIVE","ROMME"],"Barn & familj":["BOO HOCK","WAYNES ICE","BOO FOTB","SVENSKALAG","DIREKTEN","HANVIKENS","ZETTLE_*BOO HOCKEY","ICE ACADEMY","TRE KRONOR","ZETTLE_*PUCK","PINGIS","LEKIA","HAPPIES LEKSAKE","NACKA GYMN"],"Streaming & prenumerationer":["NETFLIX","SPOTIFY","BOOKBEAT","HBOMAX","APPLE.COM","HALLON","TELE2","COMVIQ","UNIONEN","GOOGLE ONE","TV4"],"Hälsa & apotek":["APOTEK","KRONANS","VACCIN","LÄKARE","TANDLÄK","RANELLA","MEDLEY","SVEA VACCIN","MABRA"],"Boende & el":["MÄLARENERGI","BYGGMAX","BOSTADS","MALARENERG","VATTENFALL","VERISURE","BOO ENERGI","NORDEA VARDAG","TIBBER","NACKA SALTSJ","BG 463-3194"],"Sparande & investeringar":["AVANZA","NORDNET"],"Inkomst":["LÖN","BARNBDR","BARNBIDRAG","FÖRSÄKRINGSK","SKATTEVERKET","FKASSA"],"Bränsle":["PREEM","OKQ8","CIRCLE K","SHELL","ST1","QSTAR"],"Parkering & trängsel":["PARKSTER","EASYPARK","PARKMAN","AIMO PARK","SWEDAVIA ARN","PARKERING","BG 809-2934","BG 316-7541","BG 282-4647"],"Bilkostnader":["STIVENBILVERKSTAD","LINDEROTHS CYKEL","BILSERVICE","BG 250-5683","BG 5051-6822","TRANSPORTSTY","FELPARKERING"],"Hemmet":["BILTEMA"],"Lån & utlägg":["STEFAN MAGLICIC","MAGLICIC"]};
 const CAT_COLORS = {
   'Mat & dagligvaror':'#2d7a56','Kollektivtrafik':'#4a9e6b',
   'Streaming & prenumerationer':'#7b52b8','Kläder & shopping':'#b83c7a',
@@ -867,6 +867,8 @@ const CAT_COLORS = {
   'Boende & el':'#7a6a3e','Sparande & investeringar':'#1a5e7a',
   'Resor':'#6b3a8e','Bilkostnader':'#8e5a2d','Bränsle':'#c47a2d','Parkering & trängsel':'#7a6b2d',
   'Frisör & skönhet':'#c4627a','Hemmet':'#6b7a3e',
+  'Lån & utlägg':'#8B6914',
+  'Bolån — ränta':'#2D4A6B','Bolån — amortering':'#6B8BA4',
   'Inkomst':'#1a7a3e','Intern överföring':'#b0a898','Övrigt':'#888780',
 };
 const ALL_CATS = Object.keys(CAT_COLORS);
@@ -959,7 +961,7 @@ function filteredByMonth(){
 // ===== BUDGET VIEW =====
 function renderBudgetView(){
   const txns = filteredByMonth();
-  const expenses = txns.filter(t => t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring');
+  const expenses = txns.filter(t => t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Bolån — amortering');
   const catTotals = {};
   expenses.forEach(t => { catTotals[t.cat] = (catTotals[t.cat]||0) + Math.abs(t.amt); });
 
@@ -1051,207 +1053,118 @@ function buildReportMonthSelector(){
 }
 
 function renderReport(){
-  const sel = document.getElementById('reportMonthSelect');
+  var sel = document.getElementById('reportMonthSelect');
   if(!sel) return;
-  const month = sel.value;
+  var month = sel.value;
   if(!month) return;
 
-  function expenses(t){ return t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring'; }
-  const months = [...new Set(TXNS.map(function(t){ return t.date.slice(0,7); }))].sort();
+  function isExp(t){ return t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Bolån — amortering'; }
+  function isInc(t){ return t.amt > 0 && t.cat === 'Inkomst'; }
 
-  const currTxns = TXNS.filter(t => t.date.startsWith(month));
-  const currExp  = currTxns.filter(expenses);
-  const currInc  = currTxns.filter(t => t.amt > 0 && t.cat === 'Inkomst');
+  var allMonths = [];
+  TXNS.forEach(function(t){ var m=t.date.slice(0,7); if(allMonths.indexOf(m)<0) allMonths.push(m); });
+  allMonths.sort();
 
-  const totalExp = currExp.reduce((s,t) => s+Math.abs(t.amt), 0);
-  const totalInc = currInc.reduce((s,t) => s+t.amt, 0);
-  const net = totalInc - totalExp;
-  const fmt = n => Math.round(Math.abs(n)).toLocaleString('sv-SE')+' kr';
+  var currExp = TXNS.filter(function(t){ return t.date.startsWith(month) && isExp(t); });
+  var currInc = TXNS.filter(function(t){ return t.date.startsWith(month) && isInc(t); });
 
-  // Snitt från alla andra månader
-  const otherMonths = months.filter(m => m !== month);
+  var totalExp = currExp.reduce(function(s,t){ return s+Math.abs(t.amt); }, 0);
+  var totalInc = currInc.reduce(function(s,t){ return s+t.amt; }, 0);
+
+  var otherMonths = allMonths.filter(function(m){ return m !== month; });
+
   function catAvg(cat){
     if(!otherMonths.length) return 0;
     var total = otherMonths.reduce(function(s,m){
-      return s + TXNS.filter(function(t){ return t.date.startsWith(m) && t.cat===cat && expenses(t); })
+      return s + TXNS.filter(function(t){ return t.date.startsWith(m) && t.cat===cat && isExp(t); })
                      .reduce(function(ss,t){ return ss+Math.abs(t.amt); }, 0);
     }, 0);
     return total / otherMonths.length;
   }
 
-  // KPIs
   var avgExpAll = otherMonths.length
-    ? otherMonths.reduce(function(s,m){ return s + TXNS.filter(function(t){ return t.date.startsWith(m)&&expenses(t); }).reduce(function(ss,t){ return ss+Math.abs(t.amt); },0); }, 0) / otherMonths.length
+    ? otherMonths.reduce(function(s,m){
+        return s + TXNS.filter(function(t){ return t.date.startsWith(m) && isExp(t); })
+                       .reduce(function(ss,t){ return ss+Math.abs(t.amt); }, 0);
+      }, 0) / otherMonths.length
     : totalExp;
-  const diffVsAvg = totalExp - avgExpAll;
 
-  document.getElementById('reportKpis').innerHTML = `
-    <div class="report-kpi">
-      <div class="report-kpi-val" style="color:var(--red)">−${fmt(totalExp)}</div>
-      <div class="report-kpi-label">Utgifter</div>
-    </div>
-    <div class="report-kpi">
-      <div class="report-kpi-val" style="color:var(--green)">+${fmt(totalInc)}</div>
-      <div class="report-kpi-label">Inkomster</div>
-    </div>
-    <div class="report-kpi">
-      <div class="report-kpi-val" style="color:${diffVsAvg>0?'var(--red)':'var(--green)'}">
-        ${diffVsAvg>0?'+':''}${Math.round(diffVsAvg).toLocaleString('sv-SE')} kr
-      </div>
-      <div class="report-kpi-label">vs månadssnitt</div>
-    </div>`;
+  var diffVsAvg = totalExp - avgExpAll;
+  function fmt(n){ return Math.round(Math.abs(n)).toLocaleString('sv-SE')+' kr'; }
+
+  // KPIs
+  var kpiEl = document.getElementById('reportKpis');
+  kpiEl.innerHTML =
+    '<div class="report-kpi"><div class="report-kpi-val" style="color:var(--red)">-'+fmt(totalExp)+'</div><div class="report-kpi-label">Utgifter</div></div>'+
+    '<div class="report-kpi"><div class="report-kpi-val" style="color:var(--green)">+'+fmt(totalInc)+'</div><div class="report-kpi-label">Inkomster</div></div>'+
+    '<div class="report-kpi"><div class="report-kpi-val" style="color:'+(diffVsAvg>0?'var(--red)':'var(--green)')+'">'+(diffVsAvg>0?'+':'')+Math.round(diffVsAvg).toLocaleString('sv-SE')+' kr</div><div class="report-kpi-label">vs månadssnitt</div></div>';
 
   // Kategori vs snitt
-  const catTotals = {};
-  currExp.forEach(t => { catTotals[t.cat] = (catTotals[t.cat]||0) + Math.abs(t.amt); });
-  const sorted = Object.entries(catTotals).sort(function(a,b){ return b[1]-a[1]; });
-  const maxVal = Math.max(...sorted.map(([,v])=>v), ...sorted.map(([c])=>catAvg(c)));
+  var catTotals = {};
+  currExp.forEach(function(t){ catTotals[t.cat] = (catTotals[t.cat]||0) + Math.abs(t.amt); });
+  var sorted = Object.entries(catTotals).sort(function(a,b){ return b[1]-a[1]; });
 
-  document.getElementById('reportCompare').innerHTML = sorted.map(([cat,val]) => {
-    const avg = catAvg(cat);
-    const diff = val - avg;
-    const pctOfMax = (val/maxVal*100).toFixed(1);
-    const avgPct = (avg/maxVal*100).toFixed(1);
-    const color = CAT_COLORS[cat] || '#888';
-    const diffTxt = avg===0 ? '' : (diff>0?'▲':'▼')+Math.round(Math.abs(diff)).toLocaleString('sv-SE')+' kr';
-    const diffClass = diff>500?'diff-up':diff<-500?'diff-down':'diff-eq';
-    return `<div class="report-compare-row">
-      <div class="report-compare-label">${cat}</div>
-      <div class="report-compare-bar-wrap">
-        <div class="report-compare-bar-curr" style="width:${pctOfMax}%;background:${color}60"></div>
-        ${avg>0?'<div class="report-compare-bar-avg" style="left:'+avgPct+'%"></div>':''}
-      </div>
-      <div class="report-compare-val">${Math.round(val).toLocaleString('sv-SE')} kr</div>
-      <div class="report-compare-diff ${diffClass}">${diffTxt}</div>
-    </div>`;
-  }).join('');
+  var allVals = sorted.map(function(e){ return e[1]; }).concat(sorted.map(function(e){ return catAvg(e[0]); }));
+  var maxVal = Math.max.apply(null, allVals) || 1;
+
+  var compareHtml = '';
+  sorted.forEach(function(entry){
+    var cat = entry[0], val = entry[1];
+    var avg = catAvg(cat);
+    var diff = val - avg;
+    var pctOfMax = (val/maxVal*100).toFixed(1);
+    var avgPct = (avg/maxVal*100).toFixed(1);
+    var color = CAT_COLORS[cat] || '#888';
+    var diffTxt = avg===0 ? '' : (diff>0?'▲':'▼')+Math.round(Math.abs(diff)).toLocaleString('sv-SE')+' kr';
+    var diffClass = diff>500?'diff-up':diff<-500?'diff-down':'diff-eq';
+    var avgBar = avg>0 ? '<div class="report-compare-bar-avg" style="left:'+avgPct+'%"></div>' : '';
+    compareHtml +=
+      '<div class="report-compare-row">'+
+        '<div class="report-compare-label">'+cat+'</div>'+
+        '<div class="report-compare-bar-wrap">'+
+          '<div class="report-compare-bar-curr" style="width:'+pctOfMax+'%;background:'+color+'60"></div>'+
+          avgBar+
+        '</div>'+
+        '<div class="report-compare-val">'+Math.round(val).toLocaleString('sv-SE')+' kr</div>'+
+        '<div class="report-compare-diff '+diffClass+'">'+diffTxt+'</div>'+
+      '</div>';
+  });
+  document.getElementById('reportCompare').innerHTML = compareHtml;
 
   // Topp 10
-  const top10 = [...currExp].sort(function(a,b){ return Math.abs(b.amt)-Math.abs(a.amt); }).slice(0,10);
-  document.getElementById('reportTop10').innerHTML = top10.map((t,i) => `
-    <li>
-      <span class="rank">${i+1}</span>
-      <span class="desc" title="${t.desc}">${t.desc}</span>
-      <span class="amt">−${Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')} kr</span>
-    </li>`).join('');
+  var top10 = currExp.slice().sort(function(a,b){ return Math.abs(b.amt)-Math.abs(a.amt); }).slice(0,10);
+  var top10Html = '';
+  top10.forEach(function(t,i){
+    top10Html += '<li>'+
+      '<span class="rank">'+(i+1)+'</span>'+
+      '<span class="desc" title="'+t.desc+'">'+t.desc+'</span>'+
+      '<span class="amt">-'+Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')+' kr</span>'+
+    '</li>';
+  });
+  document.getElementById('reportTop10').innerHTML = top10Html;
 
-  // Återkommande — köp som förekommer i minst 2 månader
-  const descMonths = {};
-  TXNS.filter(expenses).forEach(t => {
-    const key = t.desc.slice(0,20).toUpperCase();
-    if(!descMonths[key]) descMonths[key] = {desc:t.desc, months:new Set(), total:0, count:0};
-    descMonths[key].months.add(t.date.slice(0,7));
+  // Återkommande
+  var descMonths = {};
+  TXNS.filter(isExp).forEach(function(t){
+    var key = t.desc.slice(0,20).toUpperCase();
+    if(!descMonths[key]) descMonths[key] = {desc:t.desc, months:[], total:0, count:0};
+    if(descMonths[key].months.indexOf(t.date.slice(0,7)) < 0) descMonths[key].months.push(t.date.slice(0,7));
     descMonths[key].total += Math.abs(t.amt);
     descMonths[key].count++;
   });
-  const recurring = Object.values(descMonths)
-    .filter(d => d.months.size >= 2)
+  var recurring = Object.values(descMonths)
+    .filter(function(d){ return d.months.length >= 2; })
     .sort(function(a,b){ return b.total/b.count - a.total/a.count; })
     .slice(0,10);
-
-  document.getElementById('reportRecurring').innerHTML = recurring.map(r => `
-    <li>
-      <span class="desc" title="${r.desc}">${r.desc}</span>
-      <span class="recur-badge">${r.months.size} mån</span>
-      <span class="amt">~${Math.round(r.total/r.count).toLocaleString('sv-SE')} kr/mån</span>
-    </li>`).join('');
-}
-
-// ===== AI-ANALYS =====
-async function runAIAnalysis(){
-  const sel = document.getElementById('reportMonthSelect');
-  const month = sel?.value;
-  if(!month){ alert('Välj en månad först.'); return; }
-
-  const btn = document.getElementById('analyzeBtn');
-  const thinking = document.getElementById('aiThinking');
-  const responseEl = document.getElementById('aiResponse');
-
-  btn.disabled = true;
-  thinking.style.display = 'flex';
-  responseEl.style.display = 'none';
-
-  // Sammanställ data för Claude
-  const months = [...new Set(TXNS.map(t=>t.date.slice(0,7)))].sort();
-  const expenses = t => t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring';
-
-  const currTxns = TXNS.filter(t => t.date.startsWith(month));
-  const currExp  = currTxns.filter(expenses);
-  const currInc  = currTxns.filter(t => t.amt>0 && t.cat==='Inkomst');
-  const totalExp = currExp.reduce((s,t)=>s+Math.abs(t.amt),0);
-  const totalInc = currInc.reduce((s,t)=>s+t.amt,0);
-
-  // Kategori-summering
-  const catTotals = {};
-  currExp.forEach(t => { catTotals[t.cat]=(catTotals[t.cat]||0)+Math.abs(t.amt); });
-
-  // Snitt per kategori
-  const otherMonths = months.filter(m=>m!==month);
-  const catAvgs = {};
-  Object.keys(catTotals).forEach(cat => {
-    if(!otherMonths.length){ catAvgs[cat]=0; return; }
-    catAvgs[cat] = otherMonths.reduce((s,m)=>
-      s+TXNS.filter(t=>t.date.startsWith(m)&&t.cat===cat&&expenses(t)).reduce((ss,t)=>ss+Math.abs(t.amt),0),0
-    ) / otherMonths.length;
+  var recurHtml = '';
+  recurring.forEach(function(r){
+    recurHtml += '<li>'+
+      '<span class="desc" title="'+r.desc+'">'+r.desc+'</span>'+
+      '<span class="recur-badge">'+r.months.length+' mån</span>'+
+      '<span class="amt">~'+Math.round(r.total/r.count).toLocaleString('sv-SE')+' kr/mån</span>'+
+    '</li>';
   });
-
-  // Topp 5 köp
-  const top5 = [...currExp].sort((a,b)=>Math.abs(b.amt)-Math.abs(a.amt)).slice(0,5);
-
-  const [y,mo] = month.split('-');
-  const monthNames = {'01':'januari','02':'februari','03':'mars','04':'april','05':'maj',
-                      '06':'juni','07':'juli','08':'augusti','09':'september','10':'oktober',
-                      '11':'november','12':'december'};
-
-  // Bygg prompt utan nästlade backticks
-  const catLines = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(function(entry){
-    const cat = entry[0], val = entry[1];
-    const avg = catAvgs[cat]||0;
-    const diff = val-avg;
-    return '- '+cat+': '+Math.round(val).toLocaleString('sv-SE')+' kr (snitt: '+Math.round(avg).toLocaleString('sv-SE')+' kr, '+(diff>0?'+':'')+Math.round(diff).toLocaleString('sv-SE')+' kr)';
-  }).join('\n');
-
-  const top5Lines = top5.map(function(t,i){
-    return (i+1)+'. '+t.desc+': '+Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')+' kr ('+t.cat+')';
-  }).join('\n');
-
-  const prompt = 'Du är en personlig ekonomirådgivare för en svensk familj. Analysera deras ekonomi för '+monthNames[mo]+' '+y+'.\n\n'+
-    'SAMMANFATTNING:\n'+
-    '- Inkomster: '+Math.round(totalInc).toLocaleString('sv-SE')+' kr\n'+
-    '- Utgifter: '+Math.round(totalExp).toLocaleString('sv-SE')+' kr\n'+
-    '- Netto: '+Math.round(totalInc-totalExp).toLocaleString('sv-SE')+' kr\n\n'+
-    'UTGIFTER PER KATEGORI (denna månad vs månadssnitt):\n'+catLines+'\n\n'+
-    'TOPP 5 STÖRSTA KÖP:\n'+top5Lines+'\n\n'+
-    'Skriv en personlig, konkret analys på svenska. Var ärlig och specifik. Lyft fram:\n'+
-    '1. Hur månaden ser ut överlag\n'+
-    '2. Vad som sticker ut (positivt eller negativt) vs snittet\n'+
-    '3. Konkreta besparingstips baserat på datan\n'+
-    '4. En uppmuntrande avslutning\n\n'+
-    'Skriv naturligt och conversationellt, inte som en rapport. Max 250 ord.';
-
-    try {
-    // Anropar via Netlify function (säker proxy — API-nyckeln är aldrig i webbläsaren)
-    const r = await fetch('/.netlify/functions/analyze', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ prompt })
-    });
-    const data = await r.json();
-    const text = data.text || data.error || 'Kunde inte generera analys.';
-
-    // Formatera som HTML-paragrafer
-    const formatted = text.split('\n\n').filter(function(p){return p.trim();})
-      .map(function(p){ return '<p>'+p.replace(/\n/g,'<br>')+'</p>'; }).join('');
-
-    responseEl.innerHTML = formatted;
-    responseEl.style.display = 'block';
-  } catch(e) {
-    responseEl.innerHTML = '<p style="color:#f08080">Kunde inte ansluta till AI. Försök igen.</p>';
-    responseEl.style.display = 'block';
-  }
-
-  thinking.style.display = 'none';
-  btn.disabled = false;
+  document.getElementById('reportRecurring').innerHTML = recurHtml;
 }
 
 // ===== INLÄRNING =====
@@ -1594,9 +1507,8 @@ function autoCategory(desc){
     return 'Bränsle';
 
   // Parkering & trängsel
-  if(['PARKSTER','EASYPARK','PARKMAN','AIMO PARK','TRANSPORTSTYR','BG 250-5683',
-      'BG 282-4647','BG 809-2934','BG 316-7541','BG 5051-6822','PARKERING',
-      'SWEAVIA ARN PARK','SWEDAVIA ARN'].some(function(k){ return d.includes(k); }))
+  if(['PARKSTER','EASYPARK','PARKMAN','AIMO PARK','SWEDAVIA ARN',
+      'PARKERING','BG 809-2934','BG 316-7541','BG 282-4647'].some(function(k){ return d.includes(k); }))
     return 'Parkering & trängsel';
 
   // Frisör & skönhet
@@ -1608,6 +1520,15 @@ function autoCategory(desc){
   if(['BYGGMAX','BILTEMA','JULA','PLANTAGEN','IKEA','HORNBACH',
       'K-RAUTA','BAUHAUS','CLAS OHLSON','XS LEKSAKER'].some(k=>d.includes(k)))
     return 'Hemmet';
+
+  // Bolån — ränta
+  if(['LÄNSFÖRSÄKRINGAR HYPOTEK','SBAB','SWEDBANK HYPOTEK','SKANDIA HYPOTEK',
+      'STADSHYPOTEK','DANSKE HYPOTEK','NORDEA HYPOTEK','RÄNTA'].some(function(k){ return d.includes(k); }))
+    return 'Bolån — ränta';
+
+  // Bolån — amortering (räknas inte som utgift)
+  if(['AMORTERING'].some(function(k){ return d.includes(k); }))
+    return 'Bolån — amortering';
 
   for(const [cat,kws] of Object.entries(CAT_RULES))
     for(const kw of kws)
@@ -1629,8 +1550,87 @@ function closeModal(){
 function handleDrop(e){
   e.preventDefault();
   document.getElementById('dropzone').classList.remove('drag');
-  if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
 }
+function handleFiles(fileList){
+  // Processa flera filer och slå ihop resultaten
+  if(!fileList || !fileList.length) return;
+  if(fileList.length === 1){ handleFile(fileList[0]); return; }
+
+  // Flera filer — läs alla och visa samlad preview
+  const files = Array.from(fileList);
+  let pending = files.length;
+  let allResults = [];
+
+  files.forEach(function(file){
+    const isCSV  = file.name.toLowerCase().endsWith('.csv');
+    const isPDF  = file.name.toLowerCase().endsWith('.pdf');
+    const isXLSX = file.name.toLowerCase().endsWith('.xlsx');
+    if(!isCSV && !isPDF && !isXLSX){ pending--; return; }
+
+    const reader = new FileReader();
+    if(isCSV){
+      reader.onload = function(e){
+        const txns = parseCSV(e.target.result);
+        allResults.push({filename: file.name, type: 'CSV', txns});
+        pending--;
+        if(pending === 0) showMultiPreview(allResults);
+      };
+      reader.readAsArrayBuffer(file);
+    } else if(isXLSX){
+      reader.onload = function(e){
+        const txns = parseXLSX(e.target.result);
+        allResults.push({filename: file.name, type: 'Excel', txns});
+        pending--;
+        if(pending === 0) showMultiPreview(allResults);
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.onload = function(e){
+        const arr = new Uint8Array(e.target.result);
+        let text = '';
+        for(let i=0;i<arr.length;i++){
+          const c=arr[i];
+          if(c>=32&&c<127) text+=String.fromCharCode(c);
+          else if(c===10||c===13) text+='\n';
+        }
+        const txns = parsePDFRaw(text);
+        allResults.push({filename: file.name, type: 'PDF', txns});
+        pending--;
+        if(pending === 0) showMultiPreview(allResults);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  });
+}
+
+function showMultiPreview(results){
+  // Slå ihop alla transaktioner från alla filer
+  const existingKeys = new Set(TXNS.map(function(t){ return t.date+'|'+t.desc+'|'+t.amt; }));
+  let allNew = [];
+  let totalDupes = 0;
+  let filesSummary = [];
+
+  results.forEach(function(r){
+    const newTxns = r.txns.filter(function(t){
+      return !existingKeys.has(t.date+'|'+t.desc+'|'+t.amt);
+    });
+    // Märk som smarta kategorier
+    newTxns.forEach(function(t){
+      const res = smartCategory(t.desc);
+      t.cat = res.cat;
+      t._confident = res.confident;
+    });
+    const dupes = r.txns.length - newTxns.length;
+    totalDupes += dupes;
+    allNew = allNew.concat(newTxns);
+    filesSummary.push(r.filename + ': ' + newTxns.length + ' nya' + (dupes>0?' ('+dupes+' dubl.)':''));
+  });
+
+  // Visa samlad preview
+  showPreview(allNew, filesSummary.join(' · '), results.map(function(r){return r.type;}).join('/'));
+}
+
 function handleFile(file){
   if(!file) return;
   const isCSV=file.name.toLowerCase().endsWith('.csv');
@@ -2179,6 +2179,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.30-1937</div>
+<div class="version-tag">v2026.08.30-2006</div>
 </body>
 </html>
