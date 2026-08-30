@@ -1883,7 +1883,7 @@ function showPreview(txns,filename,type){
       const onChange = 'previewChangeCat(' + i + ',this.value,this)';
       return '<tr style="background:' + bg + '">' +
         '<td style="white-space:nowrap;color:#9e9484;font-size:11px;padding:6px 10px">' + t.date + '</td>' +
-        '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 10px">' +
+        '<td style="max-width:240px;padding:6px 10px">' +
           '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:' +
           (t._confident ? '#2d7a56' : '#c4821a') + '"></span>' + t.desc +
         '</td>' +
@@ -1910,7 +1910,7 @@ function showPreview(txns,filename,type){
         '<button style="background:' + btnColor + ';color:white;border:none;border-radius:6px;padding:4px 12px;font-size:11px;font-family:inherit;cursor:pointer"' +
           ' onclick="event.stopPropagation()">' + btnLabel + '</button>' +
       '</div>' +
-      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">' +
+      '<div style="overflow-x:auto;min-width:100%"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">' +
         '<thead><tr style="background:#ede9e0">' +
           '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9e9484">Datum</th>' +
           '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9e9484">Mottagare</th>' +
@@ -2112,11 +2112,11 @@ function redrawPreview(){
       }).join('');
       return '<tr style="background:'+bg+'">' +
         '<td style="white-space:nowrap;color:#9e9484;font-size:11px;padding:6px 10px">'+t.date+'</td>' +
-        '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 10px">'+
+        '<td style="max-width:240px;padding:6px 10px">'+
           '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:'+(t._confident?'#2d7a56':'#c4821a')+'"></span>'+t.desc+
         '</td>' +
         '<td style="text-align:right;white-space:nowrap;padding:6px 10px">'+Math.abs(t.amt).toFixed(0)+' kr</td>' +
-        '<td style="padding:6px 10px"><select class="cat-sel" data-idx="'+i+'" onchange="previewChangeCat('+i+',this.value,this)" style="color:'+col+'">'+opts+'</select></td>' +
+        '<td style="padding:6px 10px"><select class="cat-sel" data-idx="'+i+'" onchange="previewChangeCat('+i+',this.value,this)" style="color:'+col+';min-width:160px">'+opts+'</select></td>' +
       '</tr>';
     }).join('');
   }
@@ -2131,7 +2131,7 @@ function redrawPreview(){
       '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:'+bgColor+';color:'+txtColor+';font-size:12px;font-weight:500;margin-bottom:4px">' +
         '<span>'+label+'</span>' +
       '</div>' +
-      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">' +
+      '<div style="overflow-x:auto;min-width:100%"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">' +
         '<thead><tr style="background:#ede9e0">' +
           '<th style="padding:5px 10px;text-align:left;font-size:10px;color:#9e9484">Datum</th>' +
           '<th style="padding:5px 10px;text-align:left;font-size:10px;color:#9e9484">Mottagare</th>' +
@@ -2186,6 +2186,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.30-1909</div>
+<div class="version-tag">v2026.08.30-1914</div>
 </body>
 </html>
