@@ -1316,33 +1316,22 @@ function exportForAI(){
     .sort(function(a,b){ return b[1]-a[1]; })
     .map(function(e){
       return '- ' + e[0] + ': ' + Math.round(e[1]).toLocaleString('sv-SE') + ' kr totalt (' + Math.round(e[1]/n).toLocaleString('sv-SE') + ' kr/mån)';
-    }).join('
-');
+    }).join(nl);
 
   var top10 = TXNS.filter(isExp)
     .sort(function(a,b){ return Math.abs(b.amt)-Math.abs(a.amt); })
     .slice(0,10)
     .map(function(t){ return '- ' + t.date + ' ' + t.desc + ': ' + Math.round(Math.abs(t.amt)).toLocaleString('sv-SE') + ' kr (' + t.cat + ')'; })
-    .join('
-');
+    .join(nl);
 
+  var nl = '\n';
   var text =
-    'Familjens ekonomi ' + months[0] + ' till ' + months[months.length-1] + ' (' + n + ' månader)
-
-' +
-    'INKOMST: ' + Math.round(totalInc).toLocaleString('sv-SE') + ' kr totalt (' + Math.round(totalInc/n).toLocaleString('sv-SE') + ' kr/mån)
-' +
-    'UTGIFTER: ' + Math.round(totalExp).toLocaleString('sv-SE') + ' kr totalt (' + Math.round(totalExp/n).toLocaleString('sv-SE') + ' kr/mån)
-' +
-    'NETTO: ' + Math.round(totalInc-totalExp).toLocaleString('sv-SE') + ' kr
-
-' +
-    'UTGIFTER PER KATEGORI:
-' + catLines + '
-
-' +
-    'TOPP 10 ENSKILDA KÖP:
-' + top10;
+    'Familjens ekonomi ' + months[0] + ' till ' + months[months.length-1] + ' (' + n + ' månader)' + nl + nl +
+    'INKOMST: ' + Math.round(totalInc).toLocaleString('sv-SE') + ' kr totalt (' + Math.round(totalInc/n).toLocaleString('sv-SE') + ' kr/mån)' + nl +
+    'UTGIFTER: ' + Math.round(totalExp).toLocaleString('sv-SE') + ' kr totalt (' + Math.round(totalExp/n).toLocaleString('sv-SE') + ' kr/mån)' + nl +
+    'NETTO: ' + Math.round(totalInc-totalExp).toLocaleString('sv-SE') + ' kr' + nl + nl +
+    'UTGIFTER PER KATEGORI:' + nl + catLines + nl + nl +
+    'TOPP 10 ENSKILDA KÖP:' + nl + top10;
 
   // Kopiera till clipboard
   navigator.clipboard.writeText(text).then(function(){
@@ -2400,6 +2389,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.31-1334</div>
+<div class="version-tag">v2026.08.31-1338</div>
 </body>
 </html>
