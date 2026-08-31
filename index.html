@@ -2254,7 +2254,7 @@ function renderTxns(){
   const pages=Math.ceil(filtered.length/PAGE_SIZE)||1;
   if(currentPage>pages) currentPage=1;
   const slice=filtered.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
-  const CATS=[...new Set(TXNS.map(t=>t.cat))].sort();
+  const CATS=ALL_CATS; // Visa alltid alla kategorier
   document.getElementById('txnBody').innerHTML=slice.map(t=>{
     const idx=TXNS.indexOf(t);
     const d=new Date(t.date);
@@ -2389,6 +2389,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.31-1344</div>
+<div class="version-tag">v2026.08.31-1348</div>
 </body>
 </html>
