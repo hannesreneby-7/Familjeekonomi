@@ -942,8 +942,8 @@ const ACCOUNT_CONFIG = [
   {id:'nordea',    name:'Lönekonto',         owner:'Hannes', type:'Bank',        color:'#2d5a8e'},
   {id:'norwegian', name:'Norwegian Kreditkort', owner:'Hannes & Eva', type:'Kreditkort', color:'#b83c3c'},
   {id:'swedbank_mat', name:'Vardagskonto',    owner:'Gemensamt', type:'Kort',     color:'#2d7a56'},
-  {id:'eva_lon',   name:'Lönekonto',         owner:'Eva',    type:'Bank',        color:'#7b52b8'},
-  {id:'eva_spark', name:'Sparkonto',         owner:'Eva',    type:'Bank',        color:'#3a8fa3'},
+  {id:'eva_lon',   name:'Lönekonto',         owner:'Eva',    type:'Eva_Bank',    color:'#7b52b8'},
+  {id:'eva_spark', name:'Sparkonto (gemensamt)', owner:'Eva/Gemensamt', type:'Eva_Spark', color:'#3a8fa3'},
 ];
 
 
@@ -1264,7 +1264,7 @@ function renderCatExpand(id, cat){
     return '<div class="cat-expand-row">' +
       '<span class="cat-expand-date">'+ds+'</span>' +
       '<span class="cat-expand-desc" title="'+t.desc+'">'+t.desc+'</span>' +
-      '<span class="cat-expand-amt">-'+Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')+' kr</span>' +
+      '<span class="cat-expand-amt" style="color:'+(t.amt>0?'#1A6B4A':'#C0392B')+'">'+(t.amt>0?'+':'-')+Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')+' kr</span>' +
       '<select class="cat-expand-sel" data-idx="'+txnIdx+'" data-expand="'+id+'" data-oldcat="'+cat+'" onchange="catExpandChange(this)">' +
         opts +
       '</select>' +
@@ -1673,7 +1673,23 @@ function autoCategory(desc){
   if(d.includes('ÖVERFÖRING') || d.includes('TILL GEMENSAMT') ||
      d.includes('SPARKONTO') ||
      d.match(/^MAT (JAN|FEB|MAR|APR|MAJ|JUN|JUL|AUG|SEP|OKT|NOV|DEC|APRIL|MARS|FEBRUARI|JANUARI)/i) ||
-     d.includes('EXTRA MAT') || d.includes('TILL MATKONTO')){
+     d.includes('EXTRA MAT') || d.includes('TILL MATKONTO') ||
+     d.includes('MAT SEP') || d.includes('FELÖF') ||
+     d.includes('MAT O FÖRS') || d.includes('SPAR APRIL') ||
+     d.includes('SPAR JULI') || d.includes('EXTRA TILL MAT') ||
+     d.includes('HANNA SKATT') || d.includes('HANNES FICKPEN') ||
+     d.includes('HANNES UTE') || d.includes('HANNES SKATT') ||
+     d.includes('SWISH MOTTAGEN') || d.includes('SWISH SKICKAD') ||
+     d.includes('RTA O AMORTERI') || d.includes('RTA AMORT') ||
+     d.includes('AMORT RÄNTA')){
+    return 'Intern överföring';
+  }
+  // Swish inbetalning/mottagen = intern
+  if((d.includes('SWISH INBETALNING') || d.includes('SWISH MOTTAGEN')) && !d.includes('BARNBIDRAG')){
+    return 'Intern överföring';
+  }
+  // Kreditkortsbetalningar
+  if(d === 'INBETALNING' || d.startsWith('INBETALNING ') || d.includes('BETALNING KREDITKORT')){
     return 'Intern överföring';
   }
   // Försäkringar
@@ -1721,14 +1737,18 @@ function autoCategory(desc){
       'K-RAUTA','BAUHAUS','CLAS OHLSON','XS LEKSAKER'].some(k=>d.includes(k)))
     return 'Hemmet';
 
-  // Bolån — ränta
+  // Bolån — ränta + amortering (Eva betalar från lönekontot)
   if(['LÄNSFÖRSÄKRINGAR HYPOTEK','SBAB','SWEDBANK HYPOTEK','SKANDIA HYPOTEK',
-      'STADSHYPOTEK','DANSKE HYPOTEK','NORDEA HYPOTEK','RÄNTA'].some(function(k){ return d.includes(k); }))
+      'STADSHYPOTEK','DANSKE HYPOTEK','NORDEA HYPOTEK'].some(function(k){ return d.includes(k); }))
     return 'Bolån — ränta';
 
-  // Bolån — amortering (räknas inte som utgift)
-  if(['AMORTERING'].some(function(k){ return d.includes(k); }))
+  // Amortering
+  if(d.includes('AMORTERING') || d.includes('AMORT'))
     return 'Bolån — amortering';
+
+  // Edinburgh = resor (Eva's Edinburghresa)
+  if(d.includes('EDINBURGH') || d.includes('PAPPA RESA'))
+    return 'Resor';
 
   for(const [cat,kws] of Object.entries(CAT_RULES))
     for(const kw of kws)
@@ -1908,7 +1928,13 @@ function parseCSV(buffer){
     dateCol = headers.findIndex(h=>h.includes('bokföring')||h.includes('transaktionsdag'));
     amtCol  = headers.indexOf('belopp');
     descCol = headers.indexOf('beskrivning');
-    accName = 'Kort';
+    // Detektera konto-typ via kontonummer i datan
+    const firstDataRow = lines[startLine+1] || '';
+    const kontoCol = headers.indexOf('kontonummer');
+    const kontoNr = kontoCol >= 0 ? (firstDataRow.split(delim)[kontoCol]||'').replace(/"/g,'').trim() : '';
+    if(kontoNr === '0149059313') accName = 'Eva_Bank';      // Eva lönekonto
+    else if(kontoNr === '6941004209') accName = 'Eva_Spark'; // Eva sparkonto
+    else accName = 'Kort';
   } else if(isNordea){
     dateCol = 0; amtCol = 1; descCol = 5;
     accName = 'Bank';
@@ -2390,6 +2416,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.31-1404</div>
+<div class="version-tag">v2026.08.31-1949</div>
 </body>
 </html>
