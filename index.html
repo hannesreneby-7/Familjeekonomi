@@ -2297,7 +2297,7 @@ function renderTxns(){
     const ds=d.toLocaleDateString('sv-SE',{day:'numeric',month:'short'});
     const col=CAT_COLORS[t.cat]||'#888';
     const isPos=t.amt>0;
-    const var accLabels = {
+    var accLabels = {
       'Bank':'Nordea','Kort':'Gemensamt','Kreditkort':'Norwegian',
       'Eva_Bank':'Eva Lön','Eva_Spark':'Eva Spark','Eva_MC':'Eva MC',
       'Importerat':'Importerat'
@@ -2436,6 +2436,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.31-2101</div>
+<div class="version-tag">v2026.08.31-2105</div>
 </body>
 </html>
