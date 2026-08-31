@@ -2227,7 +2227,7 @@ function rebuildCharts(){
   const cf=document.getElementById('catFilter');
   const curr=cf.value;
   cf.innerHTML='<option value="">Alla kategorier</option>';
-  [...new Set(TXNS.map(t=>t.cat))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;if(c===curr)o.selected=true;cf.appendChild(o);});
+  ALL_CATS.forEach(function(c){const o=document.createElement('option');o.value=c;o.textContent=c;if(c===curr)o.selected=true;cf.appendChild(o);});
 }
 
 // ===== TRANSACTIONS =====
@@ -2389,6 +2389,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.31-1338</div>
+<div class="version-tag">v2026.08.31-1344</div>
 </body>
 </html>
