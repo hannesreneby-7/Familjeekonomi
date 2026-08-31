@@ -866,6 +866,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
         </div>
         <p style="font-size:13px;color:#9e9484;margin-bottom:16px">Välj en månad nedan och klicka för att få en personlig analys av er ekonomi.</p>
         <button class="ai-analyze-btn" id="analyzeBtn" onclick="runAIAnalysis()">&#10022; Analysera månaden</button>
+        <button class="ai-analyze-btn" style="margin-top:8px;background:rgba(255,255,255,.06)" onclick="exportForAI()">&#128203; Exportera för AI-analys</button>
         <div class="ai-thinking" id="aiThinking">
           <div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div>
           <span>Claude analyserar er ekonomi...</span>
@@ -2389,6 +2390,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.31-1348</div>
+<div class="version-tag">v2026.08.31-1404</div>
 </body>
 </html>
