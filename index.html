@@ -1872,7 +1872,7 @@ function autoCategory(desc){
   if(d.includes('AMORTERING') || d.includes('AMORT'))
     return 'Bolån — amortering';
 
-  // Edinburgh = resor (Eva's Edinburghresa)
+  // Edinburgh = resor (Evas Edinburghresa)
   if(d.includes('EDINBURGH') || d.includes('PAPPA RESA'))
     return 'Resor';
 
@@ -2434,9 +2434,32 @@ function renderTxns(){
     var accLabel = accLabels[t.acc] || t.acc;
     var key = txnKey(t).replace(/[^a-z0-9]/gi,'_');
     var accClass = accClasses[t.acc] || 'acc-kort';
-    return '<tr><td class="txn-date">'+ds+'</td><td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">'+t.desc+'</td><td><span class="acc-badge '+accClass+'">'+accLabel+'</span></td><td><select class="cat-select" onchange="changeCat('+idx+',this.value)" style="border-color:'+col+'22;color:'+col+'">'+CATS.map(c=>'<option value="'+c+'"'+(c===t.cat?' selected':'')+'>'+c+'</option>').join('')+'</select></td><td class="txn-amount '+(isPos?'pos':'')+'">'+(isPos?'+':'')+Math.abs(t.amt).toLocaleString('sv-SE',{minimumFractionDigits:0,maximumFractionDigits:0})+' kr</td></tr>+'<td><span class="txn-note-icon'+(NOTES[txnKey(t)]?' has-note':'')+'" id="note-icon-'+key+'" onclick="toggleNote(\''+key+'\',this)" title="'+(NOTES[txnKey(t)]?'Anteckning: '+NOTES[txnKey(t)]:'Lägg till anteckning')+'">📝</span></td></tr>'+
-      '<tr id="note-row-'+key+'" class="txn-note-row"><td colspan="6"><input class="txn-note-input" type="text" placeholder="Lägg till anteckning..." value="'+(NOTES[txnKey(t)]||'')+'" onkeydown="if(event.key===\'Enter\')submitNote(\''+key+'\',this,document.getElementById(\'note-icon-'+key+'\'))" onblur="submitNote(\''+key+'\',this,document.getElementById(\'note-icon-'+key+'\'))"><button class="txn-note-save" onclick="submitNote(\''+key+'\',this.previousElementSibling,document.getElementById(\'note-icon-'+key+'\'))">Spara</button></td></tr>';
-  }).join('');
+    var note = NOTES[txnKey(t)] || '';
+    var hasNote = note.length > 0;
+    var noteIcon = hasNote ? '&#128221;' : '&#128221;';
+    var noteTitle = hasNote ? 'Anteckning: ' + note : 'Lagg till anteckning';
+    var noteIconClass = 'txn-note-icon' + (hasNote ? ' has-note' : '');
+    var noteRowId = 'note-row-' + key;
+    var noteIconId = 'note-icon-' + key;
+
+    return '<tr>' +
+      '<td class="txn-date">' + ds + '</td>' +
+      '<td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">' + t.desc + '</td>' +
+      '<td><span class="acc-badge ' + accClass + '">' + accLabel + '</span></td>' +
+      '<td><select class="cat-select" onchange="changeCat(' + idx + ',this.value)" style="border-color:' + col + '22;color:' + col + '">' +
+        CATS.map(function(c){ return '<option value="' + c + '"' + (c===t.cat?' selected':'') + '>' + c + '</option>'; }).join('') +
+      '</select></td>' +
+      '<td class="txn-amount ' + (isPos?'pos':'') + '">' + (isPos?'+':'-') + Math.abs(t.amt).toLocaleString('sv-SE',{minimumFractionDigits:0,maximumFractionDigits:0}) + ' kr</td>' +
+      '<td><span class="' + noteIconClass + '" id="' + noteIconId + '" onclick="toggleNote(' + "'" + key + "'" + ',this)" title="' + noteTitle + '">&#9998;</span></td>' +
+    '</tr>' +
+    '<tr id="' + noteRowId + '" class="txn-note-row"><td colspan="6">' +
+      '<input class="txn-note-input" type="text" placeholder="Lagg till anteckning..." value="' + note + '" ' +
+        'onkeydown="if(event.key===\'Enter\')submitNote(\''+key+'\',this,document.getElementById(\''+noteIconId+'\'))" ' +
+        'onblur="submitNote(\''+key+'\',this,document.getElementById(\''+noteIconId+'\'))">' +
+      '<button class="txn-note-save" onclick="submitNote(\''+key+'\',this.previousElementSibling,document.getElementById(\''+noteIconId+'\'))">Spara</button>' +
+    '</td></tr>';
+
+    }).join('');
   document.getElementById('pagination').innerHTML=
     '<button class="page-btn" onclick="currentPage--;renderTxns()" '+(currentPage<=1?'disabled':'')+'>← Föregående</button>'+
     '<span>'+currentPage+' / '+pages+'</span>'+
@@ -2564,6 +2587,6 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.08.31-2115</div>
+<div class="version-tag">v2026.08.31-2122</div>
 </body>
 </html>
