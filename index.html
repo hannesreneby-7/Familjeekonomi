@@ -708,6 +708,51 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
   flex-shrink: 0;
 }
 .cat-expand-sel:focus { border-color: var(--blue); }
+
+/* Anteckningar */
+.txn-note-icon {
+  cursor: pointer;
+  font-size: 13px;
+  opacity: 0.4;
+  transition: opacity .15s;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.txn-note-icon:hover { opacity: 1; }
+.txn-note-icon.has-note { opacity: 0.8; color: var(--blue); }
+.txn-note-row {
+  display: none;
+  padding: 6px 12px 10px 12px;
+  background: #F8F7F4;
+  border-top: 1px solid var(--sand);
+}
+.txn-note-row.open { display: flex; align-items: center; gap: 8px; }
+.txn-note-input {
+  flex: 1;
+  border: 1px solid var(--sand);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--ink);
+  background: white;
+  outline: none;
+  transition: border-color .15s;
+}
+.txn-note-input:focus { border-color: var(--blue); }
+.txn-note-input::placeholder { color: var(--ink-4); }
+.txn-note-save {
+  background: var(--ink);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.txn-note-save:hover { opacity: .85; }
 </style>
 </head>
 <body>
@@ -1348,6 +1393,85 @@ function exportForAI(){
     alert('Markera allt och kopiera (Cmd+C / Ctrl+C), stäng sedan med Escape.');
     ta.addEventListener('blur', function(){ document.body.removeChild(ta); });
   });
+}
+
+
+// ===== ANTECKNINGAR =====
+var NOTES = {}; // {txnKey: anteckningstext}
+
+function txnKey(t){
+  return t.date + '|' + t.desc.slice(0,30) + '|' + Math.round(t.amt);
+}
+
+function loadNotes(){
+  var cached = localStorage.getItem('ekonomi_notes');
+  NOTES = cached ? JSON.parse(cached) : {};
+}
+
+async function fetchNotes(){
+  try{
+    var r = await fetch(SUPA_URL+'/rest/v1/anteckningar?select=id,text', {
+      headers:{ 'apikey': SUPA_KEY, 'Authorization': 'Bearer '+SUPA_KEY }
+    });
+    if(!r.ok) return;
+    var rows = await r.json();
+    NOTES = {};
+    rows.forEach(function(row){ NOTES[row.id] = row.text; });
+    localStorage.setItem('ekonomi_notes', JSON.stringify(NOTES));
+  } catch(e){ console.log('fetchNotes error:', e); }
+}
+
+async function saveNote(key, text){
+  NOTES[key] = text;
+  localStorage.setItem('ekonomi_notes', JSON.stringify(NOTES));
+  try{
+    if(text.trim()){
+      await fetch(SUPA_URL+'/rest/v1/anteckningar', {
+        method: 'POST',
+        headers:{
+          'apikey': SUPA_KEY,
+          'Authorization': 'Bearer '+SUPA_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({id: key, text: text.trim()})
+      });
+    } else {
+      // Tom anteckning = ta bort
+      delete NOTES[key];
+      localStorage.setItem('ekonomi_notes', JSON.stringify(NOTES));
+      await fetch(SUPA_URL+'/rest/v1/anteckningar?id=eq.'+encodeURIComponent(key), {
+        method: 'DELETE',
+        headers:{ 'apikey': SUPA_KEY, 'Authorization': 'Bearer '+SUPA_KEY }
+      });
+    }
+  } catch(e){ console.log('saveNote error:', e); }
+}
+
+function toggleNote(key, iconEl){
+  var rowEl = document.getElementById('note-row-'+key.replace(/[^a-z0-9]/gi,'_'));
+  if(!rowEl) return;
+  var isOpen = rowEl.classList.contains('open');
+  if(isOpen){
+    rowEl.classList.remove('open');
+  } else {
+    rowEl.classList.add('open');
+    var input = rowEl.querySelector('.txn-note-input');
+    if(input){ input.focus(); }
+  }
+}
+
+function submitNote(key, inputEl, iconEl){
+  var text = inputEl.value.trim();
+  saveNote(key, text);
+  // Uppdatera ikon
+  if(iconEl){
+    iconEl.classList.toggle('has-note', text.length > 0);
+    iconEl.title = text ? 'Anteckning: ' + text : 'Lägg till anteckning';
+  }
+  // Stäng raden
+  var rowEl = document.getElementById('note-row-'+key.replace(/[^a-z0-9]/gi,'_'));
+  if(rowEl) rowEl.classList.remove('open');
 }
 
 // ===== INLÄRNING =====
@@ -2308,8 +2432,10 @@ function renderTxns(){
       'Importerat':'acc-importerat'
     };
     var accLabel = accLabels[t.acc] || t.acc;
+    var key = txnKey(t).replace(/[^a-z0-9]/gi,'_');
     var accClass = accClasses[t.acc] || 'acc-kort';
-    return '<tr><td class="txn-date">'+ds+'</td><td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">'+t.desc+'</td><td><span class="acc-badge '+accClass+'">'+accLabel+'</span></td><td><select class="cat-select" onchange="changeCat('+idx+',this.value)" style="border-color:'+col+'22;color:'+col+'">'+CATS.map(c=>'<option value="'+c+'"'+(c===t.cat?' selected':'')+'>'+c+'</option>').join('')+'</select></td><td class="txn-amount '+(isPos?'pos':'')+'">'+(isPos?'+':'')+Math.abs(t.amt).toLocaleString('sv-SE',{minimumFractionDigits:0,maximumFractionDigits:0})+' kr</td></tr>';
+    return '<tr><td class="txn-date">'+ds+'</td><td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">'+t.desc+'</td><td><span class="acc-badge '+accClass+'">'+accLabel+'</span></td><td><select class="cat-select" onchange="changeCat('+idx+',this.value)" style="border-color:'+col+'22;color:'+col+'">'+CATS.map(c=>'<option value="'+c+'"'+(c===t.cat?' selected':'')+'>'+c+'</option>').join('')+'</select></td><td class="txn-amount '+(isPos?'pos':'')+'">'+(isPos?'+':'')+Math.abs(t.amt).toLocaleString('sv-SE',{minimumFractionDigits:0,maximumFractionDigits:0})+' kr</td></tr>+'<td><span class="txn-note-icon'+(NOTES[txnKey(t)]?' has-note':'')+'" id="note-icon-'+key+'" onclick="toggleNote(\''+key+'\',this)" title="'+(NOTES[txnKey(t)]?'Anteckning: '+NOTES[txnKey(t)]:'Lägg till anteckning')+'">📝</span></td></tr>'+
+      '<tr id="note-row-'+key+'" class="txn-note-row"><td colspan="6"><input class="txn-note-input" type="text" placeholder="Lägg till anteckning..." value="'+(NOTES[txnKey(t)]||'')+'" onkeydown="if(event.key===\'Enter\')submitNote(\''+key+'\',this,document.getElementById(\'note-icon-'+key+'\'))" onblur="submitNote(\''+key+'\',this,document.getElementById(\'note-icon-'+key+'\'))"><button class="txn-note-save" onclick="submitNote(\''+key+'\',this.previousElementSibling,document.getElementById(\'note-icon-'+key+'\'))">Spara</button></td></tr>';
   }).join('');
   document.getElementById('pagination').innerHTML=
     '<button class="page-btn" onclick="currentPage--;renderTxns()" '+(currentPage<=1?'disabled':'')+'>← Föregående</button>'+
@@ -2434,8 +2560,10 @@ function changeCat(idx, cat){
 loadBudget();
 loadLearned();
 loadImportLog();
+loadNotes();
 loadFromCloud();
+fetchNotes();
 </script>
-<div class="version-tag">v2026.08.31-2105</div>
+<div class="version-tag">v2026.08.31-2115</div>
 </body>
 </html>
