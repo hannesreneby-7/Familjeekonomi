@@ -944,6 +944,7 @@ const ACCOUNT_CONFIG = [
   {id:'swedbank_mat', name:'Vardagskonto',    owner:'Gemensamt', type:'Kort',     color:'#2d7a56'},
   {id:'eva_lon',   name:'Lönekonto',         owner:'Eva',    type:'Eva_Bank',    color:'#7b52b8'},
   {id:'eva_spark', name:'Sparkonto (gemensamt)', owner:'Eva/Gemensamt', type:'Eva_Spark', color:'#3a8fa3'},
+  {id:'eva_mc',    name:'Mastercard',           owner:'Eva',           type:'Eva_MC',    color:'#8e3a6b'},
 ];
 
 
@@ -1014,7 +1015,7 @@ function filteredByMonth(){
 // ===== BUDGET VIEW =====
 function renderBudgetView(){
   const txns = filteredByMonth();
-  const expenses = txns.filter(t => t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Bolån — amortering');
+  const expenses = txns.filter(t => t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Sparande & investeringar' && t.cat !== 'Bolån — amortering');
   const catTotals = {};
   expenses.forEach(t => { catTotals[t.cat] = (catTotals[t.cat]||0) + Math.abs(t.amt); });
 
@@ -1111,7 +1112,7 @@ function renderReport(){
   var month = sel.value;
   if(!month) return;
 
-  function isExp(t){ return t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Bolån — amortering'; }
+  function isExp(t){ return t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Sparande & investeringar' && t.cat !== 'Bolån — amortering'; }
   function isInc(t){ return t.amt > 0 && t.cat === 'Inkomst'; }
 
   var allMonths = [];
@@ -1303,7 +1304,7 @@ function catExpandChange(sel){
 function exportForAI(){
   var months = [...new Set(TXNS.map(function(t){ return t.date.slice(0,7); }))].sort();
   var n = months.length || 1;
-  function isExp(t){ return t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Bolån — amortering'; }
+  function isExp(t){ return t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Sparande & investeringar' && t.cat !== 'Bolån — amortering'; }
   function isInc(t){ return t.amt > 0 && t.cat === 'Inkomst'; }
 
   var catTotals = {};
@@ -1669,27 +1670,28 @@ function showDashboard(){
 // ===== CATEGORIZE =====
 function autoCategory(desc){
   const d=desc.toUpperCase();
-  // Interna överföringar
+  // Interna överföringar — allt som rör sig MELLAN era egna konton
   if(d.includes('ÖVERFÖRING') || d.includes('TILL GEMENSAMT') ||
      d.includes('SPARKONTO') ||
-     d.match(/^MAT (JAN|FEB|MAR|APR|MAJ|JUN|JUL|AUG|SEP|OKT|NOV|DEC|APRIL|MARS|FEBRUARI|JANUARI)/i) ||
+     d.match(/^MAT /i) ||
      d.includes('EXTRA MAT') || d.includes('TILL MATKONTO') ||
-     d.includes('MAT SEP') || d.includes('FELÖF') ||
-     d.includes('MAT O FÖRS') || d.includes('SPAR APRIL') ||
-     d.includes('SPAR JULI') || d.includes('EXTRA TILL MAT') ||
-     d.includes('HANNA SKATT') || d.includes('HANNES FICKPEN') ||
-     d.includes('HANNES UTE') || d.includes('HANNES SKATT') ||
-     d.includes('SWISH MOTTAGEN') || d.includes('SWISH SKICKAD') ||
-     d.includes('RTA O AMORTERI') || d.includes('RTA AMORT') ||
-     d.includes('AMORT RÄNTA')){
+     d.includes('FELÖF') || d.includes('MAT O FÖRS') ||
+     d.includes('EXTRA TILL MAT') || d.includes('HANNA SKATT') ||
+     d.includes('HANNES FICKPEN') || d.includes('HANNES UTE') ||
+     d.includes('HANNES SKATT') || d.includes('SWISH MOTTAGEN') ||
+     d.includes('SWISH SKICKAD') || d.includes('SPAR ') ||
+     d.includes('MASTERCARD GULD') || d.includes('VISA ') ||
+     d.includes('SKATT EVA') || d.includes('SKATT HAN') || d.startsWith('FELÖF')){
     return 'Intern överföring';
   }
   // Swish inbetalning/mottagen = intern
   if((d.includes('SWISH INBETALNING') || d.includes('SWISH MOTTAGEN')) && !d.includes('BARNBIDRAG')){
     return 'Intern överföring';
   }
-  // Kreditkortsbetalningar
-  if(d === 'INBETALNING' || d.startsWith('INBETALNING ') || d.includes('BETALNING KREDITKORT')){
+  // Kreditkortsbetalningar = intern
+  if(d === 'INBETALNING' || d.startsWith('INBETALNING ') ||
+     d.includes('BETALNING KREDITKORT') || d.includes('MASTERCARD') ||
+     d.includes('KORTBETALNING')){
     return 'Intern överföring';
   }
   // Försäkringar
@@ -2003,9 +2005,14 @@ function parseXLSX(buffer){
   }
 
   const headers = rows[headerRow].map(function(c){ return String(c).toLowerCase().trim(); });
-  const dateCol = headers.findIndex(function(h){ return h.includes('transactiondate')||h.includes('date'); });
-  const descCol = headers.findIndex(function(h){ return h==='text'||h.includes('description')||h.includes('beskrivning'); });
-  const amtCol  = headers.findIndex(function(h){ return h==='amount'||h==='belopp'; });
+  var dateCol = headers.findIndex(function(h){ return h.includes('transactiondate')||h.includes('date')||h.includes('datum'); });
+  var descCol = headers.findIndex(function(h){ return h==='text'||h.includes('description')||h.includes('beskrivning')||h.includes('transaktion'); });
+  var amtCol  = headers.findIndex(function(h){ return h==='amount'||h==='belopp'||h.includes('belopp'); });
+
+  // Mastercard-format: kolumn 0=desc, 1=datum, 2=belopp (headers innehåller "datum" och "belopp")
+  if(dateCol<0&&headers.some(function(h){return h.includes('datum');})){
+    descCol = 0; dateCol = 1; amtCol = 2;
+  }
 
   if(dateCol<0||amtCol<0){ alert('Kunde inte tolka Excel-filen.'); return []; }
 
@@ -2027,7 +2034,9 @@ function parseXLSX(buffer){
     if(!desc||desc.length<2) continue;
     const du=desc.toUpperCase();
     if(du.includes('FROM RENEBY')||du.includes('RENEBY HANNES')) continue;
-    txns.push({date:dateStr, acc:'Kreditkort', amt, desc, cat:autoCategory(desc)});
+    // Kolla om det är Mastercard (INBETALNING BANKGIRO = intern)
+  var finalCat = autoCategory(desc);
+  txns.push({date:dateStr, acc:'Eva_MC', amt, desc, cat:finalCat});
   }
   return txns;
 }
@@ -2416,6 +2425,6 @@ loadLearned();
 loadImportLog();
 loadFromCloud();
 </script>
-<div class="version-tag">v2026.08.31-1949</div>
+<div class="version-tag">v2026.08.31-2015</div>
 </body>
 </html>
