@@ -207,6 +207,7 @@ header p { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
 .kpi.expense .kpi-value { color: var(--red); }
 .kpi.net .kpi-value { color: var(--blue); }
 .kpi.avg .kpi-value { color: var(--ink); }
+.kpi.saved .kpi-value { color: var(--blue); }
 .kpi-sub { font-size: 11px; color: var(--ink-4); margin-top: 6px; }
 
 /* ── Cards ── */
@@ -2427,12 +2428,16 @@ function rebuildCharts(){
   const saved = txnsSrc.filter(t=>t.amt<0&&t.cat==='Sparande & investeringar').reduce((s,t)=>s+Math.abs(t.amt),0);
   const netAfterSaving = net - saved;
 
+  // Totalt sparat = summan av saldon på konton som är rent sparande (just nu: Eva Sparkonto)
+  const sparBalance = (BALANCES['Eva_Spark'] && BALANCES['Eva_Spark'].balance) || 0;
+  const sparDate = (BALANCES['Eva_Spark'] && BALANCES['Eva_Spark'].date) || '';
+
   document.getElementById('kpiRow').innerHTML=
     '<div class="kpi income"><div class="kpi-label">Totala inkomster</div><div class="kpi-value">+'+fmt(totalInc)+'</div><div class="kpi-sub">Löner, barnbidrag</div></div>'+
     '<div class="kpi expense"><div class="kpi-label">Totala utgifter</div><div class="kpi-value">−'+fmt(totalExp)+'</div><div class="kpi-sub">Alla konton</div></div>'+
     '<div class="kpi net"><div class="kpi-label">Nettoresultat</div><div class="kpi-value" style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmt(net)+'</div><div class="kpi-sub">Överskott</div></div>'+
     '<div class="kpi net"><div class="kpi-label">Netto efter sparande</div><div class="kpi-value" style="color:'+(netAfterSaving>=0?'var(--green)':'var(--red)')+'">'+fmt(netAfterSaving)+'</div><div class="kpi-sub">'+fmt(saved)+' sparat</div></div>'+
-    '<div class="kpi avg"><div class="kpi-label">Snitt utgifter/mån</div><div class="kpi-value">'+fmt(avgExp)+'</div><div class="kpi-sub">Genomsnitt</div></div>';
+    '<div class="kpi saved"><div class="kpi-label">Totalt sparat nu</div><div class="kpi-value" style="color:var(--blue)">'+fmt(sparBalance)+'</div><div class="kpi-sub">'+(sparDate?'Saldo per '+sparDate:'Ladda upp sparkonto')+'</div></div>';
 
   if(monthChart) monthChart.destroy();
   monthChart=new Chart(document.getElementById('monthChart'),{type:'bar',data:{labels:mLabels,datasets:[
@@ -2686,7 +2691,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.01-1537</div>
+<div class="version-tag">v2026.09.01-1639</div>
 
 <script>
 if('serviceWorker' in navigator){
