@@ -1502,11 +1502,24 @@ function toggleNote(key, iconEl){
 function submitNote(key, inputEl, iconEl){
   var text = inputEl.value.trim();
   saveNote(key, text);
+
   // Uppdatera ikon
   if(iconEl){
     iconEl.classList.toggle('has-note', text.length > 0);
-    iconEl.title = text ? 'Anteckning: ' + text : 'Lägg till anteckning';
+    iconEl.title = text ? 'Anteckning: ' + text : 'Lagg till anteckning';
   }
+
+  // Uppdatera anteckningstexten direkt på raden utan omladdning
+  var descEl = document.getElementById('note-desc-' + key);
+  if(descEl){
+    if(text){
+      descEl.textContent = text;
+      descEl.style.display = 'block';
+    } else {
+      descEl.style.display = 'none';
+    }
+  }
+
   // Stäng raden
   var rowEl = document.getElementById('note-row-'+key.replace(/[^a-z0-9]/gi,'_'));
   if(rowEl) rowEl.classList.remove('open');
@@ -2484,7 +2497,7 @@ function renderTxns(){
       '<td class="txn-date">' + ds + '</td>' +
       '<td style="max-width:190px;font-size:12px">' +
       '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + t.desc + '</div>' +
-      (note ? '<div style="font-size:11px;color:var(--blue);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">&#9998; ' + note + '</div>' : '') +
+      '<div id="note-desc-' + key + '" style="font-size:11px;color:var(--blue);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:' + (note?'block':'none') + '">&#9998; ' + (note||'') + '</div>' +
       '</td>' +
       '<td><span class="acc-badge ' + accClass + '">' + accLabel + '</span></td>' +
       '<td><select class="cat-select" onchange="changeCat(' + idx + ',this.value)" style="border-color:' + col + '22;color:' + col + '">' +
@@ -2628,7 +2641,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.08.31-2127</div>
+<div class="version-tag">v2026.09.01-0647</div>
 
 <script>
 if('serviceWorker' in navigator){
