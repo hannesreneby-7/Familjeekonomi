@@ -2377,7 +2377,7 @@ function updateHeader(){
 
 function rebuildCharts(){
   const txnsSrc=filteredByMonth();
-  const expenses=txnsSrc.filter(t=>t.amt<0&&t.cat!=='Inkomst'&&t.cat!=='Intern överföring');
+  const expenses=txnsSrc.filter(t=>t.amt<0&&t.cat!=='Inkomst'&&t.cat!=='Intern överföring'&&t.cat!=='Sparande & investeringar'&&t.cat!=='Bolån — amortering');
   const income=txnsSrc.filter(t=>t.amt>0&&t.cat==='Inkomst');
   const totalInc=income.reduce((s,t)=>s+t.amt,0);
   const totalExp=expenses.reduce((s,t)=>s+Math.abs(t.amt),0);
@@ -2647,7 +2647,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.01-1331</div>
+<div class="version-tag">v2026.09.01-1338</div>
 
 <script>
 if('serviceWorker' in navigator){
