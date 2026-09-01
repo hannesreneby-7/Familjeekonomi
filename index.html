@@ -2635,6 +2635,7 @@ function changeCat(idx, cat){
   }
 
   renderTxns();
+  rebuildCharts(); // Uppdatera KPI:er och diagram direkt
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => saveToCloud(), 2000);
 }
@@ -2647,7 +2648,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.01-0704</div>
+<div class="version-tag">v2026.09.01-1328</div>
 
 <script>
 if('serviceWorker' in navigator){
