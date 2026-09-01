@@ -2,7 +2,13 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ekonomi">
+<meta name="theme-color" content="#0F1923">
+<link rel="manifest" href="manifest.json">
 <title>Familjens Ekonomi</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -753,6 +759,38 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
   white-space: nowrap;
 }
 .txn-note-save:hover { opacity: .85; }
+
+/* PWA / Mobile optimering */
+@media (max-width: 600px) {
+  header { padding: 0 12px; height: 52px; }
+  header h1 { font-size: 13px; }
+  .main { padding: 12px; }
+  .top-nav { overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; flex-wrap: nowrap; }
+  .top-nav-btn { padding: 8px 12px; font-size: 12px; flex-shrink: 0; }
+  .month-chips { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 4px; }
+  .month-chip { flex-shrink: 0; }
+  .kpi-row { grid-template-columns: repeat(2,1fr); gap: 8px; }
+  .kpi { padding: 14px; }
+  .kpi-value { font-size: 20px; }
+  .chart-row { grid-template-columns: 1fr; }
+  .cat-grid { grid-template-columns: 1fr; }
+  .budget-grid { grid-template-columns: 1fr; }
+  .accounts-grid { grid-template-columns: 1fr; }
+  .report-kpis { grid-template-columns: repeat(3,1fr); gap: 6px; }
+  .report-kpi { padding: 10px 8px; }
+  .report-kpi-val { font-size: 15px; }
+  .txn-table { font-size: 12px; }
+  .txn-table th, .txn-table td { padding: 7px 8px; }
+  .modal { padding: 20px 16px; }
+  .upload-btn span { display: none; }
+  .header-right .hbadge { display: none; }
+  .ai-card { padding: 16px; }
+  .report-card { padding: 16px; }
+  .report-compare-label { width: 100px; font-size: 10px; }
+  /* Fixa Safari safe areas för notch/home bar */
+  header { padding-top: env(safe-area-inset-top); }
+  .main { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+}
 </style>
 </head>
 <body>
@@ -2444,7 +2482,10 @@ function renderTxns(){
 
     return '<tr>' +
       '<td class="txn-date">' + ds + '</td>' +
-      '<td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">' + t.desc + '</td>' +
+      '<td style="max-width:190px;font-size:12px">' +
+      '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + t.desc + '</div>' +
+      (note ? '<div style="font-size:11px;color:var(--blue);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">&#9998; ' + note + '</div>' : '') +
+      '</td>' +
       '<td><span class="acc-badge ' + accClass + '">' + accLabel + '</span></td>' +
       '<td><select class="cat-select" onchange="changeCat(' + idx + ',this.value)" style="border-color:' + col + '22;color:' + col + '">' +
         CATS.map(function(c){ return '<option value="' + c + '"' + (c===t.cat?' selected':'') + '>' + c + '</option>'; }).join('') +
@@ -2587,6 +2628,14 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.08.31-2122</div>
+<div class="version-tag">v2026.08.31-2127</div>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/Familjeekonomi/sw.js').catch(function(){});
+  });
+}
+</script>
 </body>
 </html>
