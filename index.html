@@ -595,6 +595,8 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 .account-status.partial { background: #FFF8E0; color: #7A5A00; }
 .account-last { font-size: 11px; color: var(--ink-3); margin-top: 6px; }
 .account-range { font-size: 11px; color: var(--ink-4); margin-top: 2px; }
+.account-balance { font-size: 20px; font-weight: 300; letter-spacing: -.02em; margin: 8px 0 6px 0; color: var(--ink); }
+.account-balance-date { font-size: 11px; font-weight: 400; color: var(--ink-4); }
 .import-log { background: var(--surface); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); border: 1px solid var(--sand); }
 .import-log-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--bg); font-size: 12px; }
 .import-log-row:last-child { border-bottom: none; }
@@ -916,6 +918,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
         <button class="tab" onclick="setTab('Bank',this)">Nordea</button>
         <button class="tab" onclick="setTab('Kreditkort',this)">Norwegian</button>
         <button class="tab" onclick="setTab('Eva_Bank',this)">Eva Lön</button>
+        <button class="tab" onclick="setTab('Eva_Spark',this)">Eva Spark</button>
         <button class="tab" onclick="setTab('Eva_MC',this)">Eva MC</button>
       </div>
       <div class="txn-controls">
@@ -1010,6 +1013,8 @@ const CAT_COLORS = {
   'Inkomst':'#1a7a3e','Intern överföring':'#b0a898','Övrigt':'#888780',
 };
 const ALL_CATS = Object.keys(CAT_COLORS);
+
+let BALANCES = {}; // {acc: {date, balance}}
 
 // Supabase config
 const SUPA_URL = 'https://ysowzitqqxxvsxfzdssj.supabase.co';
@@ -1614,6 +1619,7 @@ function renderAccountsView(){
     'norwegian':    getAccStats(function(t){ return t.acc==='Kreditkort'; }),
     'swedbank_mat': getAccStats(function(t){ return t.acc==='Kort'; }),
     'eva_lon':      getAccStats(function(t){ return t.acc==='Eva_Bank'; }),
+    'eva_spark':    getAccStats(function(t){ return t.acc==='Eva_Spark'; }),
     'eva_mc':       getAccStats(function(t){ return t.acc==='Eva_MC'; }),
   };
 
@@ -1630,6 +1636,10 @@ function renderAccountsView(){
     const status = stats ? 'ok' : 'missing';
     const statusLabel = stats ? 'Uppladdad' : 'Saknas';
     const icon   = stats ? '✓' : '!';
+    const bal    = BALANCES[acc.type];
+    const balHtml = bal
+      ? '<div class="account-balance">' + Math.round(bal.balance).toLocaleString('sv-SE') + ' kr <span class="account-balance-date">per ' + bal.date + '</span></div>'
+      : '';
 
     return '<div class="account-card '+status+'">' +
       '<div class="account-card-header">' +
@@ -1639,6 +1649,7 @@ function renderAccountsView(){
         '</div>' +
         '<span class="account-status '+status+'">'+icon+' '+statusLabel+'</span>' +
       '</div>' +
+      balHtml +
       (stats ?
         '<div class="account-last">' +
           (last ? 'Senast: '+last.filename : stats.count+' transaktioner') +
@@ -1788,6 +1799,7 @@ async function loadFromCloud(){
       if(data.t){ TXNS = data.t.map(function(r){ return {date:r[0],acc:r[1],amt:r[2],desc:r[3],cat:r[4]}; }); }
       else { TXNS = data.transaktioner || []; }
       BUDGET = data.b || data.budget || {};
+      BALANCES = data.bal || {};
       var ld = data.l || data.learned;
       if(ld){ LEARNED = ld; localStorage.setItem('ekonomi_learned', JSON.stringify(LEARNED)); }
       localStorage.setItem('ekonomi_cache', newJson);
@@ -1806,7 +1818,8 @@ async function saveToCloud(showStatus=true){
   const payload = {
     t: TXNS.map(function(t){ return [t.date,t.acc,t.amt,t.desc,t.cat]; }),
     b: BUDGET,
-    l: LEARNED
+    l: LEARNED,
+    bal: BALANCES
   };
   // Uppdatera cache
   localStorage.setItem('ekonomi_cache', JSON.stringify(payload));
@@ -2104,11 +2117,14 @@ function parseCSV(buffer){
   const delim = lines[startLine].includes(';') ? ';' : ',';
 
   let dateCol, amtCol, descCol, accName;
+  var saldoCol = -1;
+  var lastBalanceByAcc = {};
   if(isSwedbank){
     const headers = lines[startLine].split(delim).map(h=>h.trim().replace(/"/g,'').toLowerCase());
     dateCol = headers.findIndex(h=>h.includes('bokföring')||h.includes('transaktionsdag'));
     amtCol  = headers.indexOf('belopp');
     descCol = headers.indexOf('beskrivning');
+    saldoCol = headers.findIndex(h=>h.includes('saldo'));
     // Detektera konto-typ via kontonummer i datan
     const firstDataRow = lines[startLine+1] || '';
     const kontoCol = headers.indexOf('kontonummer');
@@ -2117,7 +2133,7 @@ function parseCSV(buffer){
     else if(kontoNr === '6941004209') accName = 'Eva_Spark'; // Eva sparkonto
     else accName = 'Kort';
   } else if(isNordea){
-    dateCol = 0; amtCol = 1; descCol = 5;
+    dateCol = 0; amtCol = 1; descCol = 5; saldoCol = 6;
     accName = 'Bank';
   } else {
     const headers = lines[startLine].split(delim).map(h=>h.trim().replace(/"/g,'').toLowerCase());
@@ -2159,7 +2175,20 @@ function parseCSV(buffer){
     // Alla transaktioner sparas — interna överföringar hanteras via kategorisering,
     // inte genom att osynliggöra dem
     txns.push({date:dateStr, acc:accName, amt, desc, cat:autoCategory(desc)});
+
+    // Spåra saldo — behåll bara det som hör till senaste datumet i filen
+    if(saldoCol >= 0 && row[saldoCol]){
+      const saldoStr = row[saldoCol].trim().replace(/\s/g,'').replace(',','.');
+      const saldoVal = parseFloat(saldoStr);
+      if(!isNaN(saldoVal)){
+        if(!lastBalanceByAcc[accName] || dateStr >= lastBalanceByAcc[accName].date){
+          lastBalanceByAcc[accName] = {date: dateStr, balance: saldoVal};
+        }
+      }
+    }
   }
+  // Spara upptäckt saldo globalt så showPreview/importTransactions kan använda det
+  window._pendingBalances = Object.assign(window._pendingBalances || {}, lastBalanceByAcc);
   return txns;
 }
 
@@ -2347,6 +2376,15 @@ function showPreview(txns,filename,type){
 
 async function importTransactions(){
   const importCount = pendingTxns.length; // spara INNAN closeModal nollställer
+  if(window._pendingBalances){
+    Object.entries(window._pendingBalances).forEach(function(entry){
+      var acc = entry[0], data = entry[1];
+      if(!BALANCES[acc] || data.date >= BALANCES[acc].date){
+        BALANCES[acc] = data;
+      }
+    });
+    window._pendingBalances = null;
+  }
   pendingTxns.forEach(t => learnCategory(t.desc, t.cat));
   addImportLogEntry(lastUploadedFile, lastUploadedType, pendingTxns[0]?.acc || 'Okänt', pendingTxns);
   TXNS=[...pendingTxns,...TXNS].sort((a,b)=>b.date.localeCompare(a.date));
@@ -2648,7 +2686,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.01-1350</div>
+<div class="version-tag">v2026.09.01-1537</div>
 
 <script>
 if('serviceWorker' in navigator){
