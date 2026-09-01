@@ -1,0 +1,18 @@
+{
+  "name": "Familjens Ekonomi",
+  "short_name": "Ekonomi",
+  "description": "Familjeekonomi dashboard",
+  "start_url": "/Familjeekonomi/",
+  "display": "standalone",
+  "background_color": "#F7F5F2",
+  "theme_color": "#0F1923",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230F1923' rx='20'/><text y='.9em' font-size='80' x='10'>💰</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
