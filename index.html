@@ -178,7 +178,7 @@ header p { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
 /* ── KPIs ── */
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -769,7 +769,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
   .top-nav-btn { padding: 8px 12px; font-size: 12px; flex-shrink: 0; }
   .month-chips { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 4px; }
   .month-chip { flex-shrink: 0; }
-  .kpi-row { grid-template-columns: repeat(2,1fr); gap: 8px; }
+  .kpi-row { grid-template-columns: repeat(2,1fr); gap: 8px; } .kpi-row .kpi:nth-child(5) { grid-column: span 2; }
   .kpi { padding: 14px; }
   .kpi-value { font-size: 20px; }
   .chart-row { grid-template-columns: 1fr; }
@@ -1858,7 +1858,9 @@ function autoCategory(desc){
      d.includes('HANNES SKATT') || d.includes('SWISH MOTTAGEN') ||
      d.includes('SWISH SKICKAD') || d.includes('SPAR ') ||
      d.includes('MASTERCARD GULD') || d.includes('VISA ') ||
-     d.includes('SKATT EVA') || d.includes('SKATT HAN') || d.startsWith('FELÖF')){
+     d.includes('SKATT EVA') || d.includes('SKATT HAN') || d.startsWith('FELÖF') ||
+     d.includes('EVA MAGNUSSON') || d.includes('EXTRA TILL MAT') ||
+     d.includes('TILL MATKONTO') || d.includes('BANK NORWEGI')){
     return 'Intern överföring';
   }
   // Swish inbetalning/mottagen = intern
@@ -2154,13 +2156,8 @@ function parseCSV(buffer){
     const desc = (row[descCol]||'Okänd').trim();
     if(!desc || desc.length < 2) continue;
 
-    // Skip internal transfers between accounts
-    const du = desc.toUpperCase();
-    if(du.includes('EVA MAGNUSSON') || du.includes('EXTRA TILL MAT') ||
-       du.includes('MAT MAJ') || du.includes('MAT APRIL') || du.includes('MAT MARS') ||
-       du.includes('TILL MATKONTO') || du.includes('BANK NORWEGI') ||
-       du.includes('4187500')) continue;
-
+    // Alla transaktioner sparas — interna överföringar hanteras via kategorisering,
+    // inte genom att osynliggöra dem
     txns.push({date:dateStr, acc:accName, amt, desc, cat:autoCategory(desc)});
   }
   return txns;
@@ -2389,10 +2386,14 @@ function rebuildCharts(){
   const fmt=n=>Math.round(n).toLocaleString('sv-SE')+' kr';
   const mLabels=months.map(m=>{const [y,mo]=m.split('-');const n={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'Maj','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Okt','11':'Nov','12':'Dec'};return n[mo]+' '+y.slice(2);});
 
+  const saved = txnsSrc.filter(t=>t.amt<0&&t.cat==='Sparande & investeringar').reduce((s,t)=>s+Math.abs(t.amt),0);
+  const netAfterSaving = net - saved;
+
   document.getElementById('kpiRow').innerHTML=
     '<div class="kpi income"><div class="kpi-label">Totala inkomster</div><div class="kpi-value">+'+fmt(totalInc)+'</div><div class="kpi-sub">Löner, barnbidrag</div></div>'+
     '<div class="kpi expense"><div class="kpi-label">Totala utgifter</div><div class="kpi-value">−'+fmt(totalExp)+'</div><div class="kpi-sub">Alla konton</div></div>'+
     '<div class="kpi net"><div class="kpi-label">Nettoresultat</div><div class="kpi-value" style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmt(net)+'</div><div class="kpi-sub">Överskott</div></div>'+
+    '<div class="kpi net"><div class="kpi-label">Netto efter sparande</div><div class="kpi-value" style="color:'+(netAfterSaving>=0?'var(--green)':'var(--red)')+'">'+fmt(netAfterSaving)+'</div><div class="kpi-sub">'+fmt(saved)+' sparat</div></div>'+
     '<div class="kpi avg"><div class="kpi-label">Snitt utgifter/mån</div><div class="kpi-value">'+fmt(avgExp)+'</div><div class="kpi-sub">Genomsnitt</div></div>';
 
   if(monthChart) monthChart.destroy();
@@ -2647,7 +2648,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.01-1338</div>
+<div class="version-tag">v2026.09.01-1350</div>
 
 <script>
 if('serviceWorker' in navigator){
