@@ -2376,7 +2376,6 @@ function updateHeader(){
 }
 
 function rebuildCharts(){
-  if(activeView !== 'overview') return; // Kör inte om fliken inte syns
   const txnsSrc=filteredByMonth();
   const expenses=txnsSrc.filter(t=>t.amt<0&&t.cat!=='Inkomst'&&t.cat!=='Intern överföring');
   const income=txnsSrc.filter(t=>t.amt>0&&t.cat==='Inkomst');
@@ -2648,7 +2647,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.01-1328</div>
+<div class="version-tag">v2026.09.01-1331</div>
 
 <script>
 if('serviceWorker' in navigator){
