@@ -1884,7 +1884,9 @@ function autoCategory(desc){
   // Kreditkortsbetalningar = intern
   if(d === 'INBETALNING' || d.startsWith('INBETALNING ') ||
      d.includes('BETALNING KREDITKORT') || d.includes('MASTERCARD') ||
-     d.includes('KORTBETALNING')){
+     d.includes('KORTBETALNING') || d === 'BETALNING' ||
+     d.includes('FRÅN RENEBY') || d.includes('FRAN RENEBY') ||
+     d.includes('RENEBY HANNES')){
     return 'Intern överföring';
   }
   // Försäkringar
@@ -2691,7 +2693,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.01-1639</div>
+<div class="version-tag">v2026.09.01-1646</div>
 
 <script>
 if('serviceWorker' in navigator){
