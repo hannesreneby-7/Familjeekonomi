@@ -2184,8 +2184,9 @@ function parseXLSX(buffer){
   var descCol = headers.findIndex(function(h){ return h==='text'||h.includes('description')||h.includes('beskrivning')||h.includes('transaktion'); });
   var amtCol  = headers.findIndex(function(h){ return h==='amount'||h==='belopp'||h.includes('belopp'); });
 
-  // Mastercard-format: kolumn 0=desc, 1=datum, 2=belopp (headers innehåller "datum" och "belopp")
-  if(dateCol<0&&headers.some(function(h){return h.includes('datum');})){
+  // Mastercard-format: kolumn 0=desc, 1=datum, 2=belopp
+  var isMastercard = dateCol<0 && headers.some(function(h){return h.includes('datum');});
+  if(isMastercard){
     descCol = 0; dateCol = 1; amtCol = 2;
   }
 
@@ -2209,9 +2210,11 @@ function parseXLSX(buffer){
     if(!desc||desc.length<2) continue;
     const du=desc.toUpperCase();
     if(du.includes('FROM RENEBY')||du.includes('RENEBY HANNES')) continue;
-    // Kolla om det är Mastercard (INBETALNING BANKGIRO = intern)
-  var finalCat = autoCategory(desc);
-  txns.push({date:dateStr, acc:'Eva_MC', amt, desc, cat:finalCat});
+    var finalCat = autoCategory(desc);
+  // Sätt rätt konto baserat på filformat
+  // Norwegian har 'transactiondate', Mastercard har 'datum'
+  var accType = isMastercard ? 'Eva_MC' : 'Kreditkort';
+  txns.push({date:dateStr, acc:accType, amt, desc, cat:finalCat});
   }
   return txns;
 }
@@ -2641,7 +2644,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.01-0647</div>
+<div class="version-tag">v2026.09.01-0653</div>
 
 <script>
 if('serviceWorker' in navigator){
