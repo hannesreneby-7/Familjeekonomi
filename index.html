@@ -2186,8 +2186,9 @@ function parseXLSX(buffer){
   var descCol = headers.findIndex(function(h){ return h==='text'||h.includes('description')||h.includes('beskrivning')||h.includes('transaktion'); });
   var amtCol  = headers.findIndex(function(h){ return h==='amount'||h==='belopp'||h.includes('belopp'); });
 
-  // Mastercard-format: kolumn 0=desc, 1=datum, 2=belopp
-  var isMastercard = dateCol<0 && headers.some(function(h){return h.includes('datum');});
+  // Mastercard-format: har 'datum' och 'belopp' men INTE 'transactiondate'
+  var isMastercard = headers.some(function(h){return h.includes('datum');}) &&
+                     !headers.some(function(h){return h.includes('transactiondate');});
   if(isMastercard){
     descCol = 0; dateCol = 1; amtCol = 2;
   }
@@ -2646,7 +2647,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.01-0700</div>
+<div class="version-tag">v2026.09.01-0704</div>
 
 <script>
 if('serviceWorker' in navigator){
