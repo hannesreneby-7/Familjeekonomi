@@ -902,6 +902,13 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
     <button class="save-btn" onclick="logout()" style="margin-left:8px">Logga ut</button>
 
     <hr style="border:none;border-top:1px solid #f0d88a;margin:16px 0">
+    <div style="font-size:12px;font-weight:600;color:#4a3700;margin-bottom:6px">Kategorier</div>
+    <p style="font-size:12px;color:var(--ink-3);margin-bottom:10px">Kör om nyckelordsreglerna på befintliga transaktioner. Kategorier du valt manuellt rörs inte.</p>
+    <button class="save-btn" onclick="recategorize(false)">Kör om reglerna på "Övrigt"</button>
+    <button class="save-btn" onclick="recategorize(true)" style="margin-left:8px">Kör om reglerna på allt</button>
+    <div id="recatResult" style="font-size:12px;color:var(--ink-2);margin-top:10px;white-space:pre-line"></div>
+
+    <hr style="border:none;border-top:1px solid #f0d88a;margin:16px 0">
     <div style="font-size:12px;font-weight:600;color:#4a3700;margin-bottom:6px">⚠️ Farlig zon</div>
     <button class="reset-btn" onclick="showResetWarning()">🗑 Nollställ all data</button>
     <div class="reset-warning" id="resetWarning">
@@ -1059,7 +1066,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 </div>
 
 <script>
-const CAT_RULES = {"Mat & dagligvaror":["ICA","COOP","LIDL","HEMKOP","MAXI","WILLYS","NETTO","MATHEM","CONVINI","PRIS NYCKELKUND","CITY GROSS","GRONA LUND MAT"],"Restaurang & café":["OH POKE","ZETTLE_*SKEPPSBR","HOLY GREENS","LULU","LA PASTA VELOCE","BURGER","CAFE","WERMLANDS WARDSHUS","PINCHOS","SUSHI","KEBAB","WAL*JACK","SLAKTBAREN","WH NACKA","RICHE","PRIMA NAPOLETAN","MASALA","PIZZA","BRANES RESTAURAN","MAX BURGER","WAYNES","PREPP","CENTRALKONDITORI","ZETTLE_*NORRKOPI","OLEARYS","STAVSNAS HEMBAGE","COFFEE","LEKHYTTANS","ZETTLE_*I ETT KN","INDOCHINE","ZETTLE_*BARASKEN","NAKED JUICEBAR","RESTAURANG","KOKPUNKT","MEKI FOOD","TZATZIKI","HEAT","RISTORANTE","ZETTLE_*VARDSHUS","SOLTUNA","ITAMAE","KUNG CARLS","OMG SUSHI","ELITE HOTEL","HAMBURGERI","THAI","WERMDO WARDSHUS","SUBWAY","BROD OCH SALT","ESPRESSO HOUSE","MCD"],"Kollektivtrafik":["SL","VÄSTTRAFIK","SJ.SE","FLYTOGET","RUTERAPPEN","RUTER"],"Resor":["TAXI STOCKHOLM","BOLT.EU","AVOLTA","AIRPORT TAXI","DUTY FREE","NORWEGIAN AI","SSP S.A.","UBER","NOVOTEL","RIO REAL GOLF HOTEL","SJ APP","SWEDAVIA","SBB BAHNHOF","WALKTHROUGH","SAS","AIMO PARK","TAMOIL"],"Kläder & shopping":["KANDYZ","DUTY FREE","VOLT","MICHA ADAM","INTERSPORT","LAGERHAUS","DERMAROME","AHLENS","GODISGALLERIAN","STOP N SHOP","LINDEX","STADIUM","RUSTA","ZARA","AMAZON","BROTHERS","XXL","RITUALS","SOLTORGET","GLITTER","BYGGMAX","JULA","NORMAL","H&M"],"Nöje & fritid":["STROMMA","FILMSTADEN","MIJAS GOLF","NEW BOWL","BADMINTONSTADIO","BIOGRAF","KOLMÅRDENS","AB GR","PRESSBYRAN","EKSJÖ BOWLING","7-ELEVEN","NYX*FUNI","3ARENA","MEDLEY","SPORTSBAR","FLOTTSBRO","FJARILSHUSET","W*BRANAS","GRONA LUND","ASTRID LINDGRENS","GUSTAVSBERGSBAD","SYSTEMBOLAGET","STRÖMMMA","SVENSKA GOLFFÖRBUND","FUNI","KOLM","JUMPYARD","SODRA TEATERN","GRONA LUNDS","BIBLIOTEKET","BALTIC PRINCESS","SÖDRA TEATERN","NACKA TOBAK","STOCKHOLM LIVE","ROMME"],"Barn & familj":["BOO HOCK","WAYNES ICE","BOO FOTB","SVENSKALAG","DIREKTEN","HANVIKENS","ZETTLE_*BOO HOCKEY","ICE ACADEMY","TRE KRONOR","ZETTLE_*PUCK","PINGIS","LEKIA","HAPPIES LEKSAKE","NACKA GYMN"],"Streaming & prenumerationer":["NETFLIX","SPOTIFY","BOOKBEAT","HBOMAX","APPLE.COM","COMVIQ","GOOGLE ONE","TV4"],"Hälsa & apotek":["APOTEK","KRONANS","VACCIN","LÄKARE","TANDLÄK","RANELLA","MEDLEY","SVEA VACCIN","MABRA"],"Boende & el":["MÄLARENERGI","BYGGMAX","BOSTADS","MALARENERG","VATTENFALL","VERISURE","BOO ENERGI","NORDEA VARDAG","TIBBER","NACKA SALTSJ","BG 463-3194"],"Sparande & investeringar":["AVANZA","NORDNET"],"Inkomst":["LÖN","BARNBDR","BARNBIDRAG","FÖRSÄKRINGSK","SKATTEVERKET","FKASSA"],"Bränsle":["PREEM","OKQ8","CIRCLE K","SHELL","ST1","QSTAR"],"Parkering & trängsel":["PARKSTER","EASYPARK","PARKMAN","AIMO PARK","SWEDAVIA ARN","PARKERING","BG 809-2934","BG 316-7541","BG 282-4647"],"Bilkostnader":["STIVENBILVERKSTAD","LINDEROTHS CYKEL","BILSERVICE","BG 250-5683","BG 5051-6822","TRANSPORTSTY","FELPARKERING"],"Hemmet":["BILTEMA"],"Lån & utlägg":["STEFAN MAGLICIC","MAGLICIC"],"Försäkringar":["FOLKSAM","IF SKADE","TRYGG-HANSA","LÄNSFÖRSÄKRING","MODERNA FÖRSÄKR","GJENSIDIGE","DINA FÖRSÄKRING","PROTECTOR","SOLID","VERISURE","SECURITAS","ANTICIMEX","BG 478460","PG 4784604"],"Telefon & internet":["TELE2","TELIA","TELENOR","COMHEM","BAHNHOF","BREDBAND","HALEBOP","VIMLA","VIASAT","BOXER","HALLON","TRE AB","COMVIQ","FELLO","SURFA"],"Fackavgift":["UNIONEN","SACO","LO ","TCO ","VISION","KOMMUNAL","LÄRARFÖRBUND","IF METALL","HANDELS","ST-FÖRBUNDET","BG 322-8756","BG 5642-8568","UNIONENS A-K"]};
+const CAT_RULES = {"Mat & dagligvaror": ["ICA", "COOP", "LIDL", "HEMKOP", "MAXI", "WILLYS", "NETTO", "MATHEM", "CONVINI", "PRIS NYCKELKUND", "CITY GROSS", "GRONA LUND MAT"], "Restaurang & café": ["RANELLA", "OH POKE", "ZETTLE_*SKEPPSBR", "HOLY GREENS", "LULU", "LA PASTA VELOCE", "BURGER", "CAFE", "WERMLANDS WARDSHUS", "PINCHOS", "SUSHI", "KEBAB", "WAL*JACK", "SLAKTBAREN", "WH NACKA", "RICHE", "PRIMA NAPOLETAN", "MASALA", "PIZZA", "BRANES RESTAURAN", "MAX BURGER", "WAYNES", "PREPP", "CENTRALKONDITORI", "ZETTLE_*NORRKOPI", "OLEARYS", "STAVSNAS HEMBAGE", "COFFEE", "LEKHYTTANS", "ZETTLE_*I ETT KN", "INDOCHINE", "ZETTLE_*BARASKEN", "NAKED JUICEBAR", "RESTAURANG", "KOKPUNKT", "MEKI FOOD", "TZATZIKI", "HEAT", "RISTORANTE", "ZETTLE_*VARDSHUS", "SOLTUNA", "ITAMAE", "KUNG CARLS", "OMG SUSHI", "ELITE HOTEL", "HAMBURGERI", "THAI", "WERMDO WARDSHUS", "SUBWAY", "BROD OCH SALT", "ESPRESSO HOUSE", "MCD"], "Kollektivtrafik": ["SL", "VÄSTTRAFIK", "SJ.SE", "FLYTOGET", "RUTERAPPEN", "RUTER"], "Resor": ["TAXI STOCKHOLM", "BOLT.EU", "AVOLTA", "AIRPORT TAXI", "DUTY FREE", "NORWEGIAN AI", "SSP S.A.", "UBER", "NOVOTEL", "RIO REAL GOLF HOTEL", "SJ APP", "SWEDAVIA", "SBB BAHNHOF", "WALKTHROUGH", "SAS", "TAMOIL"], "Kläder & shopping": ["KANDYZ", "VOLT", "MICHA ADAM", "INTERSPORT", "LAGERHAUS", "AHLENS", "GODISGALLERIAN", "STOP N SHOP", "LINDEX", "STADIUM", "RUSTA", "ZARA", "AMAZON", "BROTHERS", "XXL", "SOLTORGET", "GLITTER", "NORMAL", "H&M"], "Nöje & fritid": ["STROMMA", "FILMSTADEN", "MIJAS GOLF", "NEW BOWL", "BADMINTONSTADIO", "BIOGRAF", "KOLMÅRDENS", "AB GR", "PRESSBYRAN", "EKSJÖ BOWLING", "7-ELEVEN", "NYX*FUNI", "3ARENA", "MEDLEY", "SPORTSBAR", "FLOTTSBRO", "FJARILSHUSET", "W*BRANAS", "GRONA LUND", "ASTRID LINDGRENS", "GUSTAVSBERGSBAD", "SYSTEMBOLAGET", "SVENSKA GOLFFÖRBUND", "FUNI", "KOLM", "JUMPYARD", "SODRA TEATERN", "GRONA LUNDS", "BIBLIOTEKET", "BALTIC PRINCESS", "SÖDRA TEATERN", "NACKA TOBAK", "STOCKHOLM LIVE", "ROMME"], "Barn & familj": ["BOO HOCK", "WAYNES ICE", "BOO FOTB", "SVENSKALAG", "DIREKTEN", "HANVIKENS", "ZETTLE_*BOO HOCKEY", "ICE ACADEMY", "TRE KRONOR", "ZETTLE_*PUCK", "PINGIS", "LEKIA", "HAPPIES LEKSAKE", "NACKA GYMN"], "Streaming & prenumerationer": ["NETFLIX", "SPOTIFY", "BOOKBEAT", "HBOMAX", "APPLE.COM", "GOOGLE ONE", "TV4"], "Hälsa & apotek": ["APOTEK", "KRONANS", "VACCIN", "LÄKARE", "TANDLÄK", "SVEA VACCIN", "MABRA"], "Boende & el": ["MÄLARENERGI", "BOSTADS", "MALARENERG", "VATTENFALL", "VERISURE", "BOO ENERGI", "NORDEA VARDAG", "TIBBER", "NACKA SALTSJ", "BG 463-3194"], "Sparande & investeringar": ["AVANZA", "NORDNET"], "Inkomst": ["LÖN", "BARNBDR", "BARNBIDRAG", "FÖRSÄKRINGSK", "SKATTEVERKET", "FKASSA"], "Bränsle": ["PREEM", "OKQ8", "CIRCLE K", "SHELL", "ST1", "QSTAR"], "Parkering & trängsel": ["PARKSTER", "EASYPARK", "PARKMAN", "AIMO PARK", "SWEDAVIA ARN", "PARKERING", "BG 809-2934", "BG 316-7541", "BG 282-4647"], "Bilkostnader": ["STIVENBILVERKSTAD", "LINDEROTHS CYKEL", "BILSERVICE", "BG 250-5683", "BG 5051-6822", "TRANSPORTSTY", "FELPARKERING"], "Hemmet": ["BILTEMA", "BYGGMAX", "JULA", "PLANTAGEN", "IKEA", "HORNBACH", "K-RAUTA", "BAUHAUS", "CLAS OHLSON", "XS LEKSAKER"], "Lån & utlägg": ["STEFAN MAGLICIC", "MAGLICIC"], "Försäkringar": ["FOLKSAM", "IF SKADE", "TRYGG-HANSA", "LÄNSFÖRSÄKRING", "MODERNA FÖRSÄKR", "GJENSIDIGE", "DINA FÖRSÄKRING", "PROTECTOR", "SOLID", "SECURITAS", "ANTICIMEX", "BG 478460", "PG 4784604"], "Telefon & internet": ["TELE2", "TELIA", "TELENOR", "COMHEM", "BAHNHOF", "BREDBAND", "HALEBOP", "VIMLA", "VIASAT", "BOXER", "HALLON", "TRE AB", "COMVIQ", "FELLO", "SURFA"], "Fackavgift": ["UNIONEN", "SACO", "LO", "TCO", "VISION", "KOMMUNAL", "LÄRARFÖRBUND", "IF METALL", "HANDELS", "ST-FÖRBUNDET", "BG 322-8756", "BG 5642-8568", "UNIONENS A-K"], "Frisör & skönhet": ["HAIR", "FRISÖR", "SALONG", "TSOLMON", "MASSAGE", "RITUALS", "DERMAROME"], "Bolån — ränta": ["LÄNSFÖRSÄKRINGAR HYPOTEK", "SBAB", "SWEDBANK HYPOTEK", "SKANDIA HYPOTEK", "STADSHYPOTEK", "DANSKE HYPOTEK", "NORDEA HYPOTEK"]};
 const CAT_COLORS = {
   'Mat & dagligvaror':'#2d7a56','Kollektivtrafik':'#4a9e6b',
   'Streaming & prenumerationer':'#7b52b8','Kläder & shopping':'#b83c7a',
@@ -1629,7 +1636,7 @@ function smartCategory(desc){
 
   // 2. Kolla om vi sett denna mottagare i befintliga transaktioner
   const existing = TXNS.find(t => descKey(t.desc) === key);
-  if(existing) return {cat: existing.cat, confident: true, source: 'existing'};
+  if(existing && existing.cat !== 'Övrigt') return {cat: existing.cat, confident: true, source: 'existing'};
 
   // 3. Fallback till nyckelordsregler
   const ruleCat = autoCategory(desc);
@@ -1927,6 +1934,22 @@ function showDashboard(){
 }
 
 // ===== CATEGORIZE =====
+// Nyckelord som måste stå som eget ord (annars träffar "SL" Tesla, "VISION" television osv)
+const WHOLE_WORD = new Set(['SL','SAS','MAX','HEAT','VOLT','FUNI','KOLM','LULU','SOLID','VISION','HANDELS','NORMAL','LO','TCO','ST1','TV4','XXL','MCD','ICA','COOP','ZARA','JULA','RUSTA','SHELL','RUTER','THAI','CAFE','AB GR']);
+function kwRegexEsc(x){ return x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+const KW_CACHE = {};
+function kwMatch(d, kw){
+  const k = kw.toUpperCase();
+  let re = KW_CACHE[k];
+  if(!re){
+    const esc = kwRegexEsc(k);
+    const wordEnd = (WHOLE_WORD.has(k) || k.length <= 4) ? '(?![A-ZÅÄÖ0-9])' : '';
+    re = new RegExp('(?:^|[^A-ZÅÄÖ0-9])' + esc + wordEnd);
+    KW_CACHE[k] = re;
+  }
+  return re.test(d);
+}
+
 function autoCategory(desc){
   const d=desc.toUpperCase();
   // Interna överföringar — allt som rör sig MELLAN era egna konton
@@ -1937,88 +1960,33 @@ function autoCategory(desc){
      d.includes('FELÖF') || d.includes('MAT O FÖRS') ||
      d.includes('EXTRA TILL MAT') || d.includes('HANNA SKATT') ||
      d.includes('HANNES FICKPEN') || d.includes('HANNES UTE') ||
-     d.includes('HANNES SKATT') || d.includes('SWISH MOTTAGEN') ||
-     d.includes('SWISH SKICKAD') || d.includes('SPAR ') ||
-     d.includes('MASTERCARD GULD') || d.includes('VISA ') ||
-     d.includes('SKATT EVA') || d.includes('SKATT HAN') || d.startsWith('FELÖF') ||
-     d.includes('EVA MAGNUSSON') || d.includes('EXTRA TILL MAT') ||
-     d.includes('TILL MATKONTO') || d.includes('BANK NORWEGI')){
+     d.includes('HANNES SKATT') || d.includes('SPAR ') ||
+     d.includes('MASTERCARD') || d.includes('VISA ') ||
+     d.includes('SKATT EVA') || d.includes('SKATT HAN') ||
+     d.includes('EVA MAGNUSSON') || d.includes('BANK NORWEGI') ||
+     d.includes('BETALNING KREDITKORT') || d.includes('KORTBETALNING') ||
+     d === 'INBETALNING' || d.startsWith('INBETALNING ') || d === 'BETALNING' ||
+     d.includes('FRÅN RENEBY') || d.includes('FRAN RENEBY') || d.includes('RENEBY HANNES')){
     return 'Intern överföring';
   }
-  // Swish inbetalning/mottagen = intern
-  if((d.includes('SWISH INBETALNING') || d.includes('SWISH MOTTAGEN')) && !d.includes('BARNBIDRAG')){
+  // Swish till/från er själva eller privatpersoner = intern (barnbidrag undantaget)
+  if((d.includes('SWISH INBETALNING') || d.includes('SWISH MOTTAGEN') || d.includes('SWISH SKICKAD')) && !d.includes('BARNBIDRAG')){
     return 'Intern överföring';
   }
-  // Kreditkortsbetalningar = intern
-  if(d === 'INBETALNING' || d.startsWith('INBETALNING ') ||
-     d.includes('BETALNING KREDITKORT') || d.includes('MASTERCARD') ||
-     d.includes('KORTBETALNING') || d === 'BETALNING' ||
-     d.includes('FRÅN RENEBY') || d.includes('FRAN RENEBY') ||
-     d.includes('RENEBY HANNES')){
-    return 'Intern överföring';
-  }
-  // Försäkringar
-  if(['FOLKSAM','IF SKADE','TRYGG-HANSA','LÄNSFÖRSÄKRING','MODERNA FÖRSÄKR',
-      'GJENSIDIGE','VERISURE','SECURITAS','ANTICIMEX','PG 4784604',
-      'BG 478460'].some(function(k){ return d.includes(k); }))
-    return 'Försäkringar';
-
-  // Telefon & internet
-  if(['TELE2','TELIA','TELENOR','COMHEM','BAHNHOF','BREDBAND',
-      'HALEBOP','VIMLA','HALLON','COMVIQ','FELLO','SURFA',
-      'TRE AB'].some(function(k){ return d.includes(k); }))
-    return 'Telefon & internet';
-
-  // Fackavgift
-  if(['UNIONEN','SACO ','TCO ','VISION ','KOMMUNAL','LÄRARFÖRBUND',
-      'IF METALL','HANDELS ','BG 322-8756','BG 5642-8568',
-      'UNIONENS A-K'].some(function(k){ return d.includes(k); }))
-    return 'Fackavgift';
-
-  // Swish-inbetalningar från privatpersoner = återbetalning
-  if(d.includes('SWISH INBETALNING') && !d.includes('BARNBIDRAG')){
-    return 'Intern överföring';
-  }
-  // Kreditkortsbetalningar = intern överföring
-  if(d === 'INBETALNING' || d.startsWith('INBETALNING ') || d.includes('BETALNING KREDITKORT')){
-    return 'Intern överföring';
-  }
-  // Bränsle
-  if(['PREEM','OKQ8','CIRCLE K','SHELL','ST1','QSTAR','SHELL'].some(function(k){ return d.includes(k); }))
-    return 'Bränsle';
-
-  // Parkering & trängsel
-  if(['PARKSTER','EASYPARK','PARKMAN','AIMO PARK','SWEDAVIA ARN',
-      'PARKERING','BG 809-2934','BG 316-7541','BG 282-4647'].some(function(k){ return d.includes(k); }))
-    return 'Parkering & trängsel';
-
-  // Frisör & skönhet
-  if(['RANELLA','HAIR','FRISÖR','SALONG','TSOLMON','MASSAGE',
-      'RITUALS','DERMAROME','MEDLEY','KRONANS APOTEK'].some(k=>d.includes(k)))
-    return 'Frisör & skönhet';
-
-  // Hemmet
-  if(['BYGGMAX','BILTEMA','JULA','PLANTAGEN','IKEA','HORNBACH',
-      'K-RAUTA','BAUHAUS','CLAS OHLSON','XS LEKSAKER'].some(k=>d.includes(k)))
-    return 'Hemmet';
-
-  // Bolån — ränta + amortering (Eva betalar från lönekontot)
-  if(['LÄNSFÖRSÄKRINGAR HYPOTEK','SBAB','SWEDBANK HYPOTEK','SKANDIA HYPOTEK',
-      'STADSHYPOTEK','DANSKE HYPOTEK','NORDEA HYPOTEK'].some(function(k){ return d.includes(k); }))
-    return 'Bolån — ränta';
-
   // Amortering
   if(d.includes('AMORTERING') || d.includes('AMORT'))
     return 'Bolån — amortering';
-
   // Edinburgh = resor (Evas Edinburghresa)
   if(d.includes('EDINBURGH') || d.includes('PAPPA RESA'))
     return 'Resor';
 
+  // Nyckelordsregler: alla kategorier söks igenom och det LÄNGSTA
+  // matchande nyckelordet vinner (så "MAX BURGER" slår "MAX", "SWEDAVIA ARN" slår "SWEDAVIA").
+  let best = null, bestLen = 0;
   for(const [cat,kws] of Object.entries(CAT_RULES))
     for(const kw of kws)
-      if(d.includes(kw.toUpperCase())) return cat;
-  return 'Övrigt';
+      if(kw.length > bestLen && kwMatch(d, kw)){ best = cat; bestLen = kw.length; }
+  return best || 'Övrigt';
 }
 
 // ===== UPLOAD =====
@@ -2296,7 +2264,7 @@ function parseXLSX(buffer){
     let dateStr='';
     const rawDate=row[dateCol];
     if(rawDate instanceof Date){
-      dateStr=rawDate.toISOString().slice(0,10);
+      dateStr=rawDate.getFullYear()+'-'+String(rawDate.getMonth()+1).padStart(2,'0')+'-'+String(rawDate.getDate()).padStart(2,'0');
     } else {
       dateStr=String(rawDate).slice(0,10).replace(/\//g,'-');
     }
@@ -2781,6 +2749,37 @@ function changeCat(idx, cat){
 }
 
 
+// ===== KÖR OM KATEGORIREGLER =====
+function recategorize(all){
+  const changes = {};
+  let n = 0;
+  TXNS.forEach(function(t){
+    if(LEARNED[descKey(t.desc)]) return;            // manuellt vald – rör inte
+    if(!all && t.cat !== 'Övrigt') return;
+    if(t.cat === 'Intern överföring' && !all) return;
+    const nc = autoCategory(t.desc);
+    if(nc === 'Övrigt' || nc === t.cat) return;
+    const k = t.cat + ' → ' + nc;
+    changes[k] = (changes[k] || 0) + 1;
+    n++;
+  });
+  const out = document.getElementById('recatResult');
+  if(n === 0){ out.textContent = 'Inget att ändra – allt stämmer redan med reglerna.'; return; }
+  const summary = Object.entries(changes).sort(function(a,b){ return b[1]-a[1]; })
+    .map(function(e){ return e[1] + ' st: ' + e[0]; }).join('\n');
+  if(!confirm(n + ' transaktioner får ny kategori:\n\n' + summary + '\n\nVill du fortsätta?')) return;
+  TXNS.forEach(function(t){
+    if(LEARNED[descKey(t.desc)]) return;
+    if(!all && t.cat !== 'Övrigt') return;
+    if(t.cat === 'Intern överföring' && !all) return;
+    const nc = autoCategory(t.desc);
+    if(nc !== 'Övrigt' && nc !== t.cat) t.cat = nc;
+  });
+  out.textContent = n + ' transaktioner omkategoriserade:\n' + summary;
+  showDashboard();
+  saveToCloud();
+}
+
 // ===== MOTSTOD SUGET =====
 const RESIST_PHRASES = [
   'Suget förlorade. Du vann.',
@@ -2986,7 +2985,7 @@ async function initAuth(){
 // ===== INIT =====
 initAuth();
 </script>
-<div class="version-tag">v2026.09.02-2115</div>
+<div class="version-tag">v2026.09.02-2145</div>
 
 <script>
 if('serviceWorker' in navigator){
