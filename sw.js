@@ -2,7 +2,7 @@
 // Strategi: hämta alltid senaste versionen från nätet först.
 // Den sparade kopian används bara om nätet är nere.
 
-const CACHE = 'ekonomi-v2026_09_02-1645';
+const CACHE = 'ekonomi-v2026_09_02-2115';
 const INDEX = '/Familjeekonomi/index.html';
 const ASSETS = ['/Familjeekonomi/', INDEX];
 
