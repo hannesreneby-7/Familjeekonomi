@@ -2025,27 +2025,24 @@ function showMultiPreview(results){
   // Slå ihop alla transaktioner från alla filer
   const existingKeys = new Set(TXNS.map(function(t){ return t.date+'|'+t.desc+'|'+t.amt; }));
   let allNew = [];
-  let totalDupes = 0;
-  let filesSummary = [];
 
   results.forEach(function(r){
     const newTxns = r.txns.filter(function(t){
       return !existingKeys.has(t.date+'|'+t.desc+'|'+t.amt);
     });
-    // Märk som smarta kategorier
     newTxns.forEach(function(t){
       const res = smartCategory(t.desc);
       t.cat = res.cat;
       t._confident = res.confident;
     });
-    const dupes = r.txns.length - newTxns.length;
-    totalDupes += dupes;
     allNew = allNew.concat(newTxns);
-    filesSummary.push(r.filename + ': ' + newTxns.length + ' nya' + (dupes>0?' ('+dupes+' dubl.)':''));
   });
 
-  // Visa samlad preview
-  showPreview(allNew, filesSummary.join(' · '), results.map(function(r){return r.type;}).join('/'));
+  // Spara per-fil-info globalt så importTransactions kan logga varje fil separat
+  window._multiFileResults = results;
+
+  const totalFiles = results.length;
+  showPreview(allNew, totalFiles + ' filer uppladdade samtidigt', results.map(function(r){return r.type;})[0] || 'Blandat');
 }
 
 function handleFile(file){
@@ -2389,7 +2386,15 @@ async function importTransactions(){
     window._pendingBalances = null;
   }
   pendingTxns.forEach(t => learnCategory(t.desc, t.cat));
-  addImportLogEntry(lastUploadedFile, lastUploadedType, pendingTxns[0]?.acc || 'Okänt', pendingTxns);
+  if(window._multiFileResults && window._multiFileResults.length > 1){
+    window._multiFileResults.forEach(function(r){
+      const fileTxns = pendingTxns.filter(function(t){ return r.txns.some(function(rt){ return rt.date===t.date && rt.desc===t.desc && rt.amt===t.amt; }); });
+      if(fileTxns.length > 0){ addImportLogEntry(r.filename, r.type, fileTxns[0].acc, fileTxns); }
+    });
+    window._multiFileResults = null;
+  } else {
+    addImportLogEntry(lastUploadedFile, lastUploadedType, pendingTxns[0]?.acc || 'Okänt', pendingTxns);
+  }
   TXNS=[...pendingTxns,...TXNS].sort((a,b)=>b.date.localeCompare(a.date));
   closeModal();
   await saveToCloud();
@@ -2693,7 +2698,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.01-1646</div>
+<div class="version-tag">v2026.09.02-0710</div>
 
 <script>
 if('serviceWorker' in navigator){
