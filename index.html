@@ -222,6 +222,10 @@ header p { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
 .resist-stat .kpi-label { margin-bottom:4px; }
 .resist-stat .kpi-value { font-size:22px; color:var(--green); }
 .resist-stat .kpi-sub { margin-top:4px; }
+.resist-reality { grid-column:1 / -1; font-size:13px; color:var(--ink-2); display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline; }
+.resist-reality .delta { font-weight:600; }
+.resist-reality .delta.down { color:var(--green); }
+.resist-reality .delta.up { color:var(--red); }
 .resist-foot { grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--ink-3); border-top:1px solid var(--sand); padding-top:10px; }
 .resist-foot button { background:none; border:none; color:var(--ink-3); font-family:inherit; font-size:12px; cursor:pointer; text-decoration:underline; padding:0; }
 .resist-foot button:hover { color:var(--ink); }
@@ -942,6 +946,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
       <div class="resist-card" id="resistCard">
         <button class="resist-btn" onclick="resistClick()"><span>💪</span>Motstod<br>suget</button>
         <div class="resist-stats" id="resistStats"></div>
+        <div class="resist-reality" id="resistReality"></div>
         <div id="resistReminder"></div>
         <div class="resist-foot" id="resistFoot"></div>
       </div>
@@ -2884,6 +2889,29 @@ function renderResist(){
     remEl.innerHTML = '';
   }
 
+  // Verkligheten: hur går det för kategorierna där suget brukar slå till?
+  const RESIST_CATS = ['Restaurang & café','Nöje & fritid'];
+  const spendByMonth = {};
+  TXNS.forEach(function(t){
+    if(t.amt >= 0 || RESIST_CATS.indexOf(t.cat) < 0) return;
+    const m = monthOf(t.date);
+    spendByMonth[m] = (spendByMonth[m] || 0) + Math.abs(t.amt);
+  });
+  const prevMonths = Object.keys(spendByMonth).filter(function(m){ return m < thisM; }).sort().slice(-6);
+  const realEl = document.getElementById('resistReality');
+  if(prevMonths.length){
+    const avg = prevMonths.reduce(function(a,m){ return a+spendByMonth[m]; },0) / prevMonths.length;
+    const now = spendByMonth[thisM] || 0;
+    const diff = now - avg;
+    const pct = avg > 0 ? Math.round(Math.abs(diff)/avg*100) : 0;
+    realEl.innerHTML =
+      '<span>Fika, uteätande & nöje i '+monthName(thisM)+': <strong>'+fmt(now)+'</strong></span>'+
+      '<span>snitt '+fmt(avg)+'/mån (senaste '+prevMonths.length+')</span>'+
+      (now>0 ? '<span class="delta '+(diff<=0?'down':'up')+'">'+(diff<=0?'▼ ':'▲ ')+pct+' % '+(diff<=0?'under':'över')+' snittet</span>' : '');
+  } else {
+    realEl.innerHTML = '';
+  }
+
   const last = RESIST.e.length ? RESIST.e[RESIST.e.length-1] : null;
   document.getElementById('resistFoot').innerHTML =
     '<span>'+RESIST_AMOUNT+' kr per tryck · '+(last ? 'Senast '+last[0] : 'Inget registrerat än')+'</span>'+
@@ -2987,7 +3015,7 @@ async function initAuth(){
 // ===== INIT =====
 initAuth();
 </script>
-<div class="version-tag">v2026.09.02-2200</div>
+<div class="version-tag">v2026.09.02-2215</div>
 
 <script>
 if('serviceWorker' in navigator){
