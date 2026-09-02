@@ -897,7 +897,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
         <div id="catBars"></div>
       </div>
       <div class="card">
-        <div class="card-title">Utgifter per konto</div>
+        <div class="card-title">Trend — Mat, Bränsle & Parkering (6 mån)</div>
         <div style="height:230px;position:relative"><canvas id="accChart"></canvas></div>
       </div>
     </div>
@@ -2481,15 +2481,37 @@ function rebuildCharts(){
     '<div class="cat-expand" id="' + id + '"></div>';
   }).join('');
 
-  const top5=sorted.slice(0,5).map(([c])=>c);
-  const accs=['Kort','Bank','Kreditkort','Importerat'];
-  const accColors={'Kort':'#378ADD','Bank':'#A07840','Kreditkort':'#C05050','Importerat':'#7B52B8'};
+  // Trendgraf: utgifter senaste 6 månaderna för utvalda kategorier
+  const trendCats = ['Mat & dagligvaror', 'Bränsle', 'Parkering & trängsel'];
+  const trendColors = {'Mat & dagligvaror':'#2d7a56','Bränsle':'#c47a2d','Parkering & trängsel':'#7a6b2d'};
+  const trendMonths = months.slice(-6);
+  const trendLabels = trendMonths.map(m=>{const [y,mo]=m.split('-');const n={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'Maj','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Okt','11':'Nov','12':'Dec'};return n[mo]+' '+y.slice(2);});
+
   if(accChart) accChart.destroy();
-  accChart=new Chart(document.getElementById('accChart'),{type:'bar',
-    data:{labels:top5.map(c=>c.length>13?c.slice(0,13)+'…':c),
-      datasets:accs.map(acc=>({label:acc,data:top5.map(cat=>expenses.filter(t=>t.acc===acc&&t.cat===cat).reduce((s,t)=>s+Math.abs(t.amt),0)),backgroundColor:accColors[acc],borderRadius:3})).filter(ds=>ds.data.some(v=>v>0))},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6b6454',font:{size:10},boxWidth:9}}},
-      scales:{x:{ticks:{color:'#9e9484',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#9e9484',callback:v=>(v/1000)+'k',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}}}});
+  accChart=new Chart(document.getElementById('accChart'),{type:'line',
+    data:{labels:trendLabels,
+      datasets:trendCats.map(function(cat){
+        return {
+          label: cat,
+          data: trendMonths.map(function(m){
+            return TXNS.filter(function(t){ return t.date.startsWith(m) && t.cat===cat && t.amt<0; })
+                       .reduce(function(s,t){ return s+Math.abs(t.amt); }, 0);
+          }),
+          borderColor: trendColors[cat],
+          backgroundColor: trendColors[cat]+'20',
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 3,
+          pointBackgroundColor: trendColors[cat],
+          fill: false
+        };
+      })
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{color:'#6b6454',font:{size:10},boxWidth:9,padding:8,usePointStyle:true,pointStyle:'circle'}},
+        tooltip:{callbacks:{label:function(ctx){ return ' '+ctx.dataset.label+': '+Math.round(ctx.raw).toLocaleString('sv-SE')+' kr'; }}}},
+      scales:{x:{ticks:{color:'#9e9484',font:{size:10}},grid:{display:false}},
+        y:{ticks:{color:'#9e9484',callback:function(v){ return Math.round(v/1000)+'k'; },font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}}}});
 
   const cf=document.getElementById('catFilter');
   const curr=cf.value;
@@ -2698,7 +2720,7 @@ loadNotes();
 loadFromCloud();
 fetchNotes();
 </script>
-<div class="version-tag">v2026.09.02-0710</div>
+<div class="version-tag">v2026.09.02-0823</div>
 
 <script>
 if('serviceWorker' in navigator){
