@@ -2533,10 +2533,13 @@ function rebuildCharts(){
   // ---- Hero: kvar att spendera ----
   const todayS = todayStr();
   const curM = todayS.slice(0,7);
+  const allMode = activeMonth==='all';
   const lastDataM = months.length ? months[months.length-1] : curM;
-  const heroM = activeMonth==='all' ? lastDataM : activeMonth;
+  const heroM = allMode ? lastDataM : activeMonth;
+  const nMonths = months.length || 1;
   const isExpT = t => t.amt<0 && t.cat!=='Inkomst' && t.cat!=='Intern överföring' && t.cat!=='Sparande & investeringar' && t.cat!=='Bolån — amortering';
-  const heroTx = TXNS.filter(t=>t.date.startsWith(heroM));
+  const heroTx = allMode ? TXNS : TXNS.filter(t=>t.date.startsWith(heroM));
+  const periodLabel = allMode ? (months.length>1 ? monthName(months[0])+'–'+monthName(lastDataM)+' ('+nMonths+' mån)' : monthName(lastDataM)) : monthName(heroM);
   const spent = heroTx.filter(isExpT).reduce((s,t)=>s+Math.abs(t.amt),0);
   const heroInc = heroTx.filter(t=>t.amt>0&&t.cat==='Inkomst').reduce((s,t)=>s+t.amt,0);
   const heroSaved = heroTx.filter(t=>t.amt<0&&t.cat==='Sparande & investeringar').reduce((s,t)=>s+Math.abs(t.amt),0);
@@ -2564,7 +2567,18 @@ function rebuildCharts(){
     else { pace='i takt'; }
   }
   const heroEl = document.getElementById('heroCard');
-  if(ref>0){
+  if(allMode){
+    const refAll = totalBudget>0 ? totalBudget*nMonths : 0;
+    const diffAll = refAll - spent;
+    heroEl.innerHTML =
+      '<div class="hero-label">Utgifter totalt · '+periodLabel+'</div>'+
+      '<div class="hero-row"><div class="hero-value">'+fmt(spent)+'</div>'+
+      '<div class="hero-pace '+(refAll>0?(diffAll>=0?'good':'bad'):'')+'">snitt '+fmt(spent/nMonths)+'/mån'+(refAll>0?' · '+fmt(Math.abs(diffAll))+(diffAll>=0?' under budget':' över budget'):'')+'</div></div>'+
+      (refAll>0
+        ? '<div class="hero-bar"><div class="hero-bar-fill'+(spent>refAll?' over':'')+'" style="width:'+Math.min(100,spent/refAll*100)+'%"></div></div>'+
+          '<div class="hero-foot"><span>Använt '+fmt(spent)+'</span><span>Budget '+nMonths+' mån '+fmt(refAll)+'</span></div>'
+        : '<div class="hero-empty">Sätt en budget per kategori under Budget-fliken så visas hur ni ligger mot den över perioden.</div>');
+  } else if(ref>0){
     const fillPct = Math.min(100, spent/ref*100);
     heroEl.innerHTML =
       '<div class="hero-label">'+(partial?'Kvar att spendera i ':'Resultat ')+monthName(heroM)+(partial?' · t.o.m. '+day+'/'+hm+' (dag '+day+' av '+dim+')':'')+'</div>'+
@@ -2584,8 +2598,8 @@ function rebuildCharts(){
   const sparBalance = (BALANCES['Eva_Spark'] && BALANCES['Eva_Spark'].balance) || 0;
   const sparDate = (BALANCES['Eva_Spark'] && BALANCES['Eva_Spark'].date) || '';
   document.getElementById('miniRow').innerHTML =
-    '<div class="mini"><div><div class="mini-label">Inkomster</div><div class="mini-value">'+fmt(heroInc)+'</div><div class="mini-sub">'+monthName(heroM)+'</div></div></div>'+
-    '<div class="mini"><div><div class="mini-label">Sparat</div><div class="mini-value">'+fmt(heroSaved)+'</div><div class="mini-sub">'+(sparDate?'Sparkonto '+fmt(sparBalance):monthName(heroM))+'</div></div></div>'+
+    '<div class="mini"><div><div class="mini-label">Inkomster</div><div class="mini-value">'+fmt(heroInc)+'</div><div class="mini-sub">'+periodLabel+'</div></div></div>'+
+    '<div class="mini"><div><div class="mini-label">Sparat</div><div class="mini-value">'+fmt(heroSaved)+'</div><div class="mini-sub">'+(sparDate?'Sparkonto '+fmt(sparBalance):periodLabel)+'</div></div></div>'+
     '<div class="mini"><div><div class="mini-label">Motstått</div><div class="mini-value" id="resistMiniValue">–</div><div class="mini-sub" id="resistMiniSub"></div></div><button class="mini-plus" onclick="resistClick()" title="Motstod suget">+</button></div>';
 
   if(monthChart) monthChart.destroy();
@@ -2604,10 +2618,11 @@ function rebuildCharts(){
   Object.keys(BUDGET).forEach(c=>{ if(!(c in catTotals)) catTotals[c]=0; });
   const sorted=Object.entries(catTotals).filter(e=>e[0]!=='Övrigt').sort((a,b)=>b[1]-a[1]);
   if(catTotals['Övrigt']) sorted.push(['Övrigt',catTotals['Övrigt']]);
-  const maxAll=Math.max(1,...sorted.map(([c,v])=>Math.max(v,BUDGET[c]||0)));
-  document.getElementById('catBarsTitle').textContent = (totalBudget>0?'Kategorier mot budget':'Kategorier')+' — '+monthName(heroM);
+  const budMul = allMode ? nMonths : 1;
+  const maxAll=Math.max(1,...sorted.map(([c,v])=>Math.max(v,(BUDGET[c]||0)*budMul)));
+  document.getElementById('catBarsTitle').textContent = (totalBudget>0?'Kategorier mot budget':'Kategorier')+' — '+periodLabel;
   document.getElementById('catBars').innerHTML = sorted.map(function(entry){
-    var cat=entry[0], val=entry[1], bud=BUDGET[cat]||0;
+    var cat=entry[0], val=entry[1], bud=(BUDGET[cat]||0)*budMul;
     var over = bud>0 && val>bud;
     var muted = cat==='Övrigt';
     var id='cat-expand-'+cat.replace(/[^a-z0-9]/gi,'_');
@@ -2622,7 +2637,7 @@ function rebuildCharts(){
       '<span class="catrow-chev" id="chev-'+id+'">▼</span>'+
     '</div>'+
     '<div class="cat-expand" id="'+id+'"></div>';
-  }).join('') || '<div style="font-size:13px;color:var(--ink-3)">Inga utgifter registrerade för '+monthName(heroM)+' än.</div>';
+  }).join('') || '<div style="font-size:13px;color:var(--ink-3)">Inga utgifter registrerade för '+periodLabel+' än.</div>';
 
   // Trendgraf: utgifter senaste 6 månaderna för utvalda kategorier
   const trendCats = ['Mat & dagligvaror', 'Bränsle', 'Parkering & trängsel'];
@@ -2976,8 +2991,13 @@ function renderResist(){
   const total = RESIST.e.reduce(function(a,x){ return a+x[1]; }, 0);
   const streak = resistStreak();
 
-  miniV.textContent = fmt(cur.sum);
-  document.getElementById('resistMiniSub').textContent = cur.n+' gång'+(cur.n===1?'':'er')+' i '+monthName(thisM)+(streak>=2?' · '+streak+' dagar i rad':'')+' · totalt '+fmt(total);
+  if(activeMonth==='all'){
+    miniV.textContent = fmt(total);
+    document.getElementById('resistMiniSub').textContent = RESIST.e.length+' gång'+(RESIST.e.length===1?'':'er')+' totalt · '+fmt(cur.sum)+' i '+monthName(thisM)+(streak>=2?' · '+streak+' dagar i rad':'');
+  } else {
+    miniV.textContent = fmt(cur.sum);
+    document.getElementById('resistMiniSub').textContent = cur.n+' gång'+(cur.n===1?'':'er')+' i '+monthName(thisM)+(streak>=2?' · '+streak+' dagar i rad':'')+' · totalt '+fmt(total);
+  }
 
   // Påminnelse: föregående månader som inte är överförda, och innevarande från den 28:e
   const dayNum = parseInt(today.slice(8,10),10);
@@ -3123,7 +3143,7 @@ async function initAuth(){
 // ===== INIT =====
 initAuth();
 </script>
-<div class="version-tag">v2026.09.02-2300</div>
+<div class="version-tag">v2026.09.02-2315</div>
 
 <script>
 if('serviceWorker' in navigator){
