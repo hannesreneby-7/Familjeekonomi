@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ekonomi">
-<meta name="theme-color" content="#0F1923">
+<meta name="theme-color" content="#12171F">
 <link rel="manifest" href="manifest.json">
 <title>Familjens Ekonomi</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -17,25 +17,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 :root {
-  --ink:       #1B2A32;
-  --ink-2:     #3E525C;
-  --ink-3:     #6A7A82;
-  --ink-4:     #9AA7AD;
-  --bg:        #F6F3EE;
-  --surface:   #FFFFFF;
-  --sand:      #E4DDD2;
-  --accent:    #1F6F78;
-  --accent-bg: #E6F0F1;
-  --green:     #2E8B6E;
-  --green-bg:  #E7F3EE;
-  --red:       #D2573F;
-  --red-bg:    #FBECE7;
-  --amber:     #E8A33D;
-  --amber-ink: #3A2604;
-  --blue:      #1F6F78;
-  --blue-bg:   #E6F0F1;
+  --ink:       #F2EEE6;
+  --ink-2:     #C9CFD8;
+  --ink-3:     #8E98A6;
+  --ink-4:     #5F6B7A;
+  --bg:        #12171F;
+  --surface:   #1B222C;
+  --surface-2: #222B36;
+  --sand:      #2A333F;
+  --accent:    #4FE3B4;
+  --accent-ink:#0B2A21;
+  --accent-bg: #16332C;
+  --green:     #4FE3B4;
+  --green-bg:  #17342C;
+  --red:       #FF6B57;
+  --red-bg:    #3A221E;
+  --amber:     #FFC24B;
+  --amber-ink: #3A2A05;
+  --amber-bg:  #3A2E14;
+  --blue:      #4FE3B4;
+  --blue-bg:   #16332C;
   --radius:    8px;
-  --shadow:    0 1px 3px rgba(15,25,35,.07), 0 4px 12px rgba(15,25,35,.04);
+  --shadow:    0 1px 3px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.25);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,8 +54,9 @@ body {
 
 /* ── Header ── */
 header {
-  background: var(--ink);
-  color: #fff;
+  background: var(--surface);
+  border-bottom: 1px solid var(--sand);
+  color: var(--ink);
   padding: 0 32px;
   height: 56px;
   display: flex;
@@ -64,7 +68,7 @@ header h1 {
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -.01em;
-  color: #fff;
+  color: var(--ink);
 }
 header p { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
 .header-left { display: flex; flex-direction: column; }
@@ -89,7 +93,7 @@ header p { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
 .sync-saving{ color: #F0C060; background: rgba(240,192,96,.08); }
 .sync-error { color: #E88080; background: rgba(232,128,128,.08); }
 .upload-btn {
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
   border: none;
   border-radius: var(--radius);
@@ -178,7 +182,7 @@ header p { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
   transition: all .1s;
 }
 .month-chip:hover { border-color: var(--ink-4); color: var(--ink-2); }
-.month-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.month-chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 
 /* ── KPIs ── */
 .kpi-row {
@@ -233,10 +237,10 @@ header p { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
 .resist-foot { grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--ink-3); border-top:1px solid var(--sand); padding-top:10px; }
 .resist-foot button { background:none; border:none; color:var(--ink-3); font-family:inherit; font-size:12px; cursor:pointer; text-decoration:underline; padding:0; }
 .resist-foot button:hover { color:var(--ink); }
-.resist-reminder { grid-column:1 / -1; background:var(--green-bg); border:1px solid #cfe5da; border-radius:var(--radius); padding:12px 14px; font-size:13px; color:var(--green); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.resist-reminder { grid-column:1 / -1; background:var(--green-bg); border:1px solid var(--sand); border-radius:var(--radius); padding:12px 14px; font-size:13px; color:var(--green); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
 .resist-reminder strong { font-weight:600; }
-.resist-reminder button { background:var(--green); color:#fff; border:none; border-radius:var(--radius); padding:7px 12px; font-family:inherit; font-size:12px; font-weight:500; cursor:pointer; }
-.resist-toast { position:fixed; left:50%; top:22%; transform:translate(-50%,-50%) scale(.8); background:var(--ink); color:#fff; padding:18px 26px; border-radius:12px; text-align:center; z-index:9000; opacity:0; pointer-events:none; transition:opacity .2s, transform .25s cubic-bezier(.2,1.4,.4,1); box-shadow:0 12px 40px rgba(15,25,35,.35); }
+.resist-reminder button { background:var(--green); color:var(--accent-ink); border:none; border-radius:var(--radius); padding:7px 12px; font-family:inherit; font-size:12px; font-weight:500; cursor:pointer; }
+.resist-toast { position:fixed; left:50%; top:22%; transform:translate(-50%,-50%) scale(.8); background:var(--surface-2); color:var(--ink); border:1px solid var(--sand); padding:18px 26px; border-radius:12px; text-align:center; z-index:9000; opacity:0; pointer-events:none; transition:opacity .2s, transform .25s cubic-bezier(.2,1.4,.4,1); box-shadow:0 12px 40px rgba(15,25,35,.35); }
 .resist-toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
 .resist-toast .big { font-size:30px; font-weight:600; letter-spacing:-.02em; color:var(--amber); }
 .resist-toast .small { font-size:13px; opacity:.8; margin-top:4px; }
@@ -340,18 +344,18 @@ body { font-variant-numeric: tabular-nums; }
 
 /* ── Banner ── */
 .banner {
-  background: #FFF9EC;
-  border: 1px solid #EDD98A;
+  background: var(--amber-bg);
+  border: 1px solid #6B5300;
   border-radius: var(--radius);
   padding: 10px 14px;
   font-size: 12px;
-  color: #6B5300;
+  color: var(--amber);
   margin-bottom: 16px;
   display: flex;
   align-items: flex-start;
   gap: 8px;
 }
-.banner strong { color: #4A3900; }
+.banner strong { color: #FFD98A; }
 
 /* ── Setup banner ── */
 .setup-banner {
@@ -381,8 +385,8 @@ body { font-variant-numeric: tabular-nums; }
 }
 .setup-banner input:focus { border-color: var(--blue); }
 .setup-banner .save-btn {
-  background: var(--ink);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-ink);
   border: none;
   border-radius: var(--radius);
   padding: 8px 18px;
@@ -397,7 +401,7 @@ body { font-variant-numeric: tabular-nums; }
 .reset-btn {
   background: none;
   color: var(--red);
-  border: 1px solid #EBB0A8;
+  border: 1px solid var(--red);
   border-radius: var(--radius);
   padding: 7px 14px;
   font-size: 12px;
@@ -409,7 +413,7 @@ body { font-variant-numeric: tabular-nums; }
 .reset-btn:hover { background: var(--red-bg); }
 .reset-warning {
   background: var(--red-bg);
-  border: 1px solid #EBB0A8;
+  border: 1px solid var(--red);
   border-radius: var(--radius);
   padding: 12px 14px;
   font-size: 12px;
@@ -423,8 +427,8 @@ body { font-variant-numeric: tabular-nums; }
 .empty-state h2 { font-size: 20px; font-weight: 300; color: var(--ink-2); margin-bottom: 8px; }
 .empty-state p { font-size: 13px; color: var(--ink-4); margin-bottom: 20px; }
 .empty-state .empty-btn {
-  background: var(--ink);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-ink);
   border: none;
   border-radius: var(--radius);
   padding: 10px 20px;
@@ -439,7 +443,7 @@ body { font-variant-numeric: tabular-nums; }
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(15,25,35,.5);
+  background: rgba(0,0,0,.6);
   z-index: 1000;
   align-items: center;
   justify-content: center;
@@ -451,7 +455,7 @@ body { font-variant-numeric: tabular-nums; }
   padding: 28px;
   width: 540px;
   max-width: 95vw;
-  box-shadow: 0 8px 40px rgba(15,25,35,.18);
+  box-shadow: 0 8px 40px rgba(0,0,0,.5);
   position: relative;
   max-height: 90vh;
   overflow-y: auto;
@@ -510,15 +514,15 @@ body { font-variant-numeric: tabular-nums; }
   padding: 2px 6px;
   font-size: 11px;
   font-family: inherit;
-  background: white;
+  background: var(--surface);
   cursor: pointer;
   outline: none;
   color: var(--ink-2);
 }
 .modal-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
 .btn-primary {
-  background: var(--ink);
-  color: white;
+  background: var(--accent);
+  color: var(--accent-ink);
   border: none;
   border-radius: var(--radius);
   padding: 8px 18px;
@@ -591,21 +595,21 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
   text-align: left;
 }
 .txn-table td { padding: 9px 12px; border-bottom: 1px solid var(--bg); vertical-align: middle; }
-.txn-table tr:hover td { background: #FAFAF8; }
+.txn-table tr:hover td { background: var(--surface-2); }
 .txn-amount { font-weight: 500; text-align: right; white-space: nowrap; }
 .txn-amount.pos { color: var(--green); }
 .acc-badge { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 3px; white-space: nowrap; letter-spacing: .02em; }
-.acc-kort       { background: #EBF0F7; color: #1A4A7A; }
-.acc-bank       { background: #F0EDE6; color: #5A4A2A; }
-.acc-kreditkort { background: #FAEAEA; color: #8B2A2A; }
-.acc-importerat { background: #F0E8FC; color: #5A2A8B; }
+.acc-kort       { background: #16332C; color: #4FE3B4; }
+.acc-bank       { background: #2A333F; color: #C9CFD8; }
+.acc-kreditkort { background: #3A221E; color: #FF8A78; }
+.acc-importerat { background: #2C2542; color: #B9A6FF; }
 .cat-select {
   border: 1px solid var(--sand);
   border-radius: 4px;
   padding: 2px 6px;
   font-size: 11px;
   font-family: inherit;
-  background: white;
+  background: var(--surface);
   cursor: pointer;
   outline: none;
 }
@@ -639,7 +643,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 .budget-pct { font-size: 11px; font-weight: 600; }
 .budget-pct.over { color: var(--red); }
 .budget-pct.ok { color: var(--green); }
-.budget-pct.warn { color: #C49A00; }
+.budget-pct.warn { color: var(--amber); }
 .budget-bar-bg { background: var(--bg); border-radius: 2px; height: 4px; margin-bottom: 8px; overflow: hidden; }
 .budget-bar-fill { height: 100%; border-radius: 2px; transition: width .3s ease; }
 .budget-numbers { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); }
@@ -686,7 +690,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 .account-status { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 3px; white-space: nowrap; letter-spacing: .02em; }
 .account-status.ok      { background: var(--green-bg); color: var(--green); }
 .account-status.missing { background: var(--red-bg); color: var(--red); }
-.account-status.partial { background: #FFF8E0; color: #7A5A00; }
+.account-status.partial { background: var(--amber-bg); color: var(--amber); }
 .account-last { font-size: 11px; color: var(--ink-3); margin-top: 6px; }
 .account-range { font-size: 11px; color: var(--ink-4); margin-top: 2px; }
 .account-balance { font-size: 20px; font-weight: 300; letter-spacing: -.02em; margin: 8px 0 6px 0; color: var(--ink); }
@@ -731,7 +735,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 .recur-badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: var(--blue-bg); color: var(--blue); white-space: nowrap; font-weight: 500; }
 
 /* ── AI ── */
-.ai-card { background: var(--ink); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; }
+.ai-card { background: var(--surface-2); border: 1px solid var(--sand); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; }
 .ai-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .ai-card-title { font-size: 14px; font-weight: 600; color: #fff; }
 .ai-badge { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-radius: 3px; padding: 2px 7px; font-size: 10px; font-weight: 500; color: rgba(255,255,255,.4); letter-spacing: .03em; }
@@ -802,7 +806,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
   padding: 2px 4px;
   font-size: 11px;
   font-family: inherit;
-  background: white;
+  background: var(--surface);
   cursor: pointer;
   outline: none;
   color: var(--ink-2);
@@ -825,7 +829,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 .txn-note-row {
   display: none;
   padding: 6px 12px 10px 12px;
-  background: #F8F7F4;
+  background: var(--surface-2);
   border-top: 1px solid var(--sand);
 }
 .txn-note-row.open { display: flex; align-items: center; gap: 8px; }
@@ -837,15 +841,15 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
   font-size: 12px;
   font-family: inherit;
   color: var(--ink);
-  background: white;
+  background: var(--surface);
   outline: none;
   transition: border-color .15s;
 }
 .txn-note-input:focus { border-color: var(--blue); }
 .txn-note-input::placeholder { color: var(--ink-4); }
 .txn-note-save {
-  background: var(--ink);
-  color: white;
+  background: var(--accent);
+  color: var(--accent-ink);
   border: none;
   border-radius: 6px;
   padding: 6px 12px;
@@ -894,7 +898,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 .login-box h2 { font-size:18px; font-weight:600; margin-bottom:6px; }
 .login-box p { font-size:13px; color:var(--ink-3); margin-bottom:18px; }
 .login-box input { width:100%; padding:11px 12px; border:1px solid var(--sand); border-radius:var(--radius); font-size:15px; font-family:inherit; margin-bottom:10px; }
-.login-box button { width:100%; padding:11px; background:var(--ink); color:#fff; border:none; border-radius:var(--radius); font-size:14px; font-family:inherit; font-weight:500; cursor:pointer; }
+.login-box button { width:100%; padding:11px; background:var(--accent); color:var(--accent-ink); border:none; border-radius:var(--radius); font-size:14px; font-family:inherit; font-weight:500; cursor:pointer; }
 .login-box button:disabled { opacity:.5; cursor:default; }
 .login-msg { font-size:12px; color:var(--green); margin-top:12px; min-height:16px; }
 </style>
@@ -910,7 +914,12 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
     <p>Skriv din e-postadress så skickar vi en inloggningslänk.</p>
     <input type="email" id="loginEmail" placeholder="din@epost.se" autocomplete="email"
            onkeydown="if(event.key==='Enter')sendLoginLink()">
-    <button id="loginBtn" onclick="sendLoginLink()">Skicka inloggningslänk</button>
+    <button id="loginBtn" onclick="sendLoginLink()">Skicka kod</button>
+    <div id="loginCodeWrap" style="display:none;margin-top:14px">
+      <input type="text" id="loginCode" placeholder="Sexsiffrig kod" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
+             onkeydown="if(event.key==='Enter')verifyLoginCode()">
+      <button id="loginCodeBtn" onclick="verifyLoginCode()">Logga in</button>
+    </div>
     <div class="login-msg" id="loginMsg"></div>
   </div>
 </div>
@@ -963,21 +972,21 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
     <button class="save-btn" onclick="loadFromCloud()">Synka nu</button>
     <button class="save-btn" onclick="logout()" style="margin-left:8px">Logga ut</button>
 
-    <hr style="border:none;border-top:1px solid #f0d88a;margin:16px 0">
-    <div style="font-size:12px;font-weight:600;color:#4a3700;margin-bottom:6px">Kategorier</div>
+    <hr style="border:none;border-top:1px solid #6B5300;margin:16px 0">
+    <div style="font-size:12px;font-weight:600;color:#FFD98A;margin-bottom:6px">Kategorier</div>
     <p style="font-size:12px;color:var(--ink-3);margin-bottom:10px">Kör om nyckelordsreglerna på befintliga transaktioner. Kategorier du valt manuellt rörs inte.</p>
     <button class="save-btn" onclick="recategorize(false)">Kör om reglerna på "Övrigt"</button>
     <button class="save-btn" onclick="recategorize(true)" style="margin-left:8px">Kör om reglerna på allt</button>
     <div id="recatResult" style="font-size:12px;color:var(--ink-2);margin-top:10px;white-space:pre-line"></div>
 
-    <hr style="border:none;border-top:1px solid #f0d88a;margin:16px 0">
-    <div style="font-size:12px;font-weight:600;color:#4a3700;margin-bottom:6px">⚠️ Farlig zon</div>
+    <hr style="border:none;border-top:1px solid #6B5300;margin:16px 0">
+    <div style="font-size:12px;font-weight:600;color:#FFD98A;margin-bottom:6px">⚠️ Farlig zon</div>
     <button class="reset-btn" onclick="showResetWarning()">🗑 Nollställ all data</button>
     <div class="reset-warning" id="resetWarning">
       <strong>Är du säker?</strong> Detta raderar alla transaktioner, kategorier och inlärda regler permanent — både lokalt och i JSONBin. Det går inte att ångra!
       <div style="display:flex;gap:8px;margin-top:10px">
         <button onclick="confirmReset()" style="background:#b83c3c;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-family:inherit;cursor:pointer;flex:1">Ja, radera allt</button>
-        <button onclick="hideResetWarning()" style="background:none;border:1px solid #e8a0a0;border-radius:6px;padding:6px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#7a2020;flex:1">Avbryt</button>
+        <button onclick="hideResetWarning()" style="background:none;border:1px solid var(--sand);border-radius:6px;padding:6px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:var(--red);flex:1">Avbryt</button>
       </div>
     </div>
   </div>
@@ -1023,8 +1032,8 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
         <div class="card">
           <div class="card-title">Inkomst vs utgift per månad</div>
           <div class="legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#7FC4AB"></div>Inkomster</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#E9A08E"></div>Utgifter</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#4FE3B4"></div>Inkomster</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#FF6B57"></div>Utgifter</div>
           </div>
           <div style="height:200px;position:relative"><canvas id="monthChart"></canvas></div>
         </div>
@@ -1088,7 +1097,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
           <div class="ai-card-title">&#10022; AI-analys</div>
           <div class="ai-badge">Powered by Claude</div>
         </div>
-        <p style="font-size:13px;color:#9e9484;margin-bottom:16px">Välj en månad nedan och klicka för att få en personlig analys av er ekonomi.</p>
+        <p style="font-size:13px;color:var(--ink-3);margin-bottom:16px">Välj en månad nedan och klicka för att få en personlig analys av er ekonomi.</p>
         <button class="ai-analyze-btn" id="analyzeBtn" onclick="runAIAnalysis()">&#10022; Analysera månaden</button>
         <button class="ai-analyze-btn" style="margin-top:8px;background:rgba(255,255,255,.06)" onclick="exportForAI()">&#128203; Exportera för AI-analys</button>
         <div class="ai-thinking" id="aiThinking">
@@ -1284,7 +1293,7 @@ function renderBudgetView(){
     const color = CAT_COLORS[cat] || '#888';
     const pct = budget > 0 ? Math.round(spent/budget*100) : null;
     const barW = budget > 0 ? Math.min(spent/budget*100, 100).toFixed(1) : 0;
-    const barColor = pct===null ? color : pct>100 ? '#b83c3c' : pct>80 ? '#c4821a' : '#2d7a56';
+    const barColor = pct===null ? color : pct>100 ? '#FF6B57' : pct>80 ? '#FFC24B' : '#4FE3B4';
     const pctLabel = pct===null ? '' : pct>100
       ? `<span class="budget-pct over">${pct}% ⚠️</span>`
       : `<span class="budget-pct ${pct>80?'warn':'ok'}">${pct}%</span>`;
@@ -1492,7 +1501,7 @@ function renderCatExpand(id, cat){
     return '<div class="cat-expand-row">' +
       '<span class="cat-expand-date">'+ds+'</span>' +
       '<span class="cat-expand-desc" title="'+t.desc+'">'+t.desc+'</span>' +
-      '<span class="cat-expand-amt" style="color:'+(t.amt>0?'#1A6B4A':'#C0392B')+'">'+(t.amt>0?'+':'-')+Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')+' kr</span>' +
+      '<span class="cat-expand-amt" style="color:'+(t.amt>0?'var(--green)':'var(--red)')+'">'+(t.amt>0?'+':'-')+Math.round(Math.abs(t.amt)).toLocaleString('sv-SE')+' kr</span>' +
       '<select class="cat-expand-sel" data-idx="'+txnIdx+'" data-expand="'+id+'" data-oldcat="'+cat+'" onchange="catExpandChange(this)">' +
         opts +
       '</select>' +
@@ -2412,19 +2421,19 @@ function showPreview(txns,filename,type){
       const i   = newTxns.indexOf(t);
       const col = CAT_COLORS[t.cat] || '#888';
       const dot = t._confident ? 'high' : 'low';
-      const bg  = t._confident ? '#f4fbf7' : '#fffbf0';
+      const bg  = t._confident ? 'var(--green-bg)' : 'var(--amber-bg)';
       const opts = ALL_CATS.map(c => {
         const sel = c === t.cat ? ' selected' : '';
         return '<option value="' + c + '"' + sel + '>' + c + '</option>';
       }).join('');
       const onChange = 'previewChangeCat(' + i + ',this.value,this)';
       return '<tr style="background:' + bg + '">' +
-        '<td style="white-space:nowrap;color:#9e9484;font-size:11px;padding:6px 10px">' + t.date + '</td>' +
+        '<td style="white-space:nowrap;color:var(--ink-3);font-size:11px;padding:6px 10px">' + t.date + '</td>' +
         '<td style="max-width:240px;padding:6px 10px">' +
           '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:' +
           (t._confident ? '#2d7a56' : '#c4821a') + '"></span>' + t.desc +
         '</td>' +
-        '<td style="text-align:right;white-space:nowrap;padding:6px 10px;font-weight:500;color:'+(t.amt>0?'#1A6B4A':'#C0392B')+'">'+(t.amt>0?'+':'-')+Math.abs(t.amt).toFixed(0)+' kr</td>' +
+        '<td style="text-align:right;white-space:nowrap;padding:6px 10px;font-weight:500;color:'+(t.amt>0?'var(--green)':'var(--red)')+'">'+(t.amt>0?'+':'-')+Math.abs(t.amt).toFixed(0)+' kr</td>' +
         '<td style="padding:6px 10px"><select class="cat-sel" onchange="' + onChange + '" style="color:' + col + '">' + opts + '</select></td>' +
       '</tr>';
     }).join('');
@@ -2432,8 +2441,8 @@ function showPreview(txns,filename,type){
 
   function makeSection(list, isConfident){
     if(!list.length) return '';
-    const bgColor  = isConfident ? '#e8f4ed' : '#fff8e6';
-    const txtColor = isConfident ? '#2d7a56' : '#7a5e00';
+    const bgColor  = isConfident ? 'var(--green-bg)' : 'var(--amber-bg)';
+    const txtColor = isConfident ? '#2d7a56' : 'var(--amber)';
     const btnColor = isConfident ? '#2d7a56' : '#c4821a';
     const icon     = isConfident ? '✓ ' : '? ';
     const label    = isConfident
@@ -2448,11 +2457,11 @@ function showPreview(txns,filename,type){
           ' onclick="event.stopPropagation()">' + btnLabel + '</button>' +
       '</div>' +
       '<div style="overflow-x:auto;min-width:100%"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">' +
-        '<thead><tr style="background:#ede9e0">' +
-          '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9e9484">Datum</th>' +
-          '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9e9484">Mottagare</th>' +
-          '<th style="padding:5px 10px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9e9484">Belopp</th>' +
-          '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9e9484">Kategori</th>' +
+        '<thead><tr style="background:var(--sand)">' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)">Datum</th>' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)">Mottagare</th>' +
+          '<th style="padding:5px 10px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)">Belopp</th>' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)">Kategori</th>' +
         '</tr></thead>' +
         '<tbody>' + makeRows(list) + '</tbody>' +
       '</table></div>' +
@@ -2461,13 +2470,13 @@ function showPreview(txns,filename,type){
 
   const infoHtml =
     '<strong>' + filename + '</strong> · ' + type + ' · ' +
-    '<strong style="color:#2d7a56">' + confirmed.length + ' säkra</strong> · ' +
-    '<strong style="color:#c4821a">' + uncertain.length + ' osäkra</strong>' +
+    '<strong style="color:var(--green)">' + confirmed.length + ' säkra</strong> · ' +
+    '<strong style="color:var(--amber)">' + uncertain.length + ' osäkra</strong>' +
     (dupes > 0 ? ' · ' + dupes + ' dubletter borttagna' : '');
 
   const previewEl = document.getElementById('parseResult');
   previewEl.innerHTML =
-    '<div style="background:#e8f0fb;border-radius:8px;padding:10px 14px;font-size:12px;color:#2d5a8e;margin-bottom:10px">' + infoHtml + '</div>' +
+    '<div style="background:var(--accent-bg);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--accent);margin-bottom:10px">' + infoHtml + '</div>' +
     '<div style="max-height:380px;overflow-y:auto">' +
       makeSection(confirmed, true) +
       makeSection(uncertain, false) +
@@ -2609,11 +2618,11 @@ function rebuildCharts(){
 
   if(monthChart) monthChart.destroy();
   monthChart=new Chart(document.getElementById('monthChart'),{type:'bar',data:{labels:mLabels,datasets:[
-    {label:'Inkomster',data:mInc,backgroundColor:'#7FC4AB',borderRadius:4,borderSkipped:false},
-    {label:'Utgifter',data:mExp,backgroundColor:'#E9A08E',borderRadius:4,borderSkipped:false},
-    {label:'Snitt',data:Array(mLabels.length).fill(Math.round(avgExp)),type:'line',borderColor:'#bbb',borderDash:[4,3],borderWidth:1.5,pointRadius:0,fill:false}
+    {label:'Inkomster',data:mInc,backgroundColor:'#4FE3B4',borderRadius:4,borderSkipped:false},
+    {label:'Utgifter',data:mExp,backgroundColor:'#FF6B57',borderRadius:4,borderSkipped:false},
+    {label:'Snitt',data:Array(mLabels.length).fill(Math.round(avgExp)),type:'line',borderColor:'#5F6B7A',borderDash:[4,3],borderWidth:1.5,pointRadius:0,fill:false}
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-    scales:{x:{ticks:{color:'#9e9484',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#9e9484',callback:v=>(v/1000)+'k',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}}}});
+    scales:{x:{ticks:{color:'#8E98A6',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#8E98A6',callback:v=>(v/1000)+'k',font:{size:10}},grid:{color:'rgba(255,255,255,.07)'}}}}});
 
   // ---- Kategorier mot budget ----
   const catTotals={};
@@ -2646,7 +2655,7 @@ function rebuildCharts(){
 
   // Trendgraf: utgifter senaste 6 månaderna för utvalda kategorier
   const trendCats = ['Mat & dagligvaror', 'Bränsle', 'Parkering & trängsel'];
-  const trendColors = {'Mat & dagligvaror':'#2d7a56','Bränsle':'#c47a2d','Parkering & trängsel':'#7a6b2d'};
+  const trendColors = {'Mat & dagligvaror':'#4FE3B4','Bränsle':'#FFC24B','Parkering & trängsel':'#9DB4FF'};
   const trendMonths = months.slice(-6);
   const trendLabels = trendMonths.map(m=>{const [y,mo]=m.split('-');const n={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'Maj','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Okt','11':'Nov','12':'Dec'};return n[mo]+' '+y.slice(2);});
 
@@ -2671,10 +2680,10 @@ function rebuildCharts(){
       })
     },
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:'bottom',labels:{color:'#6b6454',font:{size:10},boxWidth:9,padding:8,usePointStyle:true,pointStyle:'circle'}},
+      plugins:{legend:{position:'bottom',labels:{color:'#8E98A6',font:{size:10},boxWidth:9,padding:8,usePointStyle:true,pointStyle:'circle'}},
         tooltip:{callbacks:{label:function(ctx){ return ' '+ctx.dataset.label+': '+Math.round(ctx.raw).toLocaleString('sv-SE')+' kr'; }}}},
-      scales:{x:{ticks:{color:'#9e9484',font:{size:10}},grid:{display:false}},
-        y:{ticks:{color:'#9e9484',callback:function(v){ return Math.round(v/1000)+'k'; },font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}}}});
+      scales:{x:{ticks:{color:'#8E98A6',font:{size:10}},grid:{display:false}},
+        y:{ticks:{color:'#8E98A6',callback:function(v){ return Math.round(v/1000)+'k'; },font:{size:10}},grid:{color:'rgba(255,255,255,.07)'}}}}});
 
   renderResist();
 
@@ -2749,7 +2758,7 @@ function renderTxns(){
       '<div id="note-desc-' + key + '" style="font-size:11px;color:var(--blue);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:' + (note?'block':'none') + '">&#9998; ' + (note||'') + '</div>' +
       '</td>' +
       '<td><span class="acc-badge ' + accClass + '">' + accLabel + '</span></td>' +
-      '<td><select class="cat-select" onchange="changeCat(' + idx + ',this.value)" style="border-color:' + col + '22;color:' + col + '">' +
+      '<td><select class="cat-select" onchange="changeCat(' + idx + ',this.value)" style="border-left:3px solid ' + col + ';color:var(--ink)">' +
         CATS.map(function(c){ return '<option value="' + c + '"' + (c===t.cat?' selected':'') + '>' + c + '</option>'; }).join('') +
       '</select></td>' +
       '<td class="txn-amount ' + (isPos?'pos':'') + '">' + (isPos?'+':'-') + Math.abs(t.amt).toLocaleString('sv-SE',{minimumFractionDigits:0,maximumFractionDigits:0}) + ' kr</td>' +
@@ -2776,7 +2785,7 @@ function previewChangeCat(idx, cat, el){
   const desc = pendingTxns[idx].desc;
   pendingTxns[idx].cat = cat;
   learnCategory(desc, cat);
-  if(el){ el.style.color = CAT_COLORS[cat] || '#888'; }
+  if(el){ el.style.borderLeftColor = CAT_COLORS[cat] || '#888'; }
 
   // Hitta liknande i pendingTxns
   const key = descKey(desc);
@@ -2808,25 +2817,25 @@ function redrawPreview(){
     return list.map(function(t){
       const i   = pendingTxns.indexOf(t);
       const col = CAT_COLORS[t.cat] || '#888';
-      const bg  = t._confident ? '#f4fbf7' : '#fffbf0';
+      const bg  = t._confident ? 'var(--green-bg)' : 'var(--amber-bg)';
       const opts = ALL_CATS.map(function(c){
         return '<option value="'+c+'"'+(c===t.cat?' selected':'')+'>'+c+'</option>';
       }).join('');
       return '<tr style="background:'+bg+'">' +
-        '<td style="white-space:nowrap;color:#9e9484;font-size:11px;padding:6px 10px">'+t.date+'</td>' +
+        '<td style="white-space:nowrap;color:var(--ink-3);font-size:11px;padding:6px 10px">'+t.date+'</td>' +
         '<td style="max-width:240px;padding:6px 10px">'+
           '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:'+(t._confident?'#2d7a56':'#c4821a')+'"></span>'+t.desc+
         '</td>' +
         '<td style="text-align:right;white-space:nowrap;padding:6px 10px">'+Math.abs(t.amt).toFixed(0)+' kr</td>' +
-        '<td style="padding:6px 10px"><select class="cat-sel" data-idx="'+i+'" onchange="previewChangeCat('+i+',this.value,this)" style="color:'+col+';min-width:160px">'+opts+'</select></td>' +
+        '<td style="padding:6px 10px"><select class="cat-sel" data-idx="'+i+'" onchange="previewChangeCat('+i+',this.value,this)" style="border-left:3px solid '+col+';color:var(--ink);min-width:160px">'+opts+'</select></td>' +
       '</tr>';
     }).join('');
   }
 
   function makeSectionRedraw(list, isConfident){
     if(!list.length) return '';
-    const bgColor  = isConfident ? '#e8f4ed' : '#fff8e6';
-    const txtColor = isConfident ? '#2d7a56' : '#7a5e00';
+    const bgColor  = isConfident ? 'var(--green-bg)' : 'var(--amber-bg)';
+    const txtColor = isConfident ? '#2d7a56' : 'var(--amber)';
     const btnColor = isConfident ? '#2d7a56' : '#c4821a';
     const label = isConfident ? '✓ '+list.length+' känns igen' : '? '+list.length+' nya mottagare — granska och justera';
     return '<div style="margin-bottom:10px">' +
@@ -2834,11 +2843,11 @@ function redrawPreview(){
         '<span>'+label+'</span>' +
       '</div>' +
       '<div style="overflow-x:auto;min-width:100%"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">' +
-        '<thead><tr style="background:#ede9e0">' +
-          '<th style="padding:5px 10px;text-align:left;font-size:10px;color:#9e9484">Datum</th>' +
-          '<th style="padding:5px 10px;text-align:left;font-size:10px;color:#9e9484">Mottagare</th>' +
-          '<th style="padding:5px 10px;text-align:right;font-size:10px;color:#9e9484">Belopp</th>' +
-          '<th style="padding:5px 10px;text-align:left;font-size:10px;color:#9e9484">Kategori</th>' +
+        '<thead><tr style="background:var(--sand)">' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;color:var(--ink-3)">Datum</th>' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;color:var(--ink-3)">Mottagare</th>' +
+          '<th style="padding:5px 10px;text-align:right;font-size:10px;color:var(--ink-3)">Belopp</th>' +
+          '<th style="padding:5px 10px;text-align:left;font-size:10px;color:var(--ink-3)">Kategori</th>' +
         '</tr></thead>' +
         '<tbody>'+makeRowsRedraw(list)+'</tbody>' +
       '</table></div>' +
@@ -3065,7 +3074,7 @@ function confettiBurst(){
   const cv = document.getElementById('confettiCanvas');
   const ctx = cv.getContext('2d');
   cv.width = window.innerWidth; cv.height = window.innerHeight;
-  const colors = ['#1A6B4A','#7FC4AB','#E8C547','#1A4A7A','#E9A08E','#ffffff'];
+  const colors = ['#4FE3B4','#FFC24B','#9DB4FF','#FF6B57','#F2EEE6','#4FE3B4'];
   const parts = [];
   const cx = cv.width/2, cy = cv.height*0.3;
   for(let i=0;i<140;i++){
@@ -3114,7 +3123,27 @@ async function sendLoginLink(){
   });
   btn.disabled = false;
   if(error){ msg.style.color = 'var(--red)'; msg.textContent = 'Kunde inte skicka: ' + error.message; }
-  else { msg.style.color = 'var(--green)'; msg.textContent = 'Länk skickad! Öppna mejlet och klicka på länken.'; }
+  else {
+    msg.style.color = 'var(--green)';
+    msg.textContent = 'Kod skickad! Skriv in koden från mejlet här. (Länken i mejlet fungerar också, på datorn.)';
+    document.getElementById('loginCodeWrap').style.display = 'block';
+    document.getElementById('loginCode').focus();
+  }
+}
+
+async function verifyLoginCode(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const code = document.getElementById('loginCode').value.trim();
+  const msg = document.getElementById('loginMsg');
+  if(code.length < 6){ msg.style.color = 'var(--red)'; msg.textContent = 'Skriv in hela koden.'; return; }
+  const btn = document.getElementById('loginCodeBtn');
+  btn.disabled = true; msg.textContent = 'Kontrollerar...';
+  const {data, error} = await sb.auth.verifyOtp({ email, token: code, type: 'email' });
+  btn.disabled = false;
+  if(error || !data.session){ msg.style.color = 'var(--red)'; msg.textContent = 'Fel kod eller för gammal. Be om en ny.'; return; }
+  SESSION = data.session;
+  hideLogin();
+  startApp();
 }
 
 async function logout(){
@@ -3148,7 +3177,7 @@ async function initAuth(){
 // ===== INIT =====
 initAuth();
 </script>
-<div class="version-tag">v2026.09.02-2330</div>
+<div class="version-tag">v2026.09.02-2345</div>
 
 <script>
 if('serviceWorker' in navigator){
