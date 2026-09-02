@@ -211,6 +211,36 @@ header p { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
 .kpi.saved .kpi-value { color: var(--blue); }
 .kpi-sub { font-size: 11px; color: var(--ink-4); margin-top: 6px; }
 
+
+/* ── Motstod suget ── */
+.resist-card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--sand); padding:18px 20px; margin-bottom:20px; display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:center; }
+.resist-btn { position:relative; width:104px; height:104px; border-radius:50%; border:none; cursor:pointer; background:var(--green); color:#fff; font-family:inherit; font-weight:600; font-size:13px; line-height:1.2; letter-spacing:.02em; box-shadow:0 6px 18px rgba(26,107,74,.35); transition:transform .12s, box-shadow .12s; }
+.resist-btn:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(26,107,74,.4); }
+.resist-btn:active { transform:scale(.94); }
+.resist-btn span { display:block; font-size:22px; margin-bottom:2px; }
+.resist-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.resist-stat .kpi-label { margin-bottom:4px; }
+.resist-stat .kpi-value { font-size:22px; color:var(--green); }
+.resist-stat .kpi-sub { margin-top:4px; }
+.resist-foot { grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--ink-3); border-top:1px solid var(--sand); padding-top:10px; }
+.resist-foot button { background:none; border:none; color:var(--ink-3); font-family:inherit; font-size:12px; cursor:pointer; text-decoration:underline; padding:0; }
+.resist-foot button:hover { color:var(--ink); }
+.resist-reminder { grid-column:1 / -1; background:var(--green-bg); border:1px solid #cfe5da; border-radius:var(--radius); padding:12px 14px; font-size:13px; color:var(--green); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.resist-reminder strong { font-weight:600; }
+.resist-reminder button { background:var(--green); color:#fff; border:none; border-radius:var(--radius); padding:7px 12px; font-family:inherit; font-size:12px; font-weight:500; cursor:pointer; }
+.resist-toast { position:fixed; left:50%; top:22%; transform:translate(-50%,-50%) scale(.8); background:var(--ink); color:#fff; padding:18px 26px; border-radius:12px; text-align:center; z-index:9000; opacity:0; pointer-events:none; transition:opacity .2s, transform .25s cubic-bezier(.2,1.4,.4,1); box-shadow:0 12px 40px rgba(15,25,35,.35); }
+.resist-toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+.resist-toast .big { font-size:30px; font-weight:600; letter-spacing:-.02em; }
+.resist-toast .small { font-size:13px; opacity:.8; margin-top:4px; }
+#confettiCanvas { position:fixed; inset:0; pointer-events:none; z-index:8999; }
+@media (max-width:600px){
+  .resist-card { grid-template-columns:auto 1fr; gap:14px; padding:14px; }
+  .resist-btn { width:88px; height:88px; font-size:12px; }
+  .resist-stats { grid-template-columns:1fr 1fr; gap:8px; }
+  .resist-stat:nth-child(3) { grid-column:span 2; }
+  .resist-stat .kpi-value { font-size:20px; }
+}
+
 /* ── Cards ── */
 .card {
   background: var(--surface);
@@ -809,6 +839,9 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 </head>
 <body>
 
+<canvas id="confettiCanvas"></canvas>
+<div class="resist-toast" id="resistToast"><div class="big" id="resistToastBig"></div><div class="small" id="resistToastSmall"></div></div>
+
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
     <h2>Familjens Ekonomi</h2>
@@ -899,6 +932,12 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 
     <!-- OVERVIEW VIEW -->
     <div id="view-overview">
+      <div class="resist-card" id="resistCard">
+        <button class="resist-btn" onclick="resistClick()"><span>💪</span>Motstod<br>suget</button>
+        <div class="resist-stats" id="resistStats"></div>
+        <div id="resistReminder"></div>
+        <div class="resist-foot" id="resistFoot"></div>
+      </div>
       <div class="kpi-row" id="kpiRow"></div>
     <div class="chart-row">
       <div class="card">
@@ -1039,6 +1078,8 @@ const CAT_COLORS = {
 const ALL_CATS = Object.keys(CAT_COLORS);
 
 let BALANCES = {}; // {acc: {date, balance}}
+let RESIST = {e:[], done:{}}; // e: [[datum, belopp]], done: {'2026-09': true} = överförd till sparkonto
+const RESIST_AMOUNT = 50;
 
 // Supabase config
 const SUPA_URL = 'https://ysowzitqqxxvsxfzdssj.supabase.co';
@@ -1799,6 +1840,7 @@ async function loadFromCloud(){
       else { TXNS = c.transaktioner || []; }
       BUDGET = c.b || c.budget || {};
       if(c.l || c.learned) LEARNED = c.l || c.learned;
+      if(c.r) RESIST = c.r;
       if(TXNS.length > 0){ showDashboard(); setSyncStatus('saving','⟳ Uppdaterar...'); }
     } catch(e){}
   }
@@ -1824,6 +1866,7 @@ async function loadFromCloud(){
       else { TXNS = data.transaktioner || []; }
       BUDGET = data.b || data.budget || {};
       BALANCES = data.bal || {};
+      if(data.r) RESIST = data.r;
       var ld = data.l || data.learned;
       if(ld){ LEARNED = ld; localStorage.setItem('ekonomi_learned', JSON.stringify(LEARNED)); }
       localStorage.setItem('ekonomi_cache', newJson);
@@ -1843,7 +1886,8 @@ async function saveToCloud(showStatus=true){
     t: TXNS.map(function(t){ return [t.date,t.acc,t.amt,t.desc,t.cat]; }),
     b: BUDGET,
     l: LEARNED,
-    bal: BALANCES
+    bal: BALANCES,
+    r: RESIST
   };
   // Uppdatera cache
   localStorage.setItem('ekonomi_cache', JSON.stringify(payload));
@@ -1879,6 +1923,7 @@ function showDashboard(){
   rebuildCharts();
   renderTxns();
   updateHeader();
+  renderResist();
 }
 
 // ===== CATEGORIZE =====
@@ -2735,6 +2780,155 @@ function changeCat(idx, cat){
   saveTimer = setTimeout(() => saveToCloud(), 2000);
 }
 
+
+// ===== MOTSTOD SUGET =====
+const RESIST_PHRASES = [
+  'Suget förlorade. Du vann.',
+  'Chokladen får vänta. Sparkontot tackar.',
+  'Det där var 50 kr som stannade hemma.',
+  'Viljestyrka: 1. Kiosk: 0.',
+  'Snyggt. Det bygger på sig.',
+  'Ännu en seger på vägen hem.',
+  'Godiset grät lite. Du inte.',
+  'Small beslut, stor effekt.'
+];
+let resistSaveTimer = null;
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function monthOf(dateStr){ return dateStr.slice(0,7); }
+function monthName(ym){
+  const n=['januari','februari','mars','april','maj','juni','juli','augusti','september','oktober','november','december'];
+  return n[parseInt(ym.slice(5,7),10)-1];
+}
+
+function resistClick(){
+  RESIST.e.push([todayStr(), RESIST_AMOUNT]);
+  localStorage.setItem('ekonomi_resist', JSON.stringify(RESIST));
+  renderResist();
+  resistCelebrate();
+  clearTimeout(resistSaveTimer);
+  resistSaveTimer = setTimeout(function(){ saveToCloud(false); }, 1500);
+}
+
+function resistUndo(){
+  if(!RESIST.e.length) return;
+  RESIST.e.pop();
+  localStorage.setItem('ekonomi_resist', JSON.stringify(RESIST));
+  renderResist();
+  clearTimeout(resistSaveTimer);
+  resistSaveTimer = setTimeout(function(){ saveToCloud(false); }, 1500);
+}
+
+function resistMarkDone(ym){
+  RESIST.done[ym] = true;
+  localStorage.setItem('ekonomi_resist', JSON.stringify(RESIST));
+  renderResist();
+  saveToCloud(false);
+}
+
+function resistStreak(){
+  const days = {};
+  RESIST.e.forEach(function(x){ days[x[0]] = true; });
+  let streak = 0;
+  const d = new Date();
+  // Tillåt att dagens inte är gjord än: börja på idag, annars igår
+  if(!days[todayStr()]) d.setDate(d.getDate()-1);
+  for(;;){
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if(!days[key]) break;
+    streak++;
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+
+function renderResist(){
+  const statsEl = document.getElementById('resistStats');
+  if(!statsEl) return;
+  const fmt = function(n){ return Math.round(n).toLocaleString('sv-SE')+' kr'; };
+  const today = todayStr();
+  const thisM = monthOf(today);
+
+  const byMonth = {};
+  RESIST.e.forEach(function(x){
+    const m = monthOf(x[0]);
+    if(!byMonth[m]) byMonth[m] = {sum:0, n:0};
+    byMonth[m].sum += x[1]; byMonth[m].n++;
+  });
+  const cur = byMonth[thisM] || {sum:0, n:0};
+  const total = RESIST.e.reduce(function(a,x){ return a+x[1]; }, 0);
+  const streak = resistStreak();
+
+  statsEl.innerHTML =
+    '<div class="resist-stat"><div class="kpi-label">Motstått i '+monthName(thisM)+'</div><div class="kpi-value">'+fmt(cur.sum)+'</div><div class="kpi-sub">'+cur.n+' gång'+(cur.n===1?'':'er')+'</div></div>'+
+    '<div class="resist-stat"><div class="kpi-label">Svit</div><div class="kpi-value">'+streak+' dag'+(streak===1?'':'ar')+'</div><div class="kpi-sub">'+(streak>=3?'Håll i!':'i rad med minst ett motstånd')+'</div></div>'+
+    '<div class="resist-stat"><div class="kpi-label">Totalt motstått</div><div class="kpi-value">'+fmt(total)+'</div><div class="kpi-sub">'+RESIST.e.length+' gånger sedan start</div></div>';
+
+  // Påminnelse: föregående månader som inte är överförda, och innevarande från den 28:e
+  const dayNum = parseInt(today.slice(8,10),10);
+  const pending = Object.keys(byMonth).filter(function(m){
+    if(RESIST.done[m]) return false;
+    if(m < thisM) return true;
+    return m === thisM && dayNum >= 28;
+  }).sort();
+  const remEl = document.getElementById('resistReminder');
+  if(pending.length){
+    remEl.innerHTML = pending.map(function(m){
+      return '<div class="resist-reminder" style="margin-top:4px"><div>Dags att göra det på riktigt: <strong>för över '+fmt(byMonth[m].sum)+' till sparkontot</strong> för '+monthName(m)+'.</div><button onclick="resistMarkDone(\''+m+'\')">Klart, överfört</button></div>';
+    }).join('');
+  } else {
+    remEl.innerHTML = '';
+  }
+
+  const last = RESIST.e.length ? RESIST.e[RESIST.e.length-1] : null;
+  document.getElementById('resistFoot').innerHTML =
+    '<span>'+RESIST_AMOUNT+' kr per tryck · '+(last ? 'Senast '+last[0] : 'Inget registrerat än')+'</span>'+
+    (last && last[0]===today ? '<button onclick="resistUndo()">Ångra senaste</button>' : '');
+}
+
+function resistCelebrate(){
+  const toast = document.getElementById('resistToast');
+  document.getElementById('resistToastBig').textContent = '+'+RESIST_AMOUNT+' kr';
+  document.getElementById('resistToastSmall').textContent = RESIST_PHRASES[Math.floor(Math.random()*RESIST_PHRASES.length)];
+  toast.classList.add('show');
+  setTimeout(function(){ toast.classList.remove('show'); }, 1800);
+  if(navigator.vibrate) navigator.vibrate([30,40,60]);
+  confettiBurst();
+}
+
+function confettiBurst(){
+  const cv = document.getElementById('confettiCanvas');
+  const ctx = cv.getContext('2d');
+  cv.width = window.innerWidth; cv.height = window.innerHeight;
+  const colors = ['#1A6B4A','#5DCAA5','#E8C547','#1A4A7A','#E8918D','#ffffff'];
+  const parts = [];
+  const cx = cv.width/2, cy = cv.height*0.3;
+  for(let i=0;i<140;i++){
+    const ang = Math.random()*Math.PI*2, sp = 4+Math.random()*9;
+    parts.push({x:cx, y:cy, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp-4, w:5+Math.random()*6, h:3+Math.random()*5,
+      c:colors[Math.floor(Math.random()*colors.length)], r:Math.random()*Math.PI, vr:(Math.random()-.5)*.3, life:1});
+  }
+  let frame = 0;
+  function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    let alive = false;
+    parts.forEach(function(p){
+      p.vy += 0.28; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      if(frame>45) p.life -= 0.03;
+      if(p.life<=0) return;
+      alive = true;
+      ctx.save(); ctx.globalAlpha = Math.max(0,p.life); ctx.translate(p.x,p.y); ctx.rotate(p.r);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+    });
+    frame++;
+    if(alive && frame<140) requestAnimationFrame(tick); else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  requestAnimationFrame(tick);
+}
+
 // ===== INLOGGNING =====
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 let SESSION = null;
@@ -2768,6 +2962,7 @@ async function logout(){
 }
 
 function startApp(){
+  try{ const rr = localStorage.getItem('ekonomi_resist'); if(rr) RESIST = JSON.parse(rr); }catch(e){}
   loadBudget();
   loadLearned();
   loadImportLog();
@@ -2791,7 +2986,7 @@ async function initAuth(){
 // ===== INIT =====
 initAuth();
 </script>
-<div class="version-tag">v2026.09.02-auth</div>
+<div class="version-tag">v2026.09.02-2115</div>
 
 <script>
 if('serviceWorker' in navigator){
