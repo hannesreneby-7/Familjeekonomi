@@ -245,6 +245,59 @@ header p { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
   .resist-stat .kpi-value { font-size:20px; }
 }
 
+
+/* ── Ny översikt ── */
+body { font-variant-numeric: tabular-nums; }
+.hero { background:var(--surface); border:1px solid var(--sand); border-radius:12px; box-shadow:var(--shadow); padding:22px 24px; margin-bottom:12px; }
+.hero-label { font-size:13px; color:var(--ink-3); }
+.hero-row { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-top:4px; }
+.hero-value { font-size:44px; font-weight:500; letter-spacing:-.02em; line-height:1; color:var(--ink); }
+.hero-value.neg { color:var(--red); }
+.hero-pace { font-size:14px; color:var(--ink-3); }
+.hero-pace.good { color:var(--green); } .hero-pace.bad { color:var(--red); }
+.hero-bar { margin-top:16px; height:8px; border-radius:4px; background:var(--sand); position:relative; overflow:visible; }
+.hero-bar-fill { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:var(--ink); max-width:100%; }
+.hero-bar-fill.over { background:var(--red); }
+.hero-bar-mark { position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--ink-3); }
+.hero-foot { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--ink-4); margin-top:8px; }
+.hero-empty { font-size:13px; color:var(--ink-3); margin-top:10px; }
+.mini-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:12px; }
+.mini { background:var(--surface); border:1px solid var(--sand); border-radius:var(--radius); padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.mini-label { font-size:12px; color:var(--ink-3); }
+.mini-value { font-size:20px; font-weight:500; margin-top:2px; color:var(--ink); letter-spacing:-.01em; }
+.mini-sub { font-size:11px; color:var(--ink-4); margin-top:2px; }
+.mini-plus { width:46px; height:46px; border-radius:50%; border:none; background:var(--green); color:#fff; font-size:26px; line-height:1; cursor:pointer; flex-shrink:0; box-shadow:0 4px 12px rgba(26,107,74,.3); transition:transform .12s; font-family:inherit; }
+.mini-plus:active { transform:scale(.92); }
+.resist-strip { display:flex; flex-direction:column; gap:8px; margin-bottom:24px; }
+.resist-strip .resist-reality, .resist-strip .resist-foot { padding:0 4px; border:none; }
+.resist-strip .resist-foot { padding-top:0; }
+.catrow { display:grid; grid-template-columns:170px minmax(0,1fr) 110px 14px; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--sand); cursor:pointer; }
+.catrow:hover { opacity:.8; }
+.catrow-name { font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.catrow-name.muted { color:var(--ink-3); }
+.catrow-bar { height:10px; background:var(--sand); border-radius:3px; position:relative; }
+.catrow-fill { position:absolute; left:0; top:0; bottom:0; background:var(--ink); border-radius:3px; }
+.catrow-fill.over { background:var(--red); } .catrow-fill.muted { background:var(--ink-4); }
+.catrow-mark { position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--ink-3); }
+.catrow-amt { font-size:14px; text-align:right; color:var(--ink); white-space:nowrap; }
+.catrow-amt.over { color:var(--red); } .catrow-amt span { color:var(--ink-4); }
+.catrow-chev { font-size:10px; color:var(--ink-4); }
+.bottom-nav { display:none; }
+@media (max-width:600px){
+  .hero { padding:18px 18px; }
+  .hero-value { font-size:36px; }
+  .mini-row { grid-template-columns:1fr 1fr; gap:8px; }
+  .mini:nth-child(3) { grid-column:span 2; }
+  .catrow { grid-template-columns:110px minmax(0,1fr) 90px 12px; gap:8px; }
+  .catrow-name, .catrow-amt { font-size:13px; }
+  .top-nav { display:none !important; }
+  body { padding-bottom:70px; }
+  .bottom-nav { display:flex; position:fixed; left:0; right:0; bottom:0; z-index:500; background:var(--surface); border-top:1px solid var(--sand); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); justify-content:space-around; }
+  .bottom-nav-btn { background:none; border:none; font-family:inherit; font-size:10px; color:var(--ink-4); display:flex; flex-direction:column; align-items:center; gap:3px; padding:4px 6px; cursor:pointer; min-width:56px; }
+  .bottom-nav-btn svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+  .bottom-nav-btn.active { color:var(--ink); }
+}
+
 /* ── Cards ── */
 .card {
   background: var(--surface);
@@ -928,12 +981,19 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 
     <!-- Top navigation -->
     <div class="top-nav">
-      <button class="top-nav-btn active" onclick="switchView('overview',this)">Översikt</button>
-      <button class="top-nav-btn" onclick="switchView('budget',this)">Budget</button>
-      <button class="top-nav-btn" onclick="switchView('transactions',this)">Transaktioner</button>
-      <button class="top-nav-btn" onclick="switchView('accounts',this)">Konton</button>
-      <button class="top-nav-btn" onclick="switchView('report',this)">Månadsrapport</button>
+      <button class="top-nav-btn active" data-view="overview" onclick="switchView('overview',this)">Översikt</button>
+      <button class="top-nav-btn" data-view="budget" onclick="switchView('budget',this)">Budget</button>
+      <button class="top-nav-btn" data-view="transactions" onclick="switchView('transactions',this)">Transaktioner</button>
+      <button class="top-nav-btn" data-view="accounts" onclick="switchView('accounts',this)">Konton</button>
+      <button class="top-nav-btn" data-view="report" onclick="switchView('report',this)">Månadsrapport</button>
     </div>
+    <nav class="bottom-nav">
+      <button class="bottom-nav-btn active" data-view="overview" onclick="switchView('overview',this)"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Översikt</button>
+      <button class="bottom-nav-btn" data-view="transactions" onclick="switchView('transactions',this)"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>Transaktioner</button>
+      <button class="bottom-nav-btn" data-view="budget" onclick="switchView('budget',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Budget</button>
+      <button class="bottom-nav-btn" data-view="accounts" onclick="switchView('accounts',this)"><svg viewBox="0 0 24 24"><path d="M3 10h18M5 10V8l7-4 7 4v2M5 10v8M9 10v8M15 10v8M19 10v8M3 18h18"/></svg>Konton</button>
+      <button class="bottom-nav-btn" data-view="report" onclick="switchView('report',this)"><svg viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5z M9 17v-5M12 17v-8M15 17v-3"/></svg>Rapport</button>
+    </nav>
 
     <!-- Month selector (shared across views) -->
     <div class="month-bar">
@@ -943,38 +1003,31 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 
     <!-- OVERVIEW VIEW -->
     <div id="view-overview">
-      <div class="resist-card" id="resistCard">
-        <button class="resist-btn" onclick="resistClick()"><span>💪</span>Motstod<br>suget</button>
-        <div class="resist-stats" id="resistStats"></div>
+      <div class="hero" id="heroCard"></div>
+      <div class="mini-row" id="miniRow"></div>
+      <div class="resist-strip" id="resistStrip">
         <div class="resist-reality" id="resistReality"></div>
         <div id="resistReminder"></div>
         <div class="resist-foot" id="resistFoot"></div>
       </div>
-      <div class="kpi-row" id="kpiRow"></div>
-    <div class="chart-row">
-      <div class="card">
-        <div class="card-title">Inkomst vs utgift per månad</div>
-        <div class="legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#5DCAA5"></div>Inkomster</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#E8918D"></div>Utgifter</div>
-        </div>
-        <div style="height:200px;position:relative"><canvas id="monthChart"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Utgifter per kategori</div>
-        <div style="height:230px;position:relative"><canvas id="pieChart"></canvas></div>
-      </div>
-    </div>
-    <div class="cat-grid">
-      <div class="card">
-        <div class="card-title">Kategoriöversikt — totalt</div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title" id="catBarsTitle">Kategorier mot budget</div>
         <div id="catBars"></div>
       </div>
-      <div class="card">
-        <div class="card-title">Trend — Mat, Bränsle & Parkering (6 mån)</div>
-        <div style="height:230px;position:relative"><canvas id="accChart"></canvas></div>
+      <div class="chart-row">
+        <div class="card">
+          <div class="card-title">Inkomst vs utgift per månad</div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#5DCAA5"></div>Inkomster</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#E8918D"></div>Utgifter</div>
+          </div>
+          <div style="height:200px;position:relative"><canvas id="monthChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Trend — Mat, Bränsle & Parkering (6 mån)</div>
+          <div style="height:230px;position:relative"><canvas id="accChart"></canvas></div>
+        </div>
       </div>
-    </div>
     </div><!-- end view-overview -->
 
     <!-- BUDGET VIEW -->
@@ -1136,8 +1189,7 @@ function setBudget(cat, val){
 // ===== VIEWS =====
 function switchView(view, el){
   activeView = view;
-  document.querySelectorAll('.top-nav-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+  document.querySelectorAll('.top-nav-btn,.bottom-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view===view));
   document.getElementById('view-overview').style.display     = view==='overview'     ? '' : 'none';
   document.getElementById('view-budget').style.display       = view==='budget'       ? '' : 'none';
   document.getElementById('view-transactions').style.display = view==='transactions' ? '' : 'none';
@@ -1937,7 +1989,6 @@ function showDashboard(){
   rebuildCharts();
   renderTxns();
   updateHeader();
-  renderResist();
 }
 
 // ===== CATEGORIZE =====
@@ -2469,25 +2520,66 @@ function rebuildCharts(){
   const totalExp=expenses.reduce((s,t)=>s+Math.abs(t.amt),0);
   const net=totalInc-totalExp;
   const months=[...new Set(TXNS.map(t=>t.date.slice(0,7)))].sort();
-  const mExp=months.map(m=>expenses.filter(t=>t.date.startsWith(m)).reduce((s,t)=>s+Math.abs(t.amt),0));
-  const mInc=months.map(m=>income.filter(t=>t.date.startsWith(m)).reduce((s,t)=>s+t.amt,0));
+  const mExp=months.map(m=>TXNS.filter(t=>t.date.startsWith(m)&&t.amt<0&&t.cat!=='Inkomst'&&t.cat!=='Intern överföring'&&t.cat!=='Sparande & investeringar'&&t.cat!=='Bolån — amortering').reduce((s,t)=>s+Math.abs(t.amt),0));
+  const mInc=months.map(m=>TXNS.filter(t=>t.date.startsWith(m)&&t.amt>0&&t.cat==='Inkomst').reduce((s,t)=>s+t.amt,0));
   const avgExp=mExp.filter(v=>v>0).reduce((a,b)=>a+b,0)/(mExp.filter(v=>v>0).length||1);
   const fmt=n=>Math.round(n).toLocaleString('sv-SE')+' kr';
   const mLabels=months.map(m=>{const [y,mo]=m.split('-');const n={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'Maj','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Okt','11':'Nov','12':'Dec'};return n[mo]+' '+y.slice(2);});
 
-  const saved = txnsSrc.filter(t=>t.amt<0&&t.cat==='Sparande & investeringar').reduce((s,t)=>s+Math.abs(t.amt),0);
-  const netAfterSaving = net - saved;
 
-  // Totalt sparat = summan av saldon på konton som är rent sparande (just nu: Eva Sparkonto)
+  // ---- Hero: kvar att spendera ----
+  const todayS = todayStr();
+  const curM = todayS.slice(0,7);
+  const heroM = activeMonth==='all' ? curM : activeMonth;
+  const isExpT = t => t.amt<0 && t.cat!=='Inkomst' && t.cat!=='Intern överföring' && t.cat!=='Sparande & investeringar' && t.cat!=='Bolån — amortering';
+  const heroTx = TXNS.filter(t=>t.date.startsWith(heroM));
+  const spent = heroTx.filter(isExpT).reduce((s,t)=>s+Math.abs(t.amt),0);
+  const heroInc = heroTx.filter(t=>t.amt>0&&t.cat==='Inkomst').reduce((s,t)=>s+t.amt,0);
+  const heroSaved = heroTx.filter(t=>t.amt<0&&t.cat==='Sparande & investeringar').reduce((s,t)=>s+Math.abs(t.amt),0);
+  const totalBudget = Object.values(BUDGET).reduce((a,b)=>a+b,0);
+  const prevM = months.filter(m=>m<heroM).slice(-6);
+  const avgPrev = prevM.length ? prevM.reduce((a,m)=>a+TXNS.filter(t=>t.date.startsWith(m)&&isExpT(t)).reduce((s,t)=>s+Math.abs(t.amt),0),0)/prevM.length : 0;
+  const ref = totalBudget>0 ? totalBudget : avgPrev;
+  const refLabel = totalBudget>0 ? 'Budget' : 'Snitt '+prevM.length+' mån';
+  const [hy,hm] = heroM.split('-').map(Number);
+  const dim = new Date(hy,hm,0).getDate();
+  const day = heroM===curM ? parseInt(todayS.slice(8,10),10) : (heroM<curM ? dim : 0);
+  const expFrac = day/dim;
+  const remaining = ref - spent;
+  const daysLeft = dim - day + 1;
+  const perDay = (heroM===curM && remaining>0 && daysLeft>0) ? remaining/daysLeft : null;
+  let pace='', paceCls='';
+  if(ref>0){
+    const d = spent/ref - expFrac;
+    if(heroM<curM){ pace = spent<=ref ? 'höll '+refLabel.toLowerCase() : 'över '+refLabel.toLowerCase(); paceCls = spent<=ref?'good':'bad'; }
+    else if(d < -0.05){ pace='före plan'; paceCls='good'; }
+    else if(d > 0.05){ pace='efter plan'; paceCls='bad'; }
+    else { pace='i takt'; }
+  }
+  const heroEl = document.getElementById('heroCard');
+  if(ref>0){
+    const fillPct = Math.min(100, spent/ref*100);
+    heroEl.innerHTML =
+      '<div class="hero-label">Kvar att spendera i '+monthName(heroM)+(heroM===curM?' · dag '+day+' av '+dim:'')+'</div>'+
+      '<div class="hero-row"><div class="hero-value'+(remaining<0?' neg':'')+'">'+(remaining<0?'−':'')+fmt(Math.abs(remaining))+'</div>'+
+      '<div class="hero-pace '+paceCls+'">'+(perDay!==null?fmt(perDay)+'/dag · ':'')+pace+'</div></div>'+
+      '<div class="hero-bar"><div class="hero-bar-fill'+(spent>ref?' over':'')+'" style="width:'+fillPct+'%"></div>'+
+      (heroM===curM?'<div class="hero-bar-mark" style="left:'+(expFrac*100)+'%"></div>':'')+'</div>'+
+      '<div class="hero-foot"><span>Använt '+fmt(spent)+'</span>'+(heroM===curM?'<span>Streck = var ni borde ligga idag</span>':'')+'<span>'+refLabel+' '+fmt(ref)+'</span></div>';
+  } else {
+    heroEl.innerHTML =
+      '<div class="hero-label">Använt i '+monthName(heroM)+'</div>'+
+      '<div class="hero-row"><div class="hero-value">'+fmt(spent)+'</div></div>'+
+      '<div class="hero-empty">Sätt en budget per kategori under Budget-fliken så visas hur mycket som är kvar.</div>';
+  }
+
+  // ---- Små siffror ----
   const sparBalance = (BALANCES['Eva_Spark'] && BALANCES['Eva_Spark'].balance) || 0;
   const sparDate = (BALANCES['Eva_Spark'] && BALANCES['Eva_Spark'].date) || '';
-
-  document.getElementById('kpiRow').innerHTML=
-    '<div class="kpi income"><div class="kpi-label">Totala inkomster</div><div class="kpi-value">+'+fmt(totalInc)+'</div><div class="kpi-sub">Löner, barnbidrag</div></div>'+
-    '<div class="kpi expense"><div class="kpi-label">Totala utgifter</div><div class="kpi-value">−'+fmt(totalExp)+'</div><div class="kpi-sub">Alla konton</div></div>'+
-    '<div class="kpi net"><div class="kpi-label">Nettoresultat</div><div class="kpi-value" style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmt(net)+'</div><div class="kpi-sub">Överskott</div></div>'+
-    '<div class="kpi net"><div class="kpi-label">Netto efter sparande</div><div class="kpi-value" style="color:'+(netAfterSaving>=0?'var(--green)':'var(--red)')+'">'+fmt(netAfterSaving)+'</div><div class="kpi-sub">'+fmt(saved)+' sparat</div></div>'+
-    '<div class="kpi saved"><div class="kpi-label">Totalt sparat nu</div><div class="kpi-value" style="color:var(--blue)">'+fmt(sparBalance)+'</div><div class="kpi-sub">'+(sparDate?'Saldo per '+sparDate:'Ladda upp sparkonto')+'</div></div>';
+  document.getElementById('miniRow').innerHTML =
+    '<div class="mini"><div><div class="mini-label">Inkomster</div><div class="mini-value">'+fmt(heroInc)+'</div><div class="mini-sub">'+monthName(heroM)+'</div></div></div>'+
+    '<div class="mini"><div><div class="mini-label">Sparat</div><div class="mini-value">'+fmt(heroSaved)+'</div><div class="mini-sub">'+(sparDate?'Sparkonto '+fmt(sparBalance):monthName(heroM))+'</div></div></div>'+
+    '<div class="mini"><div><div class="mini-label">Motstått</div><div class="mini-value" id="resistMiniValue">–</div><div class="mini-sub" id="resistMiniSub"></div></div><button class="mini-plus" onclick="resistClick()" title="Motstod suget">+</button></div>';
 
   if(monthChart) monthChart.destroy();
   monthChart=new Chart(document.getElementById('monthChart'),{type:'bar',data:{labels:mLabels,datasets:[
@@ -2497,32 +2589,33 @@ function rebuildCharts(){
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
     scales:{x:{ticks:{color:'#9e9484',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#9e9484',callback:v=>(v/1000)+'k',font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}}}});
 
+  // ---- Kategorier mot budget ----
   const catTotals={};
-  expenses.forEach(t=>{catTotals[t.cat]=(catTotals[t.cat]||0)+Math.abs(t.amt)});
-  const sorted=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
-  const top8=sorted.slice(0,8);
-  if(pieChart) pieChart.destroy();
-  pieChart=new Chart(document.getElementById('pieChart'),{type:'doughnut',
-    data:{labels:top8.map(([c])=>c),datasets:[{data:top8.map(([,v])=>v),backgroundColor:top8.map(([c])=>CAT_COLORS[c]||'#888'),borderWidth:0,hoverOffset:6}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{
-      legend:{position:'right',labels:{color:'#6b6454',font:{size:10},boxWidth:9,padding:6,usePointStyle:true,pointStyle:'rectRounded'}},
-      tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+Math.round(ctx.raw).toLocaleString('sv-SE')+' kr'}}}}});
-
-  const maxV=sorted[0]?.[1]||1;
+  heroTx.filter(isExpT).forEach(t=>{catTotals[t.cat]=(catTotals[t.cat]||0)+Math.abs(t.amt)});
+  const catCount={};
+  heroTx.filter(isExpT).forEach(t=>{catCount[t.cat]=(catCount[t.cat]||0)+1});
+  Object.keys(BUDGET).forEach(c=>{ if(!(c in catTotals)) catTotals[c]=0; });
+  const sorted=Object.entries(catTotals).filter(e=>e[0]!=='Övrigt').sort((a,b)=>b[1]-a[1]);
+  if(catTotals['Övrigt']) sorted.push(['Övrigt',catTotals['Övrigt']]);
+  const maxAll=Math.max(1,...sorted.map(([c,v])=>Math.max(v,BUDGET[c]||0)));
+  document.getElementById('catBarsTitle').textContent = (totalBudget>0?'Kategorier mot budget':'Kategorier')+' — '+monthName(heroM);
   document.getElementById('catBars').innerHTML = sorted.map(function(entry){
-    var cat = entry[0], val = entry[1];
-    var color = CAT_COLORS[cat] || '#888';
-    var pct = (val/maxV*100).toFixed(1);
-    var id = 'cat-expand-' + cat.replace(/[^a-z0-9]/gi,'_');
-    return '<div class="cat-item" onclick="toggleCatExpand(\'' + id + '\',\'' + cat + '\')">' +
-      '<div class="cat-dot" style="background:' + color + '"></div>' +
-      '<div class="cat-name">' + cat + '</div>' +
-      '<div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
-      '<div class="cat-amount">' + Math.round(val).toLocaleString('sv-SE') + ' kr</div>' +
-      '<span class="cat-chevron" id="chev-' + id + '">▼</span>' +
-    '</div>' +
-    '<div class="cat-expand" id="' + id + '"></div>';
-  }).join('');
+    var cat=entry[0], val=entry[1], bud=BUDGET[cat]||0;
+    var over = bud>0 && val>bud;
+    var muted = cat==='Övrigt';
+    var id='cat-expand-'+cat.replace(/[^a-z0-9]/gi,'_');
+    var amt = muted
+      ? Math.round(val).toLocaleString('sv-SE')+' <span>· '+(catCount[cat]||0)+' st</span>'
+      : Math.round(val).toLocaleString('sv-SE')+(bud>0?' <span>/ '+Math.round(bud).toLocaleString('sv-SE')+'</span>':'');
+    return '<div class="catrow" onclick="toggleCatExpand(\''+id+'\',\''+cat+'\')">'+
+      '<div class="catrow-name'+(muted?' muted':'')+'">'+cat+'</div>'+
+      '<div class="catrow-bar"><div class="catrow-fill'+(over?' over':'')+(muted?' muted':'')+'" style="width:'+(val/maxAll*100)+'%"></div>'+
+        (bud>0?'<div class="catrow-mark" style="left:'+(bud/maxAll*100)+'%"></div>':'')+'</div>'+
+      '<div class="catrow-amt'+(over?' over':'')+'">'+amt+'</div>'+
+      '<span class="catrow-chev" id="chev-'+id+'">▼</span>'+
+    '</div>'+
+    '<div class="cat-expand" id="'+id+'"></div>';
+  }).join('') || '<div style="font-size:13px;color:var(--ink-3)">Inga utgifter registrerade för '+monthName(heroM)+' än.</div>';
 
   // Trendgraf: utgifter senaste 6 månaderna för utvalda kategorier
   const trendCats = ['Mat & dagligvaror', 'Bränsle', 'Parkering & trängsel'];
@@ -2555,6 +2648,8 @@ function rebuildCharts(){
         tooltip:{callbacks:{label:function(ctx){ return ' '+ctx.dataset.label+': '+Math.round(ctx.raw).toLocaleString('sv-SE')+' kr'; }}}},
       scales:{x:{ticks:{color:'#9e9484',font:{size:10}},grid:{display:false}},
         y:{ticks:{color:'#9e9484',callback:function(v){ return Math.round(v/1000)+'k'; },font:{size:10}},grid:{color:'rgba(0,0,0,.05)'}}}}});
+
+  renderResist();
 
   const cf=document.getElementById('catFilter');
   const curr=cf.value;
@@ -2852,8 +2947,8 @@ function resistStreak(){
 }
 
 function renderResist(){
-  const statsEl = document.getElementById('resistStats');
-  if(!statsEl) return;
+  const miniV = document.getElementById('resistMiniValue');
+  if(!miniV) return;
   const fmt = function(n){ return Math.round(n).toLocaleString('sv-SE')+' kr'; };
   const today = todayStr();
   const thisM = monthOf(today);
@@ -2868,10 +2963,8 @@ function renderResist(){
   const total = RESIST.e.reduce(function(a,x){ return a+x[1]; }, 0);
   const streak = resistStreak();
 
-  statsEl.innerHTML =
-    '<div class="resist-stat"><div class="kpi-label">Motstått i '+monthName(thisM)+'</div><div class="kpi-value">'+fmt(cur.sum)+'</div><div class="kpi-sub">'+cur.n+' gång'+(cur.n===1?'':'er')+'</div></div>'+
-    '<div class="resist-stat"><div class="kpi-label">Svit</div><div class="kpi-value">'+streak+' dag'+(streak===1?'':'ar')+'</div><div class="kpi-sub">'+(streak>=3?'Håll i!':'i rad med minst ett motstånd')+'</div></div>'+
-    '<div class="resist-stat"><div class="kpi-label">Totalt motstått</div><div class="kpi-value">'+fmt(total)+'</div><div class="kpi-sub">'+RESIST.e.length+' gånger sedan start</div></div>';
+  miniV.textContent = fmt(cur.sum);
+  document.getElementById('resistMiniSub').textContent = cur.n+' gång'+(cur.n===1?'':'er')+' i '+monthName(thisM)+(streak>=2?' · '+streak+' dagar i rad':'')+' · totalt '+fmt(total);
 
   // Påminnelse: föregående månader som inte är överförda, och innevarande från den 28:e
   const dayNum = parseInt(today.slice(8,10),10);
@@ -3015,7 +3108,7 @@ async function initAuth(){
 // ===== INIT =====
 initAuth();
 </script>
-<div class="version-tag">v2026.09.02-2215</div>
+<div class="version-tag">v2026.09.02-2245</div>
 
 <script>
 if('serviceWorker' in navigator){
