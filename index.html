@@ -1055,6 +1055,9 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
         <select class="fs" id="dirFilter" onchange="renderTxns()">
           <option value="">In & ut</option><option value="in">Inkomster</option><option value="ut">Utgifter</option>
         </select>
+        <select class="fs" id="sortFilter" onchange="currentPage=1;renderTxns()">
+          <option value="date">Nyast först</option><option value="amt_desc">Största belopp</option><option value="amt_asc">Minsta belopp</option>
+        </select>
       </div>
       <table class="txn-table">
         <thead><tr><th>Datum</th><th>Mottagare</th><th>Konto</th><th>Kategori</th><th style="text-align:right">Belopp</th></tr></thead>
@@ -2530,7 +2533,8 @@ function rebuildCharts(){
   // ---- Hero: kvar att spendera ----
   const todayS = todayStr();
   const curM = todayS.slice(0,7);
-  const heroM = activeMonth==='all' ? curM : activeMonth;
+  const lastDataM = months.length ? months[months.length-1] : curM;
+  const heroM = activeMonth==='all' ? lastDataM : activeMonth;
   const isExpT = t => t.amt<0 && t.cat!=='Inkomst' && t.cat!=='Intern överföring' && t.cat!=='Sparande & investeringar' && t.cat!=='Bolån — amortering';
   const heroTx = TXNS.filter(t=>t.date.startsWith(heroM));
   const spent = heroTx.filter(isExpT).reduce((s,t)=>s+Math.abs(t.amt),0);
@@ -2543,15 +2547,18 @@ function rebuildCharts(){
   const refLabel = totalBudget>0 ? 'Budget' : 'Snitt '+prevM.length+' mån';
   const [hy,hm] = heroM.split('-').map(Number);
   const dim = new Date(hy,hm,0).getDate();
-  const day = heroM===curM ? parseInt(todayS.slice(8,10),10) : (heroM<curM ? dim : 0);
+  // Datat laddas upp i efterhand: räkna "idag" som senaste transaktionsdatumet i månaden
+  const lastTxDate = heroTx.map(t=>t.date).sort().pop() || '';
+  const partial = heroM===curM || (heroM===lastDataM && lastTxDate && parseInt(lastTxDate.slice(8,10),10) < dim - 2);
+  const day = partial ? (lastTxDate ? parseInt(lastTxDate.slice(8,10),10) : 0) : dim;
   const expFrac = day/dim;
   const remaining = ref - spent;
   const daysLeft = dim - day + 1;
-  const perDay = (heroM===curM && remaining>0 && daysLeft>0) ? remaining/daysLeft : null;
+  const perDay = (partial && remaining>0 && daysLeft>0) ? remaining/daysLeft : null;
   let pace='', paceCls='';
   if(ref>0){
     const d = spent/ref - expFrac;
-    if(heroM<curM){ pace = spent<=ref ? 'höll '+refLabel.toLowerCase() : 'över '+refLabel.toLowerCase(); paceCls = spent<=ref?'good':'bad'; }
+    if(!partial){ pace = spent<=ref ? 'höll '+refLabel.toLowerCase() : 'över '+refLabel.toLowerCase(); paceCls = spent<=ref?'good':'bad'; }
     else if(d < -0.05){ pace='före plan'; paceCls='good'; }
     else if(d > 0.05){ pace='efter plan'; paceCls='bad'; }
     else { pace='i takt'; }
@@ -2560,15 +2567,15 @@ function rebuildCharts(){
   if(ref>0){
     const fillPct = Math.min(100, spent/ref*100);
     heroEl.innerHTML =
-      '<div class="hero-label">Kvar att spendera i '+monthName(heroM)+(heroM===curM?' · dag '+day+' av '+dim:'')+'</div>'+
+      '<div class="hero-label">'+(partial?'Kvar att spendera i ':'Resultat ')+monthName(heroM)+(partial?' · t.o.m. '+day+'/'+hm+' (dag '+day+' av '+dim+')':'')+'</div>'+
       '<div class="hero-row"><div class="hero-value'+(remaining<0?' neg':'')+'">'+(remaining<0?'−':'')+fmt(Math.abs(remaining))+'</div>'+
       '<div class="hero-pace '+paceCls+'">'+(perDay!==null?fmt(perDay)+'/dag · ':'')+pace+'</div></div>'+
       '<div class="hero-bar"><div class="hero-bar-fill'+(spent>ref?' over':'')+'" style="width:'+fillPct+'%"></div>'+
-      (heroM===curM?'<div class="hero-bar-mark" style="left:'+(expFrac*100)+'%"></div>':'')+'</div>'+
-      '<div class="hero-foot"><span>Använt '+fmt(spent)+'</span>'+(heroM===curM?'<span>Streck = var ni borde ligga idag</span>':'')+'<span>'+refLabel+' '+fmt(ref)+'</span></div>';
+      (partial?'<div class="hero-bar-mark" style="left:'+(expFrac*100)+'%"></div>':'')+'</div>'+
+      '<div class="hero-foot"><span>Använt '+fmt(spent)+'</span>'+(partial?'<span>Streck = var ni borde ligga per senaste data</span>':'')+'<span>'+refLabel+' '+fmt(ref)+'</span></div>';
   } else {
     heroEl.innerHTML =
-      '<div class="hero-label">Använt i '+monthName(heroM)+'</div>'+
+      '<div class="hero-label">Använt i '+monthName(heroM)+(partial&&lastTxDate?' · t.o.m. '+day+'/'+hm:'')+'</div>'+
       '<div class="hero-row"><div class="hero-value">'+fmt(spent)+'</div></div>'+
       '<div class="hero-empty">Sätt en budget per kategori under Budget-fliken så visas hur mycket som är kvar.</div>';
   }
@@ -2673,6 +2680,12 @@ function getFiltered(){
     if(dir==='in'&&t.amt<=0) return false;
     if(dir==='ut'&&t.amt>=0) return false;
     return true;
+  }).sort((a,b)=>{
+    const sortEl=document.getElementById('sortFilter');
+    const mode=sortEl?sortEl.value:'date';
+    if(mode==='amt_desc') return Math.abs(b.amt)-Math.abs(a.amt) || b.date.localeCompare(a.date);
+    if(mode==='amt_asc')  return Math.abs(a.amt)-Math.abs(b.amt) || b.date.localeCompare(a.date);
+    return b.date.localeCompare(a.date);
   });
 }
 function renderTxns(){
@@ -2990,15 +3003,17 @@ function renderResist(){
     const m = monthOf(t.date);
     spendByMonth[m] = (spendByMonth[m] || 0) + Math.abs(t.amt);
   });
-  const prevMonths = Object.keys(spendByMonth).filter(function(m){ return m < thisM; }).sort().slice(-6);
+  const dataMonths = Object.keys(spendByMonth).sort();
+  const realM = dataMonths.length ? dataMonths[dataMonths.length-1] : thisM;
+  const prevMonths = dataMonths.filter(function(m){ return m < realM; }).slice(-6);
   const realEl = document.getElementById('resistReality');
   if(prevMonths.length){
     const avg = prevMonths.reduce(function(a,m){ return a+spendByMonth[m]; },0) / prevMonths.length;
-    const now = spendByMonth[thisM] || 0;
+    const now = spendByMonth[realM] || 0;
     const diff = now - avg;
     const pct = avg > 0 ? Math.round(Math.abs(diff)/avg*100) : 0;
     realEl.innerHTML =
-      '<span>Fika, uteätande & nöje i '+monthName(thisM)+': <strong>'+fmt(now)+'</strong></span>'+
+      '<span>Fika, uteätande & nöje i '+monthName(realM)+': <strong>'+fmt(now)+'</strong></span>'+
       '<span>snitt '+fmt(avg)+'/mån (senaste '+prevMonths.length+')</span>'+
       (now>0 ? '<span class="delta '+(diff<=0?'down':'up')+'">'+(diff<=0?'▼ ':'▲ ')+pct+' % '+(diff<=0?'under':'över')+' snittet</span>' : '');
   } else {
@@ -3108,7 +3123,7 @@ async function initAuth(){
 // ===== INIT =====
 initAuth();
 </script>
-<div class="version-tag">v2026.09.02-2245</div>
+<div class="version-tag">v2026.09.02-2300</div>
 
 <script>
 if('serviceWorker' in navigator){
