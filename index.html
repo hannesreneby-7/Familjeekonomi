@@ -307,6 +307,28 @@ body { font-variant-numeric: tabular-nums; }
   .bottom-nav-btn.active { color:var(--accent); }
 }
 
+
+/* ── Fasta kostnader ── */
+.fixed-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+.fixed-total { font-size:26px; font-weight:500; letter-spacing:-.02em; color:var(--ink); }
+.fixed-total small { font-size:13px; font-weight:400; color:var(--ink-3); margin-left:6px; }
+.fixed-row { display:grid; grid-template-columns:minmax(0,1fr) 100px 170px; gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid var(--sand); font-size:13px; }
+.fixed-row:last-child { border-bottom:none; }
+.fixed-name { color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fixed-cat { font-size:11px; color:var(--ink-4); }
+.fixed-amt { text-align:right; color:var(--ink); white-space:nowrap; }
+.fixed-tag { font-size:11px; padding:3px 8px; border-radius:999px; display:inline-block; white-space:nowrap; }
+.fixed-tag.up { background:var(--red-bg); color:var(--red); }
+.fixed-tag.new { background:var(--amber-bg); color:var(--amber); }
+.fixed-tag.gone { background:var(--sand); color:var(--ink-3); }
+.fixed-tag.ok { color:var(--ink-4); }
+.fixed-tag.down { background:var(--green-bg); color:var(--green); }
+.fixed-empty { font-size:13px; color:var(--ink-3); }
+@media (max-width:600px){
+  .fixed-row { grid-template-columns:minmax(0,1fr) 80px; row-gap:4px; }
+  .fixed-row .fixed-tagcell { grid-column:1 / -1; }
+}
+
 /* ── Cards ── */
 .card {
   background: var(--surface);
@@ -1110,6 +1132,16 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 
     <!-- RAPPORT VIEW -->
     <div id="view-report" style="display:none">
+      <div class="report-card" id="fixedCard">
+        <div class="fixed-head">
+          <div>
+            <div class="report-title">Fasta kostnader</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Återkommer varje månad med ungefär samma belopp. Rött = blivit dyrare, dags att ringa och förhandla.</div>
+          </div>
+          <div class="fixed-total" id="fixedTotal"></div>
+        </div>
+        <div id="fixedList"></div>
+      </div>
       <div class="ai-card">
         <div class="ai-card-header">
           <div class="ai-card-title">&#10022; AI-analys</div>
@@ -1364,6 +1396,7 @@ function buildReportMonthSelector(){
 }
 
 function renderReport(){
+  renderFixedCosts();
   var sel = document.getElementById('reportMonthSelect');
   if(!sel) return;
   var month = sel.value;
@@ -2031,6 +2064,7 @@ function showDashboard(){
   rebuildCharts();
   renderTxns();
   updateHeader();
+  renderFixedCosts();
 }
 
 // ===== CATEGORIZE =====
@@ -2937,6 +2971,90 @@ function saveCfg(){
   saveToCloud(false);
 }
 
+// ===== FASTA KOSTNADER =====
+function detectFixedCosts(){
+  const SKIP = new Set(['Mat & dagligvaror','Restaurang & café','Bränsle','Parkering & trängsel','Kläder & shopping','Resor','Hemmet','Övrigt','Lån & utlägg']);
+  const isExp = t => t.amt<0 && t.cat!=='Inkomst' && t.cat!=='Intern överföring' && t.cat!=='Sparande & investeringar' && t.cat!=='Bolån — amortering';
+  const months = [...new Set(TXNS.filter(isExp).map(t=>t.date.slice(0,7)))].sort();
+  const win = months.slice(-6);
+  if(win.length < 2) return {win, items:[], latest:null};
+  const latest = win[win.length-1];
+  const need = Math.min(3, win.length);
+  const groups = {};
+  TXNS.filter(isExp).forEach(t=>{
+    const m = t.date.slice(0,7);
+    if(win.indexOf(m) < 0) return;
+    const k = descKey(t.desc);
+    if(!groups[k]) groups[k] = {key:k, desc:t.desc, cat:t.cat, byMonth:{}, cnt:{}};
+    const g = groups[k];
+    g.byMonth[m] = (g.byMonth[m]||0) + Math.abs(t.amt);
+    g.cnt[m] = (g.cnt[m]||0) + 1;
+    if(t.date > (g.lastDate||'')){ g.lastDate = t.date; g.desc = t.desc; g.cat = t.cat; }
+  });
+  const items = [];
+  Object.values(groups).forEach(g=>{
+    if(SKIP.has(g.cat)) return;
+    const seen = win.filter(m=>g.byMonth[m]>0);
+    const prevM = win[win.length-2];
+    const recentPair = seen.indexOf(latest)>=0 && seen.indexOf(prevM)>=0;
+    if(seen.length < need && !(seen.length>=2 && recentPair)) return;
+    if(seen.some(m=>g.cnt[m] > 2)) return;                 // fler än 2 köp/mån = inte en fast kostnad
+    const amts = seen.map(m=>g.byMonth[m]).sort((a,b)=>a-b);
+    const median = amts[Math.floor(amts.length/2)];
+    if(median < 30) return;
+    const stable = amts.filter(a=>Math.abs(a-median)/median <= 0.25).length >= Math.max(2, Math.ceil(amts.length*0.7));
+    if(!stable) return;
+    const inLatest = g.byMonth[latest] > 0;
+    const cur = inLatest ? g.byMonth[latest] : g.byMonth[seen[seen.length-1]];
+    // Jämför mot vad det brukade kosta före senaste förändringen
+    let status='ok', diff=0, since='';
+    const prevSeen = seen.filter(m=>m!==latest);
+    if(!inLatest){ status='gone'; }
+    else if(seen.length<=2 && seen[0]!==win[0]){ status='new'; }
+    else {
+      const prevAmt = g.byMonth[prevSeen[prevSeen.length-1]];
+      // hitta första månaden med det nya beloppet
+      let firstNew = latest;
+      for(let i=seen.length-1;i>=0;i--){ if(Math.abs(g.byMonth[seen[i]]-cur)/cur <= 0.03) firstNew = seen[i]; else break; }
+      const before = seen.filter(m=>m<firstNew);
+      const baseline = before.length ? before.map(m=>g.byMonth[m]).sort((a,b)=>a-b)[Math.floor(before.length/2)] : prevAmt;
+      diff = cur - baseline;
+      if(before.length && diff/baseline > 0.03){ status='up'; since=firstNew; }
+      else if(before.length && diff/baseline < -0.03){ status='down'; since=firstNew; }
+    }
+    items.push({desc:g.desc, cat:g.cat, cur, status, diff, since, months:seen.length});
+  });
+  items.sort((a,b)=>{ const o={up:0,new:1,ok:2,down:3,gone:4}; return (o[a.status]-o[b.status]) || (b.cur-a.cur); });
+  return {win, items, latest};
+}
+
+function renderFixedCosts(){
+  const list = document.getElementById('fixedList');
+  if(!list) return;
+  const fmt = n => Math.round(n).toLocaleString('sv-SE')+' kr';
+  const r = detectFixedCosts();
+  const active = r.items.filter(i=>i.status!=='gone');
+  const total = active.reduce((s,i)=>s+i.cur,0);
+  document.getElementById('fixedTotal').innerHTML = r.items.length ? fmt(total)+'<small>/mån · '+active.length+' st</small>' : '';
+  if(!r.items.length){
+    list.innerHTML = '<div class="fixed-empty">'+(r.win.length<2 ? 'Behöver minst två månaders data för att hitta återkommande kostnader.' : 'Inga återkommande kostnader hittades än.')+'</div>';
+    return;
+  }
+  const tag = i => {
+    if(i.status==='up')   return '<span class="fixed-tag up">▲ +'+fmt(i.diff)+' sedan '+monthName(i.since)+'</span>';
+    if(i.status==='down') return '<span class="fixed-tag down">▼ '+fmt(Math.abs(i.diff))+' billigare sedan '+monthName(i.since)+'</span>';
+    if(i.status==='new')  return '<span class="fixed-tag new">Ny i '+monthName(r.latest)+'</span>';
+    if(i.status==='gone') return '<span class="fixed-tag gone">Saknas i '+monthName(r.latest)+' – uppsagd?</span>';
+    return '<span class="fixed-tag ok">Stabil · '+i.months+' mån</span>';
+  };
+  list.innerHTML = r.items.map(i =>
+    '<div class="fixed-row'+(i.status==='gone'?' " style="opacity:.6':'')+'">'+
+      '<div><div class="fixed-name">'+i.desc+'</div><div class="fixed-cat">'+i.cat+'</div></div>'+
+      '<div class="fixed-amt">'+fmt(i.cur)+'</div>'+
+      '<div class="fixed-tagcell">'+tag(i)+'</div>'+
+    '</div>').join('');
+}
+
 // ===== KÖR OM KATEGORIREGLER =====
 function recategorize(all){
   const changes = {};
@@ -3229,7 +3347,7 @@ async function initAuth(){
 // ===== INIT =====
 initAuth();
 </script>
-<div class="version-tag">v2026.09.03-1015</div>
+<div class="version-tag">v2026.09.03-1100</div>
 
 <script>
 if('serviceWorker' in navigator){
