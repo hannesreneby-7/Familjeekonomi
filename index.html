@@ -329,6 +329,16 @@ body { font-variant-numeric: tabular-nums; }
   .fixed-row .fixed-tagcell { grid-column:1 / -1; }
 }
 
+
+.sug-row { display:grid; grid-template-columns:minmax(0,1fr) 90px 90px 110px; gap:10px; align-items:center; padding:7px 0; border-bottom:1px solid var(--sand); font-size:13px; }
+.sug-row.head { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-4); border-bottom:1px solid var(--sand); }
+.sug-row:last-child { border-bottom:none; }
+.sug-num { text-align:right; white-space:nowrap; }
+.sug-num.cur { color:var(--ink-3); }
+.sug-num.sug { color:var(--accent); font-weight:500; }
+.sug-kind { font-size:11px; color:var(--ink-4); }
+@media (max-width:600px){ .sug-row { grid-template-columns:minmax(0,1fr) 80px 80px; } .sug-row .sug-cur { display:none; } }
+
 /* ── Cards ── */
 .card {
   background: var(--surface);
@@ -1086,6 +1096,23 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 
     <!-- BUDGET VIEW -->
     <div id="view-budget" style="display:none">
+      <div class="report-card" id="budgetSuggestCard">
+        <div class="fixed-head">
+          <div>
+            <div class="report-title">Budgetförslag från era siffror</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Baserat på vad ni faktiskt lagt per månad. Fasta kostnader sätts till snittet, rörliga lite under snittet så det finns något att vinna.</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select class="fs" id="suggestMode" onchange="renderBudgetSuggest()">
+              <option value="0.95">Rörligt: 5 % under snitt</option>
+              <option value="0.90">Rörligt: 10 % under snitt</option>
+              <option value="1.00">Rörligt: som snittet</option>
+            </select>
+            <button class="save-btn" onclick="applyBudgetSuggest()">Använd förslaget</button>
+          </div>
+        </div>
+        <div id="budgetSuggestList"></div>
+      </div>
       <div class="budget-summary" id="budgetSummary"></div>
       <div class="budget-grid" id="budgetGrid"></div>
     </div>
@@ -1160,6 +1187,10 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
         <div class="report-header">
           <div class="report-title">Månadsrapport</div>
           <select class="report-month-select" id="reportMonthSelect" onchange="renderReport()"></select>
+        </div>
+        <div class="report-section" style="margin-bottom:18px">
+          <h3 id="monthSummaryTitle">Vad hände</h3>
+          <div id="monthSummary"></div>
         </div>
         <div class="report-kpis" id="reportKpis"></div>
         <div class="report-section">
@@ -1303,6 +1334,7 @@ function filteredByMonth(){
 
 // ===== BUDGET VIEW =====
 function renderBudgetView(){
+  renderBudgetSuggest();
   const txns = filteredByMonth();
   const expenses = txns.filter(t => t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Sparande & investeringar' && t.cat !== 'Bolån — amortering');
   const catTotals = {};
@@ -1401,6 +1433,7 @@ function renderReport(){
   if(!sel) return;
   var month = sel.value;
   if(!month) return;
+  renderMonthSummary(month);
 
   function isExp(t){ return t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Sparande & investeringar' && t.cat !== 'Bolån — amortering'; }
   function isInc(t){ return t.amt > 0 && t.cat === 'Inkomst'; }
@@ -2971,6 +3004,131 @@ function saveCfg(){
   saveToCloud(false);
 }
 
+// ===== BUDGETFÖRSLAG =====
+const FIXED_CATS = new Set(['Boende & el','Försäkringar','Telefon & internet','Streaming & prenumerationer','Bolån — ränta','Fackavgift','Kollektivtrafik','Barn & familj','Lån & utlägg']);
+function budgetSuggestion(){
+  const isExp = t => t.amt<0 && t.cat!=='Inkomst' && t.cat!=='Intern överföring' && t.cat!=='Sparande & investeringar' && t.cat!=='Bolån — amortering';
+  const months = [...new Set(TXNS.filter(isExp).map(t=>t.date.slice(0,7)))].sort();
+  const curM = todayStr().slice(0,7);
+  const full = months.filter(m=>m<curM).slice(-6);      // bara hela månader
+  if(!full.length) return {months:full, rows:[]};
+  const factor = parseFloat((document.getElementById('suggestMode')||{}).value || '0.95');
+  const per = {};
+  TXNS.filter(isExp).forEach(t=>{
+    const m=t.date.slice(0,7); if(full.indexOf(m)<0) return;
+    per[t.cat] = per[t.cat] || {}; per[t.cat][m] = (per[t.cat][m]||0) + Math.abs(t.amt);
+  });
+  const rows = Object.keys(per).map(cat=>{
+    const vals = full.map(m=>per[cat][m]||0);
+    const avg = vals.reduce((a,b)=>a+b,0)/full.length;
+    const sorted = [...vals].sort((a,b)=>a-b);
+    const median = sorted[Math.floor(sorted.length/2)];
+    const fixed = FIXED_CATS.has(cat);
+    let raw = fixed ? Math.max(avg, median) : median*factor;
+    if(cat==='Övrigt') raw = Math.min(median, avg)*0.8;    // Övrigt ska krympa i takt med att man kategoriserar
+    const step = raw>=5000 ? 500 : raw>=1000 ? 100 : 50;
+    const sug = Math.max(step, Math.ceil(raw/step)*step);
+    return {cat, avg, median, sug, fixed};
+  }).sort((a,b)=>b.avg-a.avg);
+  return {months:full, rows};
+}
+function renderBudgetSuggest(){
+  const el = document.getElementById('budgetSuggestList'); if(!el) return;
+  const r = budgetSuggestion();
+  const fmt = n => Math.round(n).toLocaleString('sv-SE');
+  if(!r.rows.length){ el.innerHTML='<div class="fixed-empty">Behöver minst en hel månad med data.</div>'; return; }
+  const total = r.rows.reduce((s,x)=>s+x.sug,0);
+  const curTotal = r.rows.reduce((s,x)=>s+(BUDGET[x.cat]||0),0);
+  el.innerHTML =
+    '<div class="sug-row head"><div>Kategori · snitt '+r.months.length+' mån</div><div class="sug-num sug-cur">Nuvarande</div><div class="sug-num">Snitt</div><div class="sug-num">Förslag</div></div>'+
+    r.rows.map(x=>'<div class="sug-row"><div>'+x.cat+' <span class="sug-kind">'+(x.fixed?'fast':'rörlig')+'</span></div><div class="sug-num cur sug-cur">'+(BUDGET[x.cat]?fmt(BUDGET[x.cat]):'–')+'</div><div class="sug-num">'+fmt(x.avg)+'</div><div class="sug-num sug">'+fmt(x.sug)+' kr</div></div>').join('')+
+    '<div class="sug-row" style="font-weight:500"><div>Totalt per månad</div><div class="sug-num cur sug-cur">'+(curTotal?fmt(curTotal):'–')+'</div><div class="sug-num">'+fmt(r.rows.reduce((s,x)=>s+x.avg,0))+'</div><div class="sug-num sug">'+fmt(total)+' kr</div></div>';
+}
+function applyBudgetSuggest(){
+  const r = budgetSuggestion();
+  if(!r.rows.length) return;
+  const keep = Object.keys(BUDGET).length ? confirm('Ersätta nuvarande budget med förslaget för alla '+r.rows.length+' kategorier?') : true;
+  if(!keep) return;
+  r.rows.forEach(x=>{ BUDGET[x.cat] = x.sug; });
+  renderBudgetView();
+  saveToCloud();
+}
+
+// ===== VAD HÄNDE I MÅNADEN =====
+function monthSummary(month){
+  const isExp = t => t.amt<0 && t.cat!=='Inkomst' && t.cat!=='Intern överföring' && t.cat!=='Sparande & investeringar' && t.cat!=='Bolån — amortering';
+  const fmt = n => Math.round(n).toLocaleString('sv-SE')+' kr';
+  const months = [...new Set(TXNS.filter(isExp).map(t=>t.date.slice(0,7)))].sort();
+  const idx = months.indexOf(month);
+  if(idx<0) return [];
+  const prev = idx>0 ? months[idx-1] : null;
+  const ref = months.slice(Math.max(0,idx-6), idx);
+  const inM = TXNS.filter(t=>t.date.startsWith(month));
+  const exp = inM.filter(isExp);
+  const total = exp.reduce((s,t)=>s+Math.abs(t.amt),0);
+  const sumM = m => TXNS.filter(t=>t.date.startsWith(m)&&isExp(t)).reduce((s,t)=>s+Math.abs(t.amt),0);
+  const out = [];
+
+  // 1. Totalt vs förra månaden och snitt
+  if(prev){
+    const p = sumM(prev), d = total-p;
+    const avg = ref.length ? ref.reduce((s,m)=>s+sumM(m),0)/ref.length : null;
+    out.push('Utgifterna landade på <strong>'+fmt(total)+'</strong>, '+(Math.abs(d)<total*0.02?'i nivå med':(d>0?fmt(d)+' mer än':fmt(-d)+' mindre än'))+' i '+monthName(prev)+
+      (avg&&ref.length>1?' och '+(total<avg?fmt(avg-total)+' under':fmt(total-avg)+' över')+' snittet för de senaste '+ref.length+' månaderna':'')+'.');
+  } else {
+    out.push('Utgifterna landade på <strong>'+fmt(total)+'</strong>. Första månaden med data, så ingen jämförelse än.');
+  }
+
+  // 2. Största förändringen per kategori mot snitt
+  if(ref.length){
+    const catM = {}, catRef = {};
+    exp.forEach(t=>{ catM[t.cat]=(catM[t.cat]||0)+Math.abs(t.amt); });
+    TXNS.filter(t=>isExp(t)&&ref.indexOf(t.date.slice(0,7))>=0).forEach(t=>{ catRef[t.cat]=(catRef[t.cat]||0)+Math.abs(t.amt); });
+    const diffs = [...new Set([...Object.keys(catM),...Object.keys(catRef)])].filter(c=>c!=='Övrigt').map(c=>({c, d:(catM[c]||0)-(catRef[c]||0)/ref.length, m:catM[c]||0})).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+    if(diffs.length && Math.abs(diffs[0].d) > 200){
+      const x = diffs[0];
+      out.push('Största avvikelsen: <strong>'+x.c+'</strong> '+(x.d>0?'kostade '+fmt(x.d)+' mer':'kostade '+fmt(-x.d)+' mindre')+' än vanligt ('+fmt(x.m)+').');
+    }
+  }
+
+  // 3. Över budget
+  if(Object.keys(BUDGET).length){
+    const catM = {}; exp.forEach(t=>{ catM[t.cat]=(catM[t.cat]||0)+Math.abs(t.amt); });
+    const over = Object.keys(BUDGET).filter(c=>catM[c]>BUDGET[c]).map(c=>({c, o:catM[c]-BUDGET[c]})).sort((a,b)=>b.o-a.o);
+    out.push(over.length
+      ? 'Över budget: '+over.slice(0,3).map(x=>'<strong>'+x.c+'</strong> (+'+fmt(x.o)+')').join(', ')+(over.length>3?' och '+(over.length-3)+' till':'')+'.'
+      : 'Alla kategorier höll budgeten.');
+  }
+
+  // 4. Nya handlare
+  const seenBefore = new Set(TXNS.filter(t=>isExp(t)&&t.date.slice(0,7)<month).map(t=>descKey(t.desc)));
+  const newM = {};
+  exp.forEach(t=>{ const k=descKey(t.desc); if(!seenBefore.has(k)){ newM[k]=newM[k]||{desc:t.desc,sum:0}; newM[k].sum+=Math.abs(t.amt); } });
+  const news = Object.values(newM).sort((a,b)=>b.sum-a.sum);
+  if(months.indexOf(month)>0 && news.length){
+    out.push('Nya ställen: '+news.slice(0,3).map(n=>'<strong>'+n.desc+'</strong> ('+fmt(n.sum)+')').join(', ')+(news.length>3?' och '+(news.length-3)+' till':'')+'.');
+  }
+
+  // 5. Största köpet och största handlaren
+  if(exp.length){
+    const big = [...exp].sort((a,b)=>Math.abs(b.amt)-Math.abs(a.amt))[0];
+    const byM = {}; exp.forEach(t=>{ const k=descKey(t.desc); byM[k]=byM[k]||{desc:t.desc,sum:0,n:0}; byM[k].sum+=Math.abs(t.amt); byM[k].n++; });
+    const top = Object.values(byM).sort((a,b)=>b.sum-a.sum)[0];
+    out.push('Största enskilda köpet: <strong>'+big.desc+'</strong> '+fmt(Math.abs(big.amt))+' ('+big.date.slice(8)+'/'+parseInt(big.date.slice(5,7))+'). Mest pengar gick till <strong>'+top.desc+'</strong>: '+fmt(top.sum)+' på '+top.n+' köp.');
+  }
+
+  // 6. Motstått
+  const rs = (RESIST.e||[]).filter(e=>e[0].startsWith(month));
+  if(rs.length) out.push('Ni motstod suget <strong>'+rs.length+' gånger</strong>, '+fmt(rs.reduce((s,e)=>s+e[1],0))+' som kan gå till sparande.');
+  return out;
+}
+function renderMonthSummary(month){
+  const el = document.getElementById('monthSummary'); if(!el) return;
+  const lines = monthSummary(month);
+  document.getElementById('monthSummaryTitle').textContent = 'Vad hände i '+monthName(month);
+  el.innerHTML = lines.length ? '<ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45;color:var(--ink-2)">'+lines.map(l=>'<li>'+l+'</li>').join('')+'</ul>' : '<div class="fixed-empty">Ingen data för månaden.</div>';
+}
+
 // ===== FASTA KOSTNADER =====
 function detectFixedCosts(){
   const SKIP = new Set(['Mat & dagligvaror','Restaurang & café','Bränsle','Parkering & trängsel','Kläder & shopping','Resor','Hemmet','Övrigt','Lån & utlägg']);
@@ -3347,7 +3505,7 @@ async function initAuth(){
 // ===== INIT =====
 initAuth();
 </script>
-<div class="version-tag">v2026.09.03-1100</div>
+<div class="version-tag">v2026.09.03-1130</div>
 
 <script>
 if('serviceWorker' in navigator){
