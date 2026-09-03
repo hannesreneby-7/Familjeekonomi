@@ -911,15 +911,12 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
     <h2>Familjens Ekonomi</h2>
-    <p>Skriv din e-postadress så skickar vi en inloggningslänk.</p>
-    <input type="email" id="loginEmail" placeholder="din@epost.se" autocomplete="email"
-           onkeydown="if(event.key==='Enter')sendLoginLink()">
-    <button id="loginBtn" onclick="sendLoginLink()">Skicka kod</button>
-    <div id="loginCodeWrap" style="display:none;margin-top:14px">
-      <input type="text" id="loginCode" placeholder="Sexsiffrig kod" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
-             onkeydown="if(event.key==='Enter')verifyLoginCode()">
-      <button id="loginCodeBtn" onclick="verifyLoginCode()">Logga in</button>
-    </div>
+    <p>Logga in med e-post och lösenord.</p>
+    <input type="email" id="loginEmail" placeholder="din@epost.se" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Lösenord" autocomplete="current-password"
+           onkeydown="if(event.key==='Enter')loginWithPassword()">
+    <button id="loginBtn" onclick="loginWithPassword()">Logga in</button>
+    <div style="text-align:center;margin-top:12px"><button onclick="sendLoginLink()" style="background:none;border:none;color:var(--ink-3);font-size:12px;text-decoration:underline;cursor:pointer;font-family:inherit;padding:0">Inget lösenord än? Skicka inloggningslänk till mejlen</button></div>
     <div class="login-msg" id="loginMsg"></div>
   </div>
 </div>
@@ -971,6 +968,28 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
     <p style="font-size:12px;color:var(--ink-3);margin-bottom:12px">Appen är ansluten till Supabase (EU). Data lagras säkert och delas med alla som har tillgång till appen.</p>
     <button class="save-btn" onclick="loadFromCloud()">Synka nu</button>
     <button class="save-btn" onclick="logout()" style="margin-left:8px">Logga ut</button>
+
+    <hr style="border:none;border-top:1px solid #6B5300;margin:16px 0">
+    <div style="font-size:12px;font-weight:600;color:#FFD98A;margin-bottom:6px">Lösenord</div>
+    <p style="font-size:12px;color:var(--ink-3);margin-bottom:10px">Sätt ett lösenord så kan du logga in i appen på hemskärmen utan mejl. Gäller den e-post du är inloggad med nu.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <input type="password" id="pwNew" placeholder="Nytt lösenord (minst 8 tecken)" autocomplete="new-password">
+      <input type="password" id="pwNew2" placeholder="Upprepa lösenordet" autocomplete="new-password">
+    </div>
+    <button class="save-btn" onclick="setPassword()">Spara lösenord</button>
+    <span id="pwMsg" style="font-size:12px;margin-left:10px"></span>
+
+    <hr style="border:none;border-top:1px solid #6B5300;margin:16px 0">
+    <div style="font-size:12px;font-weight:600;color:#FFD98A;margin-bottom:6px">Familj & konton</div>
+    <p style="font-size:12px;color:var(--ink-3);margin-bottom:10px">Uppgifterna sparas i databasen bakom inloggningen, inte i koden. Fyll i en gång.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label style="font-size:10px;font-weight:600;color:var(--ink-4);text-transform:uppercase;letter-spacing:.04em">Evas lönekonto (kontonummer)</label><input id="cfgEvaLon" class="setup-input" placeholder="t.ex. 0123456789" inputmode="numeric"></div>
+      <div><label style="font-size:10px;font-weight:600;color:var(--ink-4);text-transform:uppercase;letter-spacing:.04em">Evas sparkonto (kontonummer)</label><input id="cfgEvaSpar" class="setup-input" placeholder="t.ex. 0123456789" inputmode="numeric"></div>
+      <div><label style="font-size:10px;font-weight:600;color:var(--ink-4);text-transform:uppercase;letter-spacing:.04em">Era namn (interna överföringar)</label><input id="cfgOwnNames" class="setup-input" placeholder="Efternamn1, Efternamn2"></div>
+      <div><label style="font-size:10px;font-weight:600;color:var(--ink-4);text-transform:uppercase;letter-spacing:.04em">Namn för Lån & utlägg</label><input id="cfgLoanNames" class="setup-input" placeholder="Förnamn Efternamn"></div>
+    </div>
+    <button class="save-btn" onclick="saveCfg()">Spara uppgifter</button>
+    <span id="cfgMsg" style="font-size:12px;color:var(--green);margin-left:10px"></span>
 
     <hr style="border:none;border-top:1px solid #6B5300;margin:16px 0">
     <div style="font-size:12px;font-weight:600;color:#FFD98A;margin-bottom:6px">Kategorier</div>
@@ -1141,7 +1160,7 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
 </div>
 
 <script>
-const CAT_RULES = {"Mat & dagligvaror": ["ICA", "COOP", "LIDL", "HEMKOP", "MAXI", "WILLYS", "NETTO", "MATHEM", "CONVINI", "PRIS NYCKELKUND", "CITY GROSS", "GRONA LUND MAT"], "Restaurang & café": ["RANELLA", "OH POKE", "ZETTLE_*SKEPPSBR", "HOLY GREENS", "LULU", "LA PASTA VELOCE", "BURGER", "CAFE", "WERMLANDS WARDSHUS", "PINCHOS", "SUSHI", "KEBAB", "WAL*JACK", "SLAKTBAREN", "WH NACKA", "RICHE", "PRIMA NAPOLETAN", "MASALA", "PIZZA", "BRANES RESTAURAN", "MAX BURGER", "WAYNES", "PREPP", "CENTRALKONDITORI", "ZETTLE_*NORRKOPI", "OLEARYS", "STAVSNAS HEMBAGE", "COFFEE", "LEKHYTTANS", "ZETTLE_*I ETT KN", "INDOCHINE", "ZETTLE_*BARASKEN", "NAKED JUICEBAR", "RESTAURANG", "KOKPUNKT", "MEKI FOOD", "TZATZIKI", "HEAT", "RISTORANTE", "ZETTLE_*VARDSHUS", "SOLTUNA", "ITAMAE", "KUNG CARLS", "OMG SUSHI", "ELITE HOTEL", "HAMBURGERI", "THAI", "WERMDO WARDSHUS", "SUBWAY", "BROD OCH SALT", "ESPRESSO HOUSE", "MCD"], "Kollektivtrafik": ["SL", "VÄSTTRAFIK", "SJ.SE", "FLYTOGET", "RUTERAPPEN", "RUTER"], "Resor": ["TAXI STOCKHOLM", "BOLT.EU", "AVOLTA", "AIRPORT TAXI", "DUTY FREE", "NORWEGIAN AI", "SSP S.A.", "UBER", "NOVOTEL", "RIO REAL GOLF HOTEL", "SJ APP", "SWEDAVIA", "SBB BAHNHOF", "WALKTHROUGH", "SAS", "TAMOIL"], "Kläder & shopping": ["KANDYZ", "VOLT", "MICHA ADAM", "INTERSPORT", "LAGERHAUS", "AHLENS", "GODISGALLERIAN", "STOP N SHOP", "LINDEX", "STADIUM", "RUSTA", "ZARA", "AMAZON", "BROTHERS", "XXL", "SOLTORGET", "GLITTER", "NORMAL", "H&M"], "Nöje & fritid": ["STROMMA", "FILMSTADEN", "MIJAS GOLF", "NEW BOWL", "BADMINTONSTADIO", "BIOGRAF", "KOLMÅRDENS", "AB GR", "PRESSBYRAN", "EKSJÖ BOWLING", "7-ELEVEN", "NYX*FUNI", "3ARENA", "MEDLEY", "SPORTSBAR", "FLOTTSBRO", "FJARILSHUSET", "W*BRANAS", "GRONA LUND", "ASTRID LINDGRENS", "GUSTAVSBERGSBAD", "SYSTEMBOLAGET", "SVENSKA GOLFFÖRBUND", "FUNI", "KOLM", "JUMPYARD", "SODRA TEATERN", "GRONA LUNDS", "BIBLIOTEKET", "BALTIC PRINCESS", "SÖDRA TEATERN", "NACKA TOBAK", "STOCKHOLM LIVE", "ROMME"], "Barn & familj": ["BOO HOCK", "WAYNES ICE", "BOO FOTB", "SVENSKALAG", "DIREKTEN", "HANVIKENS", "ZETTLE_*BOO HOCKEY", "ICE ACADEMY", "TRE KRONOR", "ZETTLE_*PUCK", "PINGIS", "LEKIA", "HAPPIES LEKSAKE", "NACKA GYMN"], "Streaming & prenumerationer": ["NETFLIX", "SPOTIFY", "BOOKBEAT", "HBOMAX", "APPLE.COM", "GOOGLE ONE", "TV4"], "Hälsa & apotek": ["APOTEK", "KRONANS", "VACCIN", "LÄKARE", "TANDLÄK", "SVEA VACCIN", "MABRA"], "Boende & el": ["MÄLARENERGI", "BOSTADS", "MALARENERG", "VATTENFALL", "VERISURE", "BOO ENERGI", "NORDEA VARDAG", "TIBBER", "NACKA SALTSJ", "BG 463-3194"], "Sparande & investeringar": ["AVANZA", "NORDNET"], "Inkomst": ["LÖN", "BARNBDR", "BARNBIDRAG", "FÖRSÄKRINGSK", "SKATTEVERKET", "FKASSA"], "Bränsle": ["PREEM", "OKQ8", "CIRCLE K", "SHELL", "ST1", "QSTAR"], "Parkering & trängsel": ["PARKSTER", "EASYPARK", "PARKMAN", "AIMO PARK", "SWEDAVIA ARN", "PARKERING", "BG 809-2934", "BG 316-7541", "BG 282-4647"], "Bilkostnader": ["STIVENBILVERKSTAD", "LINDEROTHS CYKEL", "BILSERVICE", "BG 250-5683", "BG 5051-6822", "TRANSPORTSTY", "FELPARKERING"], "Hemmet": ["BILTEMA", "BYGGMAX", "JULA", "PLANTAGEN", "IKEA", "HORNBACH", "K-RAUTA", "BAUHAUS", "CLAS OHLSON", "XS LEKSAKER"], "Lån & utlägg": ["STEFAN MAGLICIC", "MAGLICIC"], "Försäkringar": ["FOLKSAM", "IF SKADE", "TRYGG-HANSA", "LÄNSFÖRSÄKRING", "MODERNA FÖRSÄKR", "GJENSIDIGE", "DINA FÖRSÄKRING", "PROTECTOR", "SOLID", "SECURITAS", "ANTICIMEX", "BG 478460", "PG 4784604"], "Telefon & internet": ["TELE2", "TELIA", "TELENOR", "COMHEM", "BAHNHOF", "BREDBAND", "HALEBOP", "VIMLA", "VIASAT", "BOXER", "HALLON", "TRE AB", "COMVIQ", "FELLO", "SURFA"], "Fackavgift": ["UNIONEN", "SACO", "LO", "TCO", "VISION", "KOMMUNAL", "LÄRARFÖRBUND", "IF METALL", "HANDELS", "ST-FÖRBUNDET", "BG 322-8756", "BG 5642-8568", "UNIONENS A-K"], "Frisör & skönhet": ["HAIR", "FRISÖR", "SALONG", "TSOLMON", "MASSAGE", "RITUALS", "DERMAROME"], "Bolån — ränta": ["LÄNSFÖRSÄKRINGAR HYPOTEK", "SBAB", "SWEDBANK HYPOTEK", "SKANDIA HYPOTEK", "STADSHYPOTEK", "DANSKE HYPOTEK", "NORDEA HYPOTEK"]};
+const CAT_RULES = {"Mat & dagligvaror": ["ICA", "COOP", "LIDL", "HEMKOP", "MAXI", "WILLYS", "NETTO", "MATHEM", "CONVINI", "PRIS NYCKELKUND", "CITY GROSS", "GRONA LUND MAT"], "Restaurang & café": ["RANELLA", "OH POKE", "ZETTLE_*SKEPPSBR", "HOLY GREENS", "LULU", "LA PASTA VELOCE", "BURGER", "CAFE", "WERMLANDS WARDSHUS", "PINCHOS", "SUSHI", "KEBAB", "WAL*JACK", "SLAKTBAREN", "WH NACKA", "RICHE", "PRIMA NAPOLETAN", "MASALA", "PIZZA", "BRANES RESTAURAN", "MAX BURGER", "WAYNES", "PREPP", "CENTRALKONDITORI", "ZETTLE_*NORRKOPI", "OLEARYS", "STAVSNAS HEMBAGE", "COFFEE", "LEKHYTTANS", "ZETTLE_*I ETT KN", "INDOCHINE", "ZETTLE_*BARASKEN", "NAKED JUICEBAR", "RESTAURANG", "KOKPUNKT", "MEKI FOOD", "TZATZIKI", "HEAT", "RISTORANTE", "ZETTLE_*VARDSHUS", "SOLTUNA", "ITAMAE", "KUNG CARLS", "OMG SUSHI", "ELITE HOTEL", "HAMBURGERI", "THAI", "WERMDO WARDSHUS", "SUBWAY", "BROD OCH SALT", "ESPRESSO HOUSE", "MCD"], "Kollektivtrafik": ["SL", "VÄSTTRAFIK", "SJ.SE", "FLYTOGET", "RUTERAPPEN", "RUTER"], "Resor": ["TAXI STOCKHOLM", "BOLT.EU", "AVOLTA", "AIRPORT TAXI", "DUTY FREE", "NORWEGIAN AI", "SSP S.A.", "UBER", "NOVOTEL", "RIO REAL GOLF HOTEL", "SJ APP", "SWEDAVIA", "SBB BAHNHOF", "WALKTHROUGH", "SAS", "TAMOIL"], "Kläder & shopping": ["KANDYZ", "VOLT", "MICHA ADAM", "INTERSPORT", "LAGERHAUS", "AHLENS", "GODISGALLERIAN", "STOP N SHOP", "LINDEX", "STADIUM", "RUSTA", "ZARA", "AMAZON", "BROTHERS", "XXL", "SOLTORGET", "GLITTER", "NORMAL", "H&M"], "Nöje & fritid": ["STROMMA", "FILMSTADEN", "MIJAS GOLF", "NEW BOWL", "BADMINTONSTADIO", "BIOGRAF", "KOLMÅRDENS", "AB GR", "PRESSBYRAN", "EKSJÖ BOWLING", "7-ELEVEN", "NYX*FUNI", "3ARENA", "MEDLEY", "SPORTSBAR", "FLOTTSBRO", "FJARILSHUSET", "W*BRANAS", "GRONA LUND", "ASTRID LINDGRENS", "GUSTAVSBERGSBAD", "SYSTEMBOLAGET", "SVENSKA GOLFFÖRBUND", "FUNI", "KOLM", "JUMPYARD", "SODRA TEATERN", "GRONA LUNDS", "BIBLIOTEKET", "BALTIC PRINCESS", "SÖDRA TEATERN", "NACKA TOBAK", "STOCKHOLM LIVE", "ROMME"], "Barn & familj": ["BOO HOCK", "WAYNES ICE", "BOO FOTB", "SVENSKALAG", "DIREKTEN", "HANVIKENS", "ZETTLE_*BOO HOCKEY", "ICE ACADEMY", "TRE KRONOR", "ZETTLE_*PUCK", "PINGIS", "LEKIA", "HAPPIES LEKSAKE", "NACKA GYMN"], "Streaming & prenumerationer": ["NETFLIX", "SPOTIFY", "BOOKBEAT", "HBOMAX", "APPLE.COM", "GOOGLE ONE", "TV4"], "Hälsa & apotek": ["APOTEK", "KRONANS", "VACCIN", "LÄKARE", "TANDLÄK", "SVEA VACCIN", "MABRA"], "Boende & el": ["MÄLARENERGI", "BOSTADS", "MALARENERG", "VATTENFALL", "VERISURE", "BOO ENERGI", "NORDEA VARDAG", "TIBBER", "NACKA SALTSJ", "BG 463-3194"], "Sparande & investeringar": ["AVANZA", "NORDNET"], "Inkomst": ["LÖN", "BARNBDR", "BARNBIDRAG", "FÖRSÄKRINGSK", "SKATTEVERKET", "FKASSA"], "Bränsle": ["PREEM", "OKQ8", "CIRCLE K", "SHELL", "ST1", "QSTAR"], "Parkering & trängsel": ["PARKSTER", "EASYPARK", "PARKMAN", "AIMO PARK", "SWEDAVIA ARN", "PARKERING", "BG 809-2934", "BG 316-7541", "BG 282-4647"], "Bilkostnader": ["STIVENBILVERKSTAD", "LINDEROTHS CYKEL", "BILSERVICE", "BG 250-5683", "BG 5051-6822", "TRANSPORTSTY", "FELPARKERING"], "Hemmet": ["BILTEMA", "BYGGMAX", "JULA", "PLANTAGEN", "IKEA", "HORNBACH", "K-RAUTA", "BAUHAUS", "CLAS OHLSON", "XS LEKSAKER"], "Lån & utlägg": [], "Försäkringar": ["FOLKSAM", "IF SKADE", "TRYGG-HANSA", "LÄNSFÖRSÄKRING", "MODERNA FÖRSÄKR", "GJENSIDIGE", "DINA FÖRSÄKRING", "PROTECTOR", "SOLID", "SECURITAS", "ANTICIMEX", "BG 478460", "PG 4784604"], "Telefon & internet": ["TELE2", "TELIA", "TELENOR", "COMHEM", "BAHNHOF", "BREDBAND", "HALEBOP", "VIMLA", "VIASAT", "BOXER", "HALLON", "TRE AB", "COMVIQ", "FELLO", "SURFA"], "Fackavgift": ["UNIONEN", "SACO", "LO", "TCO", "VISION", "KOMMUNAL", "LÄRARFÖRBUND", "IF METALL", "HANDELS", "ST-FÖRBUNDET", "BG 322-8756", "BG 5642-8568", "UNIONENS A-K"], "Frisör & skönhet": ["HAIR", "FRISÖR", "SALONG", "TSOLMON", "MASSAGE", "RITUALS", "DERMAROME"], "Bolån — ränta": ["LÄNSFÖRSÄKRINGAR HYPOTEK", "SBAB", "SWEDBANK HYPOTEK", "SKANDIA HYPOTEK", "STADSHYPOTEK", "DANSKE HYPOTEK", "NORDEA HYPOTEK"]};
 const CAT_COLORS = {
   'Mat & dagligvaror':'#2d7a56','Kollektivtrafik':'#4a9e6b',
   'Streaming & prenumerationer':'#7b52b8','Kläder & shopping':'#b83c7a',
@@ -1160,6 +1179,9 @@ const CAT_COLORS = {
 const ALL_CATS = Object.keys(CAT_COLORS);
 
 let BALANCES = {}; // {acc: {date, balance}}
+let CFG = {evaLon:'', evaSpar:'', ownNames:[], loanNames:[]}; // personliga uppgifter – lagras i molnet, inte i koden
+function cfgNames(list){ return (list||[]).map(function(x){ return String(x).trim().toUpperCase(); }).filter(Boolean); }
+function isOwnName(d){ return cfgNames(CFG.ownNames).some(function(n){ return d.includes(n); }); }
 let RESIST = {e:[], done:{}}; // e: [[datum, belopp]], done: {'2026-09': true} = överförd till sparkonto
 const RESIST_AMOUNT = 50;
 
@@ -1870,7 +1892,7 @@ async function confirmReset(){
         'Content-Type': 'application/json',
         'Prefer': 'return=minimal'
       },
-      body: JSON.stringify({data:{t:[],b:{},l:LEARNED}})
+      body: JSON.stringify({data:{t:[],b:{},l:LEARNED,r:RESIST,cfg:CFG}})
     });
   } catch(e){ console.log('Supabase reset failed:', e); }
 
@@ -1924,6 +1946,7 @@ async function loadFromCloud(){
       BUDGET = c.b || c.budget || {};
       if(c.l || c.learned) LEARNED = c.l || c.learned;
       if(c.r) RESIST = c.r;
+      if(c.cfg) CFG = Object.assign(CFG, c.cfg);
       if(TXNS.length > 0){ showDashboard(); setSyncStatus('saving','⟳ Uppdaterar...'); }
     } catch(e){}
   }
@@ -1950,6 +1973,8 @@ async function loadFromCloud(){
       BUDGET = data.b || data.budget || {};
       BALANCES = data.bal || {};
       if(data.r) RESIST = data.r;
+      if(data.cfg) CFG = Object.assign(CFG, data.cfg);
+      applyCfg();
       var ld = data.l || data.learned;
       if(ld){ LEARNED = ld; localStorage.setItem('ekonomi_learned', JSON.stringify(LEARNED)); }
       localStorage.setItem('ekonomi_cache', newJson);
@@ -1970,7 +1995,8 @@ async function saveToCloud(showStatus=true){
     b: BUDGET,
     l: LEARNED,
     bal: BALANCES,
-    r: RESIST
+    r: RESIST,
+    cfg: CFG
   };
   // Uppdatera cache
   localStorage.setItem('ekonomi_cache', JSON.stringify(payload));
@@ -2038,10 +2064,9 @@ function autoCategory(desc){
      d.includes('HANNES SKATT') || d.includes('SPAR ') ||
      d.includes('MASTERCARD') || d.includes('VISA ') ||
      d.includes('SKATT EVA') || d.includes('SKATT HAN') ||
-     d.includes('EVA MAGNUSSON') || d.includes('BANK NORWEGI') ||
+     isOwnName(d) || d.includes('BANK NORWEGI') ||
      d.includes('BETALNING KREDITKORT') || d.includes('KORTBETALNING') ||
-     d === 'INBETALNING' || d.startsWith('INBETALNING ') || d === 'BETALNING' ||
-     d.includes('FRÅN RENEBY') || d.includes('FRAN RENEBY') || d.includes('RENEBY HANNES')){
+     d === 'INBETALNING' || d.startsWith('INBETALNING ') || d === 'BETALNING'){
     return 'Intern överföring';
   }
   // Swish till/från er själva eller privatpersoner = intern (barnbidrag undantaget)
@@ -2240,8 +2265,8 @@ function parseCSV(buffer){
     const firstDataRow = lines[startLine+1] || '';
     const kontoCol = headers.indexOf('kontonummer');
     const kontoNr = kontoCol >= 0 ? (firstDataRow.split(delim)[kontoCol]||'').replace(/"/g,'').trim() : '';
-    if(kontoNr === '0149059313') accName = 'Eva_Bank';      // Eva lönekonto
-    else if(kontoNr === '6941004209') accName = 'Eva_Spark'; // Eva sparkonto
+    if(kontoNr && kontoNr === String(CFG.evaLon||'').trim()) accName = 'Eva_Bank';
+    else if(kontoNr && kontoNr === String(CFG.evaSpar||'').trim()) accName = 'Eva_Spark';
     else accName = 'Kort';
   } else if(isNordea){
     dateCol = 0; amtCol = 1; descCol = 5; saldoCol = 6;
@@ -2349,7 +2374,7 @@ function parseXLSX(buffer){
     const desc=String(row[descCol]||'Okänd').trim();
     if(!desc||desc.length<2) continue;
     const du=desc.toUpperCase();
-    if(du.includes('FROM RENEBY')||du.includes('RENEBY HANNES')) continue;
+    if(du.includes('FROM ') && isOwnName(du)) continue;
     var finalCat = autoCategory(desc);
   // Sätt rätt konto baserat på filformat
   // Norwegian har 'transactiondate', Mastercard har 'datum'
@@ -2374,7 +2399,7 @@ function parsePDFRaw(text){
 
     // Skip internal payments
     const lu = l.toUpperCase();
-    if(lu.includes('FROM RENEBY') || lu.includes('RENEBY HANNES')) continue;
+    if(lu.includes('FROM ') && isOwnName(lu)) continue;
 
     // Remove all dates from line
     let rest = l.replace(/\d{4}-\d{2}-\d{2}/g, '').trim();
@@ -2893,6 +2918,28 @@ function changeCat(idx, cat){
 }
 
 
+// ===== FAMILJ & KONTON (personliga uppgifter utanför koden) =====
+function applyCfg(){
+  CAT_RULES['Lån & utlägg'] = cfgNames(CFG.loanNames);
+  const set = function(id,v){ const el=document.getElementById(id); if(el) el.value = v || ''; };
+  set('cfgEvaLon', CFG.evaLon); set('cfgEvaSpar', CFG.evaSpar);
+  set('cfgOwnNames', (CFG.ownNames||[]).join(', ')); set('cfgLoanNames', (CFG.loanNames||[]).join(', '));
+}
+function saveCfg(){
+  const split = function(id){ return document.getElementById(id).value.split(',').map(function(x){ return x.trim(); }).filter(Boolean); };
+  CFG = {
+    evaLon: document.getElementById('cfgEvaLon').value.replace(/\s/g,''),
+    evaSpar: document.getElementById('cfgEvaSpar').value.replace(/\s/g,''),
+    ownNames: split('cfgOwnNames'),
+    loanNames: split('cfgLoanNames')
+  };
+  localStorage.setItem('ekonomi_cfg', JSON.stringify(CFG));
+  applyCfg();
+  document.getElementById('cfgMsg').textContent = 'Sparat';
+  setTimeout(function(){ document.getElementById('cfgMsg').textContent=''; }, 2500);
+  saveToCloud(false);
+}
+
 // ===== KÖR OM KATEGORIREGLER =====
 function recategorize(all){
   const changes = {};
@@ -3111,39 +3158,45 @@ function showLogin(msg){
 }
 function hideLogin(){ document.getElementById('loginOverlay').style.display = 'none'; }
 
+async function loginWithPassword(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const msg = document.getElementById('loginMsg');
+  if(!email || !pass){ msg.style.color='var(--red)'; msg.textContent = 'Fyll i både e-post och lösenord.'; return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; msg.style.color='var(--ink-3)'; msg.textContent = 'Loggar in...';
+  const {data, error} = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false;
+  if(error || !data.session){ msg.style.color='var(--red)'; msg.textContent = 'Fel e-post eller lösenord.'; return; }
+  SESSION = data.session;
+  msg.textContent = '';
+  hideLogin();
+  startApp();
+}
+
 async function sendLoginLink(){
   const email = document.getElementById('loginEmail').value.trim();
   const msg = document.getElementById('loginMsg');
-  if(!email){ msg.textContent = 'Skriv din e-postadress.'; return; }
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true; msg.textContent = 'Skickar...';
+  if(!email){ msg.style.color='var(--red)'; msg.textContent = 'Skriv din e-postadress först.'; return; }
+  msg.style.color='var(--ink-3)'; msg.textContent = 'Skickar...';
   const {error} = await sb.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: window.location.origin + window.location.pathname, shouldCreateUser: false }
   });
-  btn.disabled = false;
   if(error){ msg.style.color = 'var(--red)'; msg.textContent = 'Kunde inte skicka: ' + error.message; }
-  else {
-    msg.style.color = 'var(--green)';
-    msg.textContent = 'Kod skickad! Skriv in koden från mejlet här. (Länken i mejlet fungerar också, på datorn.)';
-    document.getElementById('loginCodeWrap').style.display = 'block';
-    document.getElementById('loginCode').focus();
-  }
+  else { msg.style.color = 'var(--green)'; msg.textContent = 'Länk skickad! Klicka på den i mejlet, gå sedan till Inställningar och sätt ett lösenord.'; }
 }
 
-async function verifyLoginCode(){
-  const email = document.getElementById('loginEmail').value.trim();
-  const code = document.getElementById('loginCode').value.trim();
-  const msg = document.getElementById('loginMsg');
-  if(code.length < 6){ msg.style.color = 'var(--red)'; msg.textContent = 'Skriv in hela koden.'; return; }
-  const btn = document.getElementById('loginCodeBtn');
-  btn.disabled = true; msg.textContent = 'Kontrollerar...';
-  const {data, error} = await sb.auth.verifyOtp({ email, token: code, type: 'email' });
-  btn.disabled = false;
-  if(error || !data.session){ msg.style.color = 'var(--red)'; msg.textContent = 'Fel kod eller för gammal. Be om en ny.'; return; }
-  SESSION = data.session;
-  hideLogin();
-  startApp();
+async function setPassword(){
+  const p1 = document.getElementById('pwNew').value, p2 = document.getElementById('pwNew2').value;
+  const msg = document.getElementById('pwMsg');
+  if(p1.length < 8){ msg.style.color='var(--red)'; msg.textContent = 'Minst 8 tecken.'; return; }
+  if(p1 !== p2){ msg.style.color='var(--red)'; msg.textContent = 'Lösenorden matchar inte.'; return; }
+  msg.style.color='var(--ink-3)'; msg.textContent = 'Sparar...';
+  const {error} = await sb.auth.updateUser({ password: p1 });
+  if(error){ msg.style.color='var(--red)'; msg.textContent = 'Gick inte: ' + error.message; return; }
+  msg.style.color='var(--green)'; msg.textContent = 'Lösenord sparat. Använd det när du loggar in i mobilen.';
+  document.getElementById('pwNew').value=''; document.getElementById('pwNew2').value='';
 }
 
 async function logout(){
@@ -3154,6 +3207,8 @@ async function logout(){
 
 function startApp(){
   try{ const rr = localStorage.getItem('ekonomi_resist'); if(rr) RESIST = JSON.parse(rr); }catch(e){}
+  try{ const cc = localStorage.getItem('ekonomi_cfg'); if(cc) CFG = Object.assign(CFG, JSON.parse(cc)); }catch(e){}
+  applyCfg();
   loadBudget();
   loadLearned();
   loadImportLog();
