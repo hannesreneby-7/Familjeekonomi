@@ -339,6 +339,16 @@ body { font-variant-numeric: tabular-nums; }
 .sug-kind { font-size:11px; color:var(--ink-4); }
 @media (max-width:600px){ .sug-row { grid-template-columns:minmax(0,1fr) 80px 80px; } .sug-row .sug-cur { display:none; } }
 
+
+.shop-row { display:grid; grid-template-columns:110px minmax(0,1fr) 110px 60px 80px; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--sand); font-size:13px; }
+.shop-row.head { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-4); }
+.shop-row:last-child { border-bottom:none; }
+.shop-bar { height:9px; background:var(--sand); border-radius:3px; position:relative; }
+.shop-fill { position:absolute; left:0; top:0; bottom:0; background:var(--accent); border-radius:3px; }
+.shop-num { text-align:right; white-space:nowrap; }
+.shop-num small { color:var(--ink-4); }
+@media (max-width:600px){ .shop-row { grid-template-columns:90px minmax(0,1fr) 90px; } .shop-row .shop-x { display:none; } }
+
 /* ── Cards ── */
 .card {
   background: var(--surface);
@@ -1169,6 +1179,15 @@ input.si:focus, select.fs:focus { border-color: var(--blue); }
         </div>
         <div id="fixedList"></div>
       </div>
+      <div class="report-card" id="shopCard">
+        <div class="fixed-head">
+          <div>
+            <div class="report-title" id="shopTitle">Mat per butik</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Var matpengarna går, och hur mycket per besök. Många små besök brukar kosta mer än få stora.</div>
+          </div>
+        </div>
+        <div id="shopList"></div>
+      </div>
       <div class="ai-card">
         <div class="ai-card-header">
           <div class="ai-card-title">&#10022; AI-analys</div>
@@ -1434,6 +1453,7 @@ function renderReport(){
   var month = sel.value;
   if(!month) return;
   renderMonthSummary(month);
+  renderShops(month);
 
   function isExp(t){ return t.amt < 0 && t.cat !== 'Inkomst' && t.cat !== 'Intern överföring' && t.cat !== 'Sparande & investeringar' && t.cat !== 'Bolån — amortering'; }
   function isInc(t){ return t.amt > 0 && t.cat === 'Inkomst'; }
@@ -3129,6 +3149,44 @@ function renderMonthSummary(month){
   el.innerHTML = lines.length ? '<ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45;color:var(--ink-2)">'+lines.map(l=>'<li>'+l+'</li>').join('')+'</ul>' : '<div class="fixed-empty">Ingen data för månaden.</div>';
 }
 
+// ===== MAT PER BUTIK =====
+const SHOP_CHAINS = [['ICA','ICA'],['COOP','Coop'],['WILLYS','Willys'],['HEMKOP','Hemköp'],['HEMKÖP','Hemköp'],['LIDL','Lidl'],['MATHEM','Mathem'],['CITY GROSS','City Gross'],['NETTO','Netto'],['MATSMART','Matsmart'],['MAXI','ICA']];
+function shopChain(desc){
+  const d = desc.toUpperCase();
+  for(const [k,name] of SHOP_CHAINS) if(kwMatch(d,k)) return name;
+  return 'Annat';
+}
+function renderShops(month){
+  const el = document.getElementById('shopList'); if(!el) return;
+  const fmt = n => Math.round(n).toLocaleString('sv-SE');
+  const food = t => t.amt<0 && t.cat==='Mat & dagligvaror';
+  const months = [...new Set(TXNS.filter(food).map(t=>t.date.slice(0,7)))].sort();
+  const idx = months.indexOf(month);
+  const ref = idx>0 ? months.slice(Math.max(0,idx-6), idx) : [];
+  const agg = (list) => { const o={}; list.forEach(t=>{ const c=shopChain(t.desc); o[c]=o[c]||{sum:0,n:0}; o[c].sum+=Math.abs(t.amt); o[c].n++; }); return o; };
+  const cur = agg(TXNS.filter(t=>food(t)&&t.date.startsWith(month)));
+  const refA = agg(TXNS.filter(t=>food(t)&&ref.indexOf(t.date.slice(0,7))>=0));
+  const total = Object.values(cur).reduce((s,x)=>s+x.sum,0);
+  const refTotal = Object.values(refA).reduce((s,x)=>s+x.sum,0);
+  document.getElementById('shopTitle').textContent = 'Mat per butik — '+monthName(month);
+  if(!total){ el.innerHTML='<div class="fixed-empty">Inga matköp i '+monthName(month)+'.</div>'; return; }
+  const rows = Object.keys(cur).map(c=>({c, sum:cur[c].sum, n:cur[c].n, share:cur[c].sum/total, refShare: refTotal? (refA[c]?refA[c].sum/refTotal:0) : null})).sort((a,b)=>b.sum-a.sum);
+  const maxShare = rows[0].share;
+  el.innerHTML =
+    '<div class="shop-row head"><div>Kedja</div><div>Andel</div><div class="shop-num">Belopp</div><div class="shop-num shop-x">Besök</div><div class="shop-num">Kr/besök</div></div>'+
+    rows.map(r=>{
+      const d = r.refShare===null ? '' : Math.round((r.share-r.refShare)*100);
+      const trend = r.refShare===null || Math.abs(d)<3 ? '' : ' <small>'+(d>0?'▲':'▼')+Math.abs(d)+'</small>';
+      return '<div class="shop-row"><div>'+r.c+'</div>'+
+        '<div><div class="shop-bar"><div class="shop-fill" style="width:'+(r.share/maxShare*100)+'%"></div></div></div>'+
+        '<div class="shop-num">'+fmt(r.sum)+' <small>'+Math.round(r.share*100)+'%'+trend+'</small></div>'+
+        '<div class="shop-num shop-x">'+r.n+'</div>'+
+        '<div class="shop-num">'+fmt(r.sum/r.n)+'</div></div>';
+    }).join('')+
+    '<div class="shop-row" style="font-weight:500"><div>Totalt</div><div></div><div class="shop-num">'+fmt(total)+' kr</div><div class="shop-num shop-x">'+rows.reduce((s,r)=>s+r.n,0)+'</div><div class="shop-num">'+fmt(total/rows.reduce((s,r)=>s+r.n,0))+'</div></div>'+
+    (ref.length?'<div style="font-size:11px;color:var(--ink-4);margin-top:8px">▲▼ = andelen jämfört med snittet för de '+ref.length+' föregående månaderna, i procentenheter.</div>':'');
+}
+
 // ===== FASTA KOSTNADER =====
 function detectFixedCosts(){
   const SKIP = new Set(['Mat & dagligvaror','Restaurang & café','Bränsle','Parkering & trängsel','Kläder & shopping','Resor','Hemmet','Övrigt','Lån & utlägg']);
@@ -3505,7 +3563,7 @@ async function initAuth(){
 // ===== INIT =====
 initAuth();
 </script>
-<div class="version-tag">v2026.09.03-1130</div>
+<div class="version-tag">v2026.09.03-1200</div>
 
 <script>
 if('serviceWorker' in navigator){
